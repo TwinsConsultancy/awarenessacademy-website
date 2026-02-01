@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Player - InnerSpark</title>
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;600&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            background: #1a1a1a;
+            color: white;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .player-container {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            height: 100vh;
+        }
+
+        .video-section {
+            display: flex;
+            flex-direction: column;
+            background: black;
+            position: relative;
+        }
+
+        video {
+            width: 100%;
+            height: auto;
+            max-height: calc(100vh - 100px);
+            flex: 1;
+        }
+
+        .curriculum-sidebar {
+            background: #252525;
+            padding: 30px;
+            border-left: 1px solid rgba(255, 255, 255, 0.05);
+            overflow-y: auto;
+        }
+
+        .player-header {
+            padding: 20px 40px;
+            background: #252525;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .preview-overlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 10;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .content-item {
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .content-item.active {
+            border-left: 4px solid var(--color-saffron);
+            background: rgba(255, 153, 51, 0.08);
+        }
+
+        .content-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+    </style>
+</head>
+
+<body oncontextmenu="return false;">
+    <div class="player-container">
+        <div class="video-section">
+            <header class="player-header">
+                <div>
+                    <a href="marketplace.html" style="color: grey; text-decoration: none; font-size: 0.8rem;"><i
+                            class="fas fa-chevron-left"></i> Back to Sanctuary</a>
+                    <h2 id="courseTitle" style="margin-top: 5px; font-size: 1.2rem;">Course Title</h2>
+                </div>
+                <div id="playerStats" style="font-size: 0.8rem; color: #aaa;">
+                    <i class="fas fa-eye"></i> <span id="viewCount">...</span> seekers watching
+                </div>
+            </header>
+
+            <div style="position: relative; flex: 1; display: flex; align-items: center; background: black;">
+                <video id="mainVideo" controls controlsList="nodownload" oncontextmenu="return false;"></video>
+
+                <div id="previewOverlay" class="preview-overlay">
+                    <h2 style="color: var(--color-saffron); margin-bottom: 15px;">Seeking the complete path?</h2>
+                    <p style="max-width: 400px; margin-bottom: 30px; line-height: 1.6;">You've reached the end of this
+                        preview. Enroll now to unlock the full spiritual journey and receive your certification.</p>
+                    <a href="marketplace.html" class="btn-primary" style="padding: 15px 40px;">View Enrollment
+                        Options</a>
+                </div>
+            </div>
+
+            <footer
+                style="padding: 20px 40px; background: #252525; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.05);">
+                <div>
+                    <h4 id="contentTitle">Lesson Title</h4>
+                    <p id="mentorName" style="font-size: 0.8rem; color: #888;">Mentor Name</p>
+                </div>
+                <div style="display: flex; gap: 15px;">
+                    <a id="downloadNotesBtn" href="#" class="btn-primary"
+                        style="background: transparent; border: 1px solid var(--color-golden); padding: 8px 15px; display: none;"
+                        download>
+                        <i class="fas fa-download"></i> Download Notes
+                    </a>
+                    <button id="markCompleteBtn" onclick="markAsComplete()" class="btn-primary"
+                        style="padding: 8px 25px;">
+                        Mark as Complete
+                    </button>
+                </div>
+            </footer>
+
+            <!-- Forum Section -->
+            <div
+                style="padding: 40px; background: #1a1a1a; overflow-y: auto; flex: 1; border-top: 1px solid rgba(255,255,255,0.05);">
+                <h3 style="margin-bottom: 25px;">Sacred Discussion (Forum)</h3>
+                <form id="forumForm" style="margin-bottom: 30px; display: flex; gap: 15px;">
+                    <input type="text" name="comment" class="form-control" placeholder="Share your realization..."
+                        style="background: #333; border: 1px solid #444; color: white; flex: 1; padding: 10px;"
+                        required>
+                    <button type="submit" class="btn-primary" style="padding: 10px 30px;">Post</button>
+                </form>
+                <div id="forumList" style="display: flex; flex-direction: column; gap: 20px;">
+                    <!-- Forum posts load here -->
+                </div>
+            </div>
+        </div>
+
+        <aside class="curriculum-sidebar">
+            <h3 style="margin-bottom: 25px;">Pathway Curriculum</h3>
+            <div id="curriculumList">
+                <!-- Lessons load here -->
+            </div>
+        </aside>
+    </div>
+
+    <script src="../js/auth.js"></script>
+    <script src="../js/utils.js"></script>
+    <script src="../js/player.js"></script>
+</body>
+
+</html>

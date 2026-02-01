@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Dashboard - InnerSpark Mentor Suite</title>
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;600&display=swap"
+        rel="stylesheet">
+    <style>
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            background: white;
+            padding: 30px;
+            border-right: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .main-content {
+            padding: 40px;
+            background: #fdfaf7;
+            overflow-y: auto;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: var(--border-radius-lg);
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: var(--border-radius-md);
+        }
+
+        .course-list-item {
+            background: white;
+            padding: 20px;
+            border-radius: var(--border-radius-md);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            box-shadow: var(--shadow-soft);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div style="text-align: center; margin-bottom: 40px;">
+                <a href="index.html" style="text-decoration: none;">
+                    <h2 style="font-family: var(--font-heading); color: var(--color-golden);">InnerSpark</h2>
+                </a>
+                <p style="font-size: 0.8rem; font-weight: 600; color: var(--color-saffron);">MENTOR SUITE</p>
+            </div>
+            <ul style="list-style: none;">
+                <li style="margin-bottom: 10px;">
+                    <a href="#" class="btn-primary" id="newCourseBtn"
+                        style="display: block; text-align: center; text-decoration: none;">+ New Course</a>
+                </li>
+                <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;">
+                <li><a href="#" class="nav-link active" onclick="switchSection('courses')"><i
+                            class="fas fa-swatchbook"></i> My Courses</a></li>
+                <li><a href="#" class="nav-link" onclick="switchSection('students')"><i class="fas fa-users"></i>
+                        Student Insights</a></li>
+                <li><a href="#" class="nav-link" onclick="switchSection('live')"><i class="fas fa-video"></i> Live
+                        Classroom</a></li>
+                <li><a href="#" id="logoutBtn" class="nav-link" style="color: var(--color-error); margin-top: 50px;"><i
+                            class="fas fa-sign-out-alt"></i> Logout</a></li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <header style="margin-bottom: 40px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1>Mentor Workshop</h1>
+                    <p>Welcome, <span id="mentorName">Mentor</span>. Your wisdom empowers many.</p>
+                </div>
+                <button class="btn-primary" id="newExamBtn" style="background: var(--color-golden);">+ Create
+                    Assessment</button>
+            </header>
+
+            <section id="coursesSection">
+                <h3 style="margin-bottom: 20px;">Manage Your Courses</h3>
+                <div id="courseList">
+                    <!-- Courses will be loaded here -->
+                    <p style="color: var(--color-text-secondary);">Loading your sanctuary projects...</p>
+                </div>
+            </section>
+
+            <!-- Student Insights Section -->
+            <section id="studentsSection" style="display: none;">
+                <h3 style="margin-bottom: 20px;">Seeker Engagement</h3>
+                <div class="glass-card" style="padding: 0; overflow: hidden;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                        <thead style="background: rgba(0,0,0,0.02);">
+                            <tr>
+                                <th style="padding: 15px;">Seeker</th>
+                                <th style="padding: 15px;">Course</th>
+                                <th style="padding: 15px;">Enrolled On</th>
+                                <th style="padding: 15px;">Progress</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentInsightList">
+                            <!-- Data loads here -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Live Classroom Section -->
+            <section id="liveSection" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                    <h3>Live Flows & Schedules</h3>
+                    <button class="btn-primary" onclick="openScheduleModal()">+ Schedule New Flow</button>
+                </div>
+                <div id="scheduleList">
+                    <!-- Schedules load here -->
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- New Course Modal -->
+    <div class="modal" id="courseModal">
+        <div class="modal-content glass-card">
+            <h2>Start a New Course</h2>
+            <form id="courseForm">
+                <div class="form-group">
+                    <label>Course Title</label>
+                    <input type="text" name="title" class="form-control" required
+                        placeholder="e.g., Morning Zen Meditation">
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select name="category" class="form-control">
+                        <option>Meditation</option>
+                        <option>Philosophy</option>
+                        <option>Motivation</option>
+                        <option>Rituals</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Price (USD)</label>
+                    <input type="number" name="price" class="form-control" required placeholder="0 for Free">
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea name="description" class="form-control" rows="4" required
+                        placeholder="What will the seekers learn?"></textarea>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 30px;">
+                    <button type="submit" class="btn-primary">Create Draft</button>
+                    <button type="button" class="btn-primary" id="closeModal"
+                        style="background: var(--color-text-secondary);">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Upload Content Modal -->
+    <div class="modal" id="uploadModal">
+        <div class="modal-content glass-card">
+            <h2>Add Learning Material</h2>
+            <p id="uploadCourseTitle" style="color: var(--color-saffron); font-weight: 600; margin-bottom: 20px;"></p>
+            <form id="uploadForm">
+                <input type="hidden" name="courseID" id="uploadCourseID">
+                <div class="form-group">
+                    <label>Material Type</label>
+                    <select name="type" class="form-control" id="materialType">
+                        <option value="Video">Video (MP4)</option>
+                        <option value="PDF">Document (PDF)</option>
+                        <option value="Note">Notes (Text)</option>
+                    </select>
+                </div>
+                <div class="form-group" id="previewDurationGroup">
+                    <label>Preview Duration (Seconds)</label>
+                    <input type="number" name="previewDuration" class="form-control" value="30">
+                    <small style="color: var(--color-text-secondary);">Time allowed for non-enrolled viewers.</small>
+                </div>
+                <div class="form-group">
+                    <label>Upload File</label>
+                    <input type="file" name="file" class="form-control" required>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 30px;">
+                    <button type="submit" class="btn-primary">Upload to Admin for Review</button>
+                    <button type="button" class="btn-primary" id="closeUploadModal"
+                        style="background: var(--color-text-secondary);">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Exam Modal [NEW] -->
+    <div class="modal" id="examModal">
+        <div class="modal-content glass-card">
+            <h2 style="font-family: var(--font-heading); color: var(--color-saffron);">Create Assessment</h2>
+            <form id="examForm">
+                <div class="form-group">
+                    <label>Select Course</label>
+                    <select name="courseID" id="examCourseSelect" class="form-control" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Exam Title</label>
+                    <input type="text" name="title" class="form-control" placeholder="e.g. Mindfulness Mastery Test"
+                        required>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="form-group">
+                        <label>Duration (mins)</label>
+                        <input type="number" name="duration" class="form-control" value="30">
+                    </div>
+                    <div class="form-group">
+                        <label>Passing Score (%)</label>
+                        <input type="number" name="passingScore" class="form-control" value="70">
+                    </div>
+                </div>
+
+                <div id="questionContainer">
+                    <h4 style="margin: 20px 0 10px;">Questions</h4>
+                    <!-- Questions will be added here -->
+                </div>
+                <button type="button" onclick="addQuestionField()" class="btn-primary"
+                    style="background: var(--color-golden); margin-bottom: 20px;">+ Add Question</button>
+
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="btn-primary">Create Assessment</button>
+                    <button type="button" id="closeExamModal" class="btn-primary"
+                        style="background: var(--color-text-secondary);">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Schedule Modal [NEW] -->
+    <div class="modal" id="scheduleModal">
+        <div class="modal-content glass-card">
+            <h2 style="font-family: var(--font-heading); color: var(--color-saffron);">Schedule Live Flow</h2>
+            <form id="scheduleForm">
+                <div class="form-group">
+                    <label>Select Course</label>
+                    <select name="courseID" id="scheduleCourseSelect" class="form-control" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Session Title</label>
+                    <input type="text" name="title" class="form-control" placeholder="e.g. Deep Breath-Work Session"
+                        required>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="form-group">
+                        <label>Date & Time</label>
+                        <input type="datetime-local" name="startTime" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Duration (mins)</label>
+                        <input type="number" name="duration" class="form-control" value="60">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Live Link (Jitsi Room Name)</label>
+                    <input type="text" name="meetingLink" class="form-control" placeholder="e.g. InnerSpark-Yoga-101">
+                    <small style="color: var(--color-text-secondary);">Students will join this room at the scheduled
+                        time.</small>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 30px;">
+                    <button type="submit" class="btn-primary">Publish Schedule</button>
+                    <button type="button" id="closeScheduleModal" class="btn-primary"
+                        style="background: var(--color-text-secondary);">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="../js/auth.js"></script>
+    <script src="../js/utils.js"></script>
+    <script src="../js/staff.js"></script>
+    <script src="../js/chatbot.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inner Circle Chronicles - InnerSpark</title>
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;600&display=swap"
+        rel="stylesheet">
+    <style>
+        .blog-header {
+            padding: 100px 20px;
+            background: linear-gradient(rgba(255, 153, 51, 0.1), rgba(255, 195, 0, 0.05));
+            text-align: center;
+        }
+
+        .blog-content {
+            max-width: 800px;
+            margin: -60px auto 100px;
+            background: white;
+            padding: 60px;
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.05);
+            line-height: 1.8;
+        }
+
+        .blog-meta {
+            color: var(--color-saffron);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="nav" id="mainNav"
+        style="background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: fixed; top: 0; width: 100%; padding: 15px 50px; display: flex; justify-content: space-between; align-items: center; z-index: 100;">
+        <a href="index.html" class="logo"
+            style="color: var(--color-saffron); font-family: var(--font-heading); font-size: 1.8rem; text-decoration: none; font-weight: bold;">✨
+            InnerSpark</a>
+        <div class="nav-links">
+            <a href="index.html#featuredSection"
+                style="color: var(--color-text-primary); text-decoration: none; margin-left: 30px; font-weight: 500;"><i
+                    class="fas fa-fire"></i> Featured</a>
+            <a href="marketplace.html"
+                style="color: var(--color-text-primary); text-decoration: none; margin-left: 30px; font-weight: 500;"><i
+                    class="fas fa-compass"></i> Explore Paths</a>
+            <a href="index.html#eventsSection"
+                style="color: var(--color-text-primary); text-decoration: none; margin-left: 30px; font-weight: 500;"><i
+                    class="fas fa-calendar-star"></i> Live Sessions</a>
+            <a href="login.html" class="btn-primary" style="margin-left:30px;"><i class="fas fa-sign-in-alt"></i>
+                Login</a>
+        </div>
+    </nav>
+
+    <header class="blog-header">
+        <div id="blog-header-content">
+            <p>Gathering cosmic insights...</p>
+        </div>
+    </header>
+
+    <article class="blog-content" id="blog-article">
+        <p>Aligning stars for your wisdom...</p>
+    </article>
+
+    <!-- Footer -->
+    <footer style="padding: 80px 50px 40px; background: #1a1a1a; color: white;">
+        <div
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 50px; max-width: 1200px; margin: 0 auto; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 50px;">
+            <div>
+                <a href="#" class="logo"
+                    style="margin-bottom: 20px; display: block; color: var(--color-golden); font-family: var(--font-heading); font-size: 1.8rem; text-decoration: none; font-weight: bold;">✨
+                    InnerSpark</a>
+                <p style="opacity: 0.6; line-height: 1.8;">A sacred space for those seeking to rediscover their internal
+                    light through ancient wisdom and modern mindfulness.</p>
+            </div>
+            <div>
+                <h4 style="margin-bottom: 25px; color: var(--color-golden);">Quick Links</h4>
+                <ul style="list-style: none; opacity: 0.8; display: grid; gap: 15px;">
+                    <li><a href="marketplace.html" style="color: white; text-decoration: none;">Explore Courses</a></li>
+                    <li><a href="index.html#eventsSection" style="color: white; text-decoration: none;">Sacred
+                            Gatherings</a></li>
+                    <li><a href="login.html" style="color: white; text-decoration: none;">Login / Register</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 style="margin-bottom: 25px; color: var(--color-golden);">Contact</h4>
+                <ul style="list-style: none; opacity: 0.8; display: grid; gap: 15px;">
+                    <li><i class="fas fa-envelope"></i> support@innerspark.com</li>
+                    <li><i class="fas fa-map-marker-alt"></i> Spiritual Valley, 12345</li>
+                </ul>
+            </div>
+        </div>
+        <p style="text-align: center; margin-top: 40px; opacity: 0.4; font-size: 0.9rem;">&copy; 2026 InnerSpark
+            Sanctuary. All rights reserved.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get('id');
+            if (!id) { window.location.href = 'index.html'; return; }
+
+            try {
+                const res = await fetch(`/api/extra/blogs/${id}`);
+                const blog = await res.json();
+
+                document.title = `${blog.title} - InnerSpark`;
+                document.getElementById('blog-header-content').innerHTML = `
+                    <p class="blog-meta">${blog.category || 'Spiritual'}</p>
+                    <h1 style="font-size: 3rem; font-family: var(--font-heading); max-width: 900px; margin: 0 auto;">${blog.title}</h1>
+                `;
+                document.getElementById('blog-article').innerHTML = `
+                    <img src="${blog.thumbnail || 'https://images.unsplash.com/photo-1518199266791-5375a83190b7?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'}" style="width: 100%; border-radius: 12px; margin-bottom: 40px;">
+                    <div style="font-size: 1.1rem; color: #444;">${blog.content.replace(/\n/g, '<br>')}</div>
+                    <hr style="margin: 40px 0; opacity: 0.1;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <p style="color: grey;">Written by ${blog.author || 'InnerSpark Guide'}</p>
+                        <a href="index.html#blogSection" style="color: var(--color-saffron); text-decoration: none; font-weight: 600;">Back to Insights</a>
+                    </div>
+                `;
+            } catch (e) {
+                document.getElementById('blog-article').innerHTML = "The archive is currently sealed.";
+            }
+        });
+    </script>
+</body>
+
+</html>

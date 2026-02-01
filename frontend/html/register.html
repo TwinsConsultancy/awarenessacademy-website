@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Join InnerSpark - Begin Your Journey</title>
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;600&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, var(--color-warm-white) 0%, #ffe8d1 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .auth-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .auth-card {
+            width: 100%;
+            max-width: 500px;
+            padding: 40px;
+            margin: auto;
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .auth-header h2 {
+            font-size: 2.2rem;
+            color: var(--color-saffron);
+            margin-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--color-text-secondary);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: var(--border-radius-md);
+            font-family: var(--font-body);
+            transition: var(--transition-smooth);
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--color-saffron);
+            box-shadow: 0 0 0 3px rgba(255, 153, 51, 0.1);
+        }
+
+        .btn-auth {
+            width: 100%;
+            padding: 14px;
+            font-size: 1.1rem;
+            margin-top: 10px;
+        }
+
+        .auth-footer {
+            text-align: center;
+            margin-top: 25px;
+            color: var(--color-text-secondary);
+        }
+
+        .auth-footer a {
+            color: var(--color-saffron);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .role-selector {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .role-option {
+            flex: 1;
+            text-align: center;
+            padding: 12px;
+            border: 2px solid rgba(0, 0, 0, 0.05);
+            border-radius: var(--border-radius-md);
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            font-weight: 600;
+            background: white;
+        }
+
+        .role-option.active {
+            border-color: var(--color-saffron);
+            background: rgba(255, 153, 51, 0.05);
+            color: var(--color-saffron);
+        }
+
+        #message {
+            padding: 10px;
+            border-radius: var(--border-radius-md);
+            margin-bottom: 20px;
+            display: none;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="nav" id="mainNav"
+        style="background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: fixed; top: 0; width: 100%; padding: 15px 50px; display: flex; justify-content: space-between; align-items: center; z-index: 100;">
+        <a href="index.html" class="logo"
+            style="color: var(--color-saffron); font-family: var(--font-heading); font-size: 1.8rem; text-decoration: none; font-weight: bold;">✨
+            InnerSpark</a>
+        <div class="nav-links">
+            <a href="index.html#featuredSection"
+                style="color: var(--color-text-primary); text-decoration: none; margin-left: 30px; font-weight: 500;"><i
+                    class="fas fa-fire"></i> Featured</a>
+            <a href="marketplace.html"
+                style="color: var(--color-text-primary); text-decoration: none; margin-left: 30px; font-weight: 500;"><i
+                    class="fas fa-compass"></i> Explore Paths</a>
+            <a href="index.html#eventsSection"
+                style="color: var(--color-text-primary); text-decoration: none; margin-left: 30px; font-weight: 500;"><i
+                    class="fas fa-calendar-star"></i> Live Sessions</a>
+            <a href="index.html#blogSection"
+                style="color: var(--color-text-primary); text-decoration: none; margin-left: 30px; font-weight: 500;"><i
+                    class="fas fa-book-open"></i> Wisdom Blog</a>
+            <a href="login.html" class="btn-primary" style="margin-left: 10px;"><i class="fas fa-sign-in-alt"></i> Begin
+                Journey</a>
+        </div>
+    </nav>
+    <div style="height: 80px;"></div> <!-- Spacer for fixed nav -->
+
+    <div class="auth-container">
+        <div class="auth-card glass-card">
+            <div class="auth-header">
+                <a href="index.html" style="text-decoration: none;">
+                    <h2 style="font-family: var(--font-heading); color: var(--color-golden);">InnerSpark</h2>
+                </a>
+                <h2>Create Account</h2>
+                <p>Join our sanctuary of wisdom.</p>
+            </div>
+
+            <div id="message"></div>
+
+            <form id="registerForm">
+                <!-- Role selection removed: Public registration is for Students only -->
+                <input type="hidden" name="role" id="roleInput" value="Student">
+
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" name="name" class="form-control" placeholder="Enter your full name" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" name="email" class="form-control" placeholder="name@example.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" name="password" id="passwordInput" class="form-control"
+                        placeholder="Create a strong password" required oninput="validatePassword()">
+                    <div id="passwordConstraints"
+                        style="margin-top: 10px; font-size: 0.85rem; color: #666; display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+                        <div id="ruleLength"><i class="fas fa-times-circle" style="color: #ccc;"></i> 8+ Characters
+                        </div>
+                        <div id="ruleUpper"><i class="fas fa-times-circle" style="color: #ccc;"></i> 1 Uppercase</div>
+                        <div id="ruleLower"><i class="fas fa-times-circle" style="color: #ccc;"></i> 1 Lowercase</div>
+                        <div id="ruleNumber"><i class="fas fa-times-circle" style="color: #ccc;"></i> 1 Number</div>
+                        <div id="ruleSymbol"><i class="fas fa-times-circle" style="color: #ccc;"></i> 1 Symbol</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="text" name="phone" class="form-control" placeholder="+91 XXXXX XXXXX">
+                </div>
+
+                <div class="form-group">
+                    <label>Profile Picture</label>
+                    <input type="file" name="profilePic" class="form-control" accept="image/*">
+                    <input type="hidden" name="type" value="profile">
+                </div>
+
+                <button type="submit" class="btn-primary btn-auth">Sign Up Now</button>
+            </form>
+
+            <div class="auth-footer">
+                Already have an account? <a href="login.html">Login</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer style="padding: 40px 50px; background: #1a1a1a; color: white; text-align: center;">
+        <p style="opacity: 0.6; font-size: 0.9rem;">&copy; 2026 InnerSpark Sanctuary. All rights reserved.</p>
+    </footer>
+
+    <script src="../js/auth.js"></script>
+    <script src="../js/utils.js"></script>
+    <script>
+        // Role Selection Logic
+        const roleOptions = document.querySelectorAll('.role-option');
+        const roleInput = document.getElementById('roleInput');
+
+        roleOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                roleOptions.forEach(opt => opt.classList.remove('active'));
+                option.classList.add('active');
+                roleInput.value = option.dataset.role;
+            });
+        });
+
+        // Password Validation Logic
+        const passwordInput = document.getElementById('passwordInput');
+        const submitBtn = document.querySelector('.btn-auth');
+        let isPasswordValid = false;
+
+        function validatePassword() {
+            const pwd = passwordInput.value;
+            const rules = {
+                length: pwd.length >= 8,
+                upper: /[A-Z]/.test(pwd),
+                lower: /[a-z]/.test(pwd),
+                number: /[0-9]/.test(pwd),
+                symbol: /[^A-Za-z0-9]/.test(pwd)
+            };
+
+            updateRuleUI('ruleLength', rules.length);
+            updateRuleUI('ruleUpper', rules.upper);
+            updateRuleUI('ruleLower', rules.lower);
+            updateRuleUI('ruleNumber', rules.number);
+            updateRuleUI('ruleSymbol', rules.symbol);
+
+            isPasswordValid = Object.values(rules).every(Boolean);
+            submitBtn.style.opacity = isPasswordValid ? '1' : '0.5';
+            submitBtn.style.cursor = isPasswordValid ? 'pointer' : 'not-allowed';
+            submitBtn.disabled = !isPasswordValid;
+        }
+
+        function updateRuleUI(id, passed) {
+            const el = document.getElementById(id);
+            const icon = el.querySelector('i');
+            if (passed) {
+                el.style.color = 'var(--color-success)';
+                icon.className = 'fas fa-check-circle';
+                icon.style.color = 'var(--color-success)';
+            } else {
+                el.style.color = '#666';
+                icon.className = 'fas fa-times-circle';
+                icon.style.color = '#ccc';
+            }
+        }
+
+        // Form Submission
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+
+            try {
+                UI.showLoader();
+                const res = await fetch(`${Auth.apiBase}/auth/register`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await res.json();
+
+                if (res.ok) {
+                    UI.success(`Your path is chosen! Your ID is: ${result.studentID}`);
+                    setTimeout(() => window.location.href = 'login.html', 3000);
+                } else {
+                    UI.error(result.message || 'The registration ritual failed.');
+                }
+            } catch (err) {
+                UI.error('The connection to the sanctuary is unstable.');
+            } finally {
+                UI.hideLoader();
+            }
+        });
+    </script>
+</body>
+
+</html>

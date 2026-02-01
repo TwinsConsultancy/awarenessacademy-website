@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sanctuary Marketplace - InnerSpark</title>
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;600&display=swap"
+        rel="stylesheet">
+    <style>
+        .marketplace-header {
+            padding: 100px 20px 60px;
+            background: linear-gradient(rgba(255, 153, 51, 0.1), rgba(255, 195, 0, 0.05));
+            text-align: center;
+        }
+
+        .category-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 50px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 10px 25px;
+            border-radius: 25px;
+            background: white;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            font-weight: 500;
+        }
+
+        .tab.active {
+            background: var(--color-saffron);
+            color: white;
+            border-color: var(--color-saffron);
+        }
+
+        .courses-container {
+            max-width: 1200px;
+            margin: 0 auto 100px;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 30px;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .course-modal-content {
+            background: white;
+            width: 100%;
+            max-width: 900px;
+            max-height: 90vh;
+            border-radius: var(--border-radius-lg);
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+        }
+
+        .modal-left {
+            background: #f8f8f8;
+            padding: 0;
+        }
+
+        .modal-thumb {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+        }
+
+        .modal-right {
+            padding: 40px;
+            overflow-y: auto;
+        }
+
+        @media (max-width: 768px) {
+            .course-modal-content {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-thumb {
+                height: 200px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="nav" id="mainNav"
+        style="background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: fixed; top: 0; width: 100%; padding: 15px 50px; display: flex; justify-content: space-between; align-items: center; z-index: 100;">
+        <a href="index.html" class="logo"
+            style="color: var(--color-saffron); font-family: var(--font-heading); font-size: 1.8rem; text-decoration: none; font-weight: bold;">✨
+            InnerSpark</a>
+        <div class="nav-links">
+            <a href="index.html#featuredSection"
+                style="color: var(--color-text-primary); text-decoration: none; margin-left: 30px; font-weight: 500;"><i
+                    class="fas fa-fire"></i> Featured</a>
+            <a href="marketplace.html"
+                style="color: var(--color-text-primary); text-decoration: none; margin-left: 30px; font-weight: 500;"><i
+                    class="fas fa-compass"></i> Explore Paths</a>
+            <a href="index.html#eventsSection"
+                style="color: var(--color-text-primary); text-decoration: none; margin-left: 30px; font-weight: 500;"><i
+                    class="fas fa-calendar-star"></i> Live Sessions</a>
+            <a href="index.html#blogSection"
+                style="color: var(--color-text-primary); text-decoration: none; margin-left: 30px; font-weight: 500;"><i
+                    class="fas fa-book-open"></i> Wisdom Blog</a>
+            <a href="login.html" class="btn-primary" style="margin-left: 10px;"><i class="fas fa-sign-in-alt"></i> Begin
+                Journey</a>
+        </div>
+    </nav>
+
+    <header class="marketplace-header">
+        <h1 style="font-size: 3rem; margin-bottom: 15px;">Sanctuary Marketplace</h1>
+        <p style="color: var(--color-text-secondary); font-size: 1.2rem; max-width: 600px; margin: 0 auto 40px;">
+            Discover spiritual paths curated by enlightened mentors to guide your personal spark.</p>
+
+        <div class="category-tabs">
+            <div class="tab active">All Paths</div>
+            <div class="tab">Meditation</div>
+            <div class="tab">Philosophy</div>
+            <div class="tab">Motivation</div>
+            <div class="tab">Rituals</div>
+        </div>
+    </header>
+
+    <div class="courses-container" id="marketplaceCourses">
+        <!-- Courses will be loaded via JS -->
+        <p style="text-align:center; grid-column: 1/-1;">Opening the gates to wisdom...</p>
+    </div>
+
+    <!-- Course Preview Modal -->
+    <div class="modal" id="coursePreviewModal">
+        <div class="course-modal-content glass-card">
+            <div class="modal-left">
+                <img id="modalImg" class="modal-thumb" src="" alt="Thumbnail">
+                <div style="padding: 20px;">
+                    <h3 id="modalPrice" style="font-size: 1.8rem; color: var(--color-saffron);">$0</h3>
+                    <p style="font-size: 0.8rem; color: var(--color-text-secondary); margin-bottom: 20px;">One-time
+                        purchase for lifetime access</p>
+                    <button class="btn-primary" id="enrollBtn" style="width: 100%; padding: 15px;">Enroll Now</button>
+                    <p style="text-align: center; margin-top: 15px; font-size: 0.85rem;">
+                        <i class="fas fa-lock" style="margin-right: 5px;"></i> Money-back guarantee
+                    </p>
+                </div>
+            </div>
+            <div class="modal-right">
+                <div
+                    style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                    <h2 id="modalTitle" style="font-size: 2rem;">Course Title</h2>
+                    <button onclick="closeModal()"
+                        style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #999;">&times;</button>
+                </div>
+                <p id="modalMentor" style="color: var(--color-saffron); font-weight: 600; margin-bottom: 20px;">By
+                    Mentor Name</p>
+
+                <h4 style="margin-bottom: 10px;">About this Path</h4>
+                <p id="modalDesc" style="color: var(--color-text-secondary); line-height: 1.8; margin-bottom: 30px;">
+                    Full description goes here...</p>
+
+                <div id="materialList" style="border-top: 1px solid #eee; padding-top: 20px;">
+                    <h4 style="margin-bottom: 15px;">Curriculum Preview</h4>
+                    <!-- Content list will be here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div>
+
+    <!-- Footer -->
+    <footer style="padding: 80px 50px 40px; background: #1a1a1a; color: white;">
+        <div
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 50px; max-width: 1200px; margin: 0 auto; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 50px;">
+            <div>
+                <a href="#" class="logo"
+                    style="margin-bottom: 20px; display: block; color: var(--color-golden); font-family: var(--font-heading); font-size: 1.8rem; text-decoration: none; font-weight: bold;">✨
+                    InnerSpark</a>
+                <p style="opacity: 0.6; line-height: 1.8;">A sacred space for those seeking to rediscover their internal
+                    light through ancient wisdom and modern mindfulness.</p>
+            </div>
+            <div>
+                <h4 style="margin-bottom: 25px; color: var(--color-golden);">Quick Links</h4>
+                <ul style="list-style: none; opacity: 0.8; display: grid; gap: 15px;">
+                    <li><a href="marketplace.html" style="color: white; text-decoration: none;">Explore Courses</a></li>
+                    <li><a href="index.html#eventsSection" style="color: white; text-decoration: none;">Sacred
+                            Gatherings</a></li>
+                    <li><a href="login.html" style="color: white; text-decoration: none;">Login / Register</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 style="margin-bottom: 25px; color: var(--color-golden);">Contact</h4>
+                <ul style="list-style: none; opacity: 0.8; display: grid; gap: 15px;">
+                    <li><i class="fas fa-envelope"></i> support@innerspark.com</li>
+                    <li><i class="fas fa-map-marker-alt"></i> Spiritual Valley, 12345</li>
+                </ul>
+            </div>
+        </div>
+        <p style="text-align: center; margin-top: 40px; opacity: 0.4; font-size: 0.9rem;">&copy; 2026 InnerSpark
+            Sanctuary. All rights reserved.</p>
+    </footer>
+
+    <script src="../js/auth.js"></script>
+    <script src="../js/utils.js"></script>
+    <script src="../js/marketplace.js"></script>
+    <script src="../js/chatbot.js"></script>
+</body>
+
+</html>

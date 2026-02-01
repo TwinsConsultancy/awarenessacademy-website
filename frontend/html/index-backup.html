@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="InnerSpark - A premium spiritual sanctuary for mindfulness, meditation, and ancient wisdom. Discover courses, attend live sessions, and track your growth.">
+    <meta name="keywords" content="spirituality, meditation, mindfulness, courses, mentor, sanctuary">
+    <title>InnerSpark - Digital Sanctuary for Spiritual Growth</title>
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;600&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            overflow-x: hidden;
+        }
+
+        .hero {
+            height: 100vh;
+            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://images.unsplash.com/photo-1506126613408-eca07ce68773?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: white;
+            padding: 0 20px;
+            position: relative;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.3) 100%);
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            animation: fadeInUp 1s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hero-content h1 {
+            font-size: 4.5rem;
+            margin-bottom: 25px;
+            text-shadow: 3px 3px 15px rgba(0, 0, 0, 0.7);
+            font-family: var(--font-heading);
+            letter-spacing: 2px;
+            animation: glow 3s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { text-shadow: 3px 3px 15px rgba(0, 0, 0, 0.7), 0 0 20px rgba(255, 195, 0, 0.3); }
+            50% { text-shadow: 3px 3px 15px rgba(0, 0, 0, 0.7), 0 0 40px rgba(255, 195, 0, 0.5); }
+        }
+
+        .hero-content p {
+            font-size: 1.5rem;
+            max-width: 800px;
+            margin: 0 auto 40px;
+            font-weight: 300;
+            line-height: 1.8;
+            opacity: 0.95;
+        }
+
+        .nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 25px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .nav.scrolled {
+            background: rgba(0, 0, 0, 0.95);
+            padding: 15px 50px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        }
+
+        .logo {
+            font-family: var(--font-heading);
+            font-size: 2rem;
+            color: var(--color-golden);
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .logo:hover {
+            transform: scale(1.05);
+            text-shadow: 0 0 20px rgba(255, 195, 0, 0.5);
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border-radius: 5px;
+        }
+
+        .nav-links a:hover {
+            color: var(--color-saffron);
+            background: rgba(255, 153, 51, 0.1);
+        }
+
+        .daily-spark {
+            margin-top: 50px;
+            padding: 30px 40px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: inline-block;
+            max-width: 700px;
+            transition: all 0.5s ease;
+        }
+
+        .quote-text {
+            font-style: italic;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            transition: opacity 0.5s ease;
+        }
+
+        .stats-section {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 30px;
+            max-width: 1200px;
+            margin: -80px auto 0;
+            padding: 0 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 40px 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: bold;
+            color: var(--color-saffron);
+            font-family: var(--font-heading);
+        }
+
+        .stat-label {
+            color: var(--color-text-secondary);
+            font-size: 0.9rem;
+            margin-top: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        @media (max-width: 768px) {
+            .hero-content h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero-content p {
+                font-size: 1.1rem;
+            }
+
+            .nav {
+                padding: 20px;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .stats-section {
+                grid-template-columns: 1fr;
+                margin-top: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="nav">
+        <a href="index.html" class="logo">InnerSpark</a>
+        <div class="nav-links">
+            <a href="marketplace.html">Explore</a>
+            <a href="events.html">Live Sessions</a>
+            <a href="#blogSection">The Blog</a>
+            <a href="login.html" class="btn-primary">Login</a>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Ignite Your Inner Light</h1>
+            <p>Ancient wisdom meets modern life in your personal digital sanctuary.</p>
+            <a href="marketplace.html" class="btn-primary" style="font-size: 1.2rem; padding: 15px 40px;">Begin Your
+                Journey</a>
+
+            <div class="daily-spark" id="dailySpark">
+                <p class="quote-text">"The soul always knows what to do to heal itself. The challenge is to silence the
+                    mind."</p>
+                <small>- Daily Spark</small>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="blogSection" style="padding: 100px 50px; background: #fafafa;">
+        <div style="text-align: center; margin-bottom: 50px;">
+            <p style="color: var(--color-saffron); font-weight: 700; text-transform: uppercase;">Insights</p>
+            <h2 style="font-size: 2.5rem; font-family: var(--font-heading);">Inner Circle Chronicles</h2>
+        </div>
+        <div id="blogGrid"
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; max-width: 1200px; margin: 0 auto;">
+            <p style="text-align: center; grid-column: 1/-1;">Fetching cosmic insights...</p>
+        </div>
+    </section>
+
+    <section class="section" id="eventsSection" style="padding: 100px 50px; background: white;">
+        <div style="text-align: center; margin-bottom: 50px;">
+            <p style="color: var(--color-saffron); font-weight: 700; text-transform: uppercase;">Live Gathering</p>
+            <h2 style="font-size: 2.5rem; font-family: var(--font-heading);">Sacred Gatherings</h2>
+        </div>
+        <div id="eventsGrid"
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 30px; max-width: 1200px; margin: 0 auto;">
+            <p style="text-align: center; grid-column: 1/-1;">Aligning future stars...</p>
+        </div>
+    </section>
+
+    <section style="padding: 80px 20px; background: var(--color-primary); color: white; text-align: center;">
+        <h2 style="font-family: var(--font-heading); margin-bottom: 20px;">Join the Inner Circle</h2>
+        <p style="margin-bottom: 40px; opacity: 0.8;">Receive weekly wisdom and exclusive gathering invites.</p>
+        <form id="newsletterForm" style="max-width: 500px; margin: 0 auto; display: flex; gap: 10px;">
+            <input type="email" name="email" class="form-control" placeholder="your@email.com" required
+                style="flex: 1; padding: 15px;">
+            <button type="submit" class="btn-primary"
+                style="padding: 15px 30px; background: var(--color-saffron);">Ascend</button>
+        </form>
+    </section>
+
+    <footer style="padding: 80px 50px 40px; background: #1a1a1a; color: white;">
+        <div
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 50px; max-width: 1200px; margin: 0 auto; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 50px;">
+            <div>
+                <a href="#" class="logo" style="margin-bottom: 20px; display: block;">InnerSpark</a>
+                <p style="opacity: 0.6; line-height: 1.6;">A sacred space for those seeking to rediscover their internal
+                    light through ancient wisdom and modern mindfulness.</p>
+            </div>
+            <div>
+                <h4 style="margin-bottom: 25px;">Navigation</h4>
+                <ul style="list-style: none; opacity: 0.8; display: grid; gap: 15px;">
+                    <li><a href="marketplace.html" style="color: white; text-decoration: none;">Marketplace</a></li>
+                    <li><a href="#blogSection" style="color: white; text-decoration: none;">The Blog</a></li>
+                    <li><a href="#eventsSection" style="color: white; text-decoration: none;">Events</a></li>
+                    <li><a href="login.html" style="color: white; text-decoration: none;">Journey Login</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 style="margin-bottom: 25px;">Connect</h4>
+                <div style="display: flex; gap: 20px; font-size: 1.5rem;">
+                    <a href="https://instagram.com" target="_blank" style="color: white;"><i
+                            class="fab fa-instagram"></i></a>
+                    <a href="https://twitter.com" target="_blank" style="color: white;"><i
+                            class="fab fa-twitter"></i></a>
+                    <a href="https://youtube.com" target="_blank" style="color: white;"><i
+                            class="fab fa-youtube"></i></a>
+                </div>
+            </div>
+        </div>
+        <p style="text-align: center; margin-top: 40px; opacity: 0.4; font-size: 0.8rem;">&copy; 2026 InnerSpark
+            Sanctuary. All rights reserved.</p>
+    </footer>
+
+    <script src="../js/landing.js"></script>
+    <script>
+        const quotes = [
+            "The soul always knows what to do to heal itself. The challenge is to silence the mind.",
+            "Peace is the result of retraining your mind to process life as it is, rather than as you think it should be.",
+            "Within you, there is a stillness and a sanctuary to which you can retreat at any time and be yourself.",
+            "Your vision will become clear only when you can look into your own heart. Who looks outside, dreams; who looks inside, awakes."
+        ];
+
+        let index = 0;
+        const sparkEl = document.querySelector('.quote-text');
+
+        setInterval(() => {
+            index = (index + 1) % quotes.length;
+            sparkEl.style.opacity = 0;
+            setTimeout(() => {
+                sparkEl.textContent = `"${quotes[index]}"`;
+                sparkEl.style.opacity = 1;
+            }, 500);
+        }, 8000);
+    </script>
+</body>
+
+</html>

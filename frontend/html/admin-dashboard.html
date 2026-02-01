@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Command Center - InnerSpark</title>
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;600&display=swap"
+        rel="stylesheet">
+    <style>
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            background: white;
+            padding: 30px;
+            border-right: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .main-content {
+            padding: 40px;
+            background: #fdfaf7;
+            overflow-y: auto;
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .review-card {
+            background: white;
+            padding: 20px;
+            border-radius: var(--border-radius-md);
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-pending {
+            background: rgba(255, 153, 51, 0.1);
+            color: var(--color-saffron);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div style="text-align: center; margin-bottom: 40px;">
+                <a href="index.html" style="text-decoration: none;">
+                    <h2 style="font-family: var(--font-heading); color: var(--color-golden);">InnerSpark</h2>
+                </a>
+                <p style="font-size: 0.8rem; font-weight: 700; color: #333;">COMMAND CENTER</p>
+            </div>
+            <ul style="list-style: none;">
+                <li><a href="#" class="nav-link active" onclick="switchSection('queue')"><i class="fas fa-tasks"></i>
+                        Review Queue</a></li>
+                <li><a href="#" class="nav-link" onclick="switchSection('analytics')"><i class="fas fa-chart-line"></i>
+                        Analytics</a></li>
+                <li><a href="#" class="nav-link" onclick="switchSection('ledger')"><i
+                            class="fas fa-file-invoice-dollar"></i> Financial Ledger</a></li>
+                <li><a href="#" class="nav-link" onclick="switchSection('broadcast')"><i class="fas fa-bullhorn"></i>
+                        Global Broadcast</a></li>
+                <li><a href="#" class="nav-link" onclick="switchSection('banners')"><i class="fas fa-image"></i>
+                        Banners</a></li>
+                <li><a href="#" class="nav-link" onclick="switchSection('blogs')"><i class="fas fa-feather-alt"></i>
+                        Manage Blog</a></li>
+                <li><a href="#" class="nav-link" onclick="switchSection('events')"><i class="fas fa-calendar-alt"></i>
+                        Manage Events</a></li>
+                <li><a href="#" class="nav-link" onclick="switchSection('override')"><i class="fas fa-user-shield"></i>
+                        Manual Override</a></li>
+                <li><a href="#" class="nav-link" onclick="switchSection('certificates')"><i
+                            class="fas fa-certificate"></i> Manage Certificates</a></li>
+                <li><a href="#" class="nav-link" onclick="switchSection('staff')"><i class="fas fa-users-cog"></i>
+                        Manage Staff</a></li>
+                <li><a href="#" id="logoutBtn" class="nav-link" style="color: var(--color-error); margin-top: 50px;"><i
+                            class="fas fa-sign-out-alt"></i> Logout</a></li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <header style="margin-bottom: 40px;">
+                <h1>System Oversight</h1>
+                <p>Welcome back, Administrator. Platform health is stable.</p>
+            </header>
+
+            <div class="stats-row" id="adminStats">
+                <div class="stat-card glass-card">
+                    <h3 id="statUsers">-</h3>
+                    <p style="font-size: 0.8rem; color: var(--color-text-secondary);">Students</p>
+                </div>
+                <div class="stat-card glass-card">
+                    <h3 id="statMentors">-</h3>
+                    <p style="font-size: 0.8rem; color: var(--color-text-secondary);">Mentors</p>
+                </div>
+                <div class="stat-card glass-card">
+                    <h3 id="statCourses">-</h3>
+                    <p style="font-size: 0.8rem; color: var(--color-text-secondary);">Courses</p>
+                </div>
+                <div class="stat-card glass-card">
+                    <h3 id="statRevenue">$0</h3>
+                    <p style="font-size: 0.8rem; color: var(--color-text-secondary);">Gross Revenue</p>
+                </div>
+            </div>
+
+            <section id="queueSection">
+                <h3>Content Approval Queue</h3>
+                <div id="pendingQueue" style="margin-top: 20px;">
+                    <p style="color: var(--color-text-secondary);">Scanning for new spiritual uploads...</p>
+                </div>
+            </section>
+
+            <!-- Analytics Section -->
+            <section id="analyticsSection" style="display: none;">
+                <h3 style="margin-bottom: 20px;">Platform Evolution (Advanced Analytics)</h3>
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 30px;">
+                    <div class="glass-card" style="padding: 30px;">
+                        <h4 style="margin-bottom: 20px;">Revenue & Growth</h4>
+                        <canvas id="growthChart"></canvas>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 20px;">
+                        <div class="glass-card" style="padding: 25px; text-align: center;">
+                            <h4>Marketplace Conversion</h4>
+                            <div style="font-size: 2.5rem; color: var(--color-saffron); margin: 10px 0;"
+                                id="conversionRate">0%</div>
+                            <p style="font-size: 0.8rem; color: #666;"><span id="totalImpressions">0</span> Impressions
+                                &rarr; <span id="totalEnrollments">0</span> Enrollments</p>
+                        </div>
+                        <div class="glass-card" style="padding: 25px; text-align: center;">
+                            <h4>Student Activity (Last 7 Days)</h4>
+                            <div style="font-size: 2.5rem; color: var(--color-success); margin: 10px 0;"
+                                id="activeRatio">0/0</div>
+                            <p style="font-size: 0.8rem; color: #666;">Active seekers vs. total registrations</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="glass-card" style="padding: 30px;">
+                    <h4>Pathway Completion Rate</h4>
+                    <div style="font-size: 3.5rem; color: var(--color-golden); margin: 20px 0;" id="avgProgress">0%
+                    </div>
+                    <p style="color: var(--color-text-secondary);">Average progress across all sacred learning paths.
+                    </p>
+                </div>
+            </section>
+
+            <!-- Certificate Management Section -->
+            <section id="certificatesSection" style="display: none;">
+                <h3 style="margin-bottom: 20px;">Seal of Authenticity (Certificates)</h3>
+                <div class="glass-card" id="certificatesList" style="padding: 0; overflow: hidden;">
+                    <p style="padding: 30px;">Retrieving issued certifications...</p>
+                </div>
+            </section>
+
+            <!-- Ledger Section -->
+            <section id="ledgerSection" style="display: none;">
+                <h3 style="margin-bottom: 20px;">Financial Ledger</h3>
+                <div class="glass-card" style="padding: 0; overflow: hidden;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                        <thead style="background: rgba(0,0,0,0.02);">
+                            <tr>
+                                <th style="padding: 15px;">Transaction</th>
+                                <th style="padding: 15px;">Seeker</th>
+                                <th style="padding: 15px;">Path</th>
+                                <th style="padding: 15px;">Amount</th>
+                                <th style="padding: 15px;">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ledgerList"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Broadcast Section -->
+            <section id="broadcastSection" style="display: none;">
+                <h3 style="margin-bottom: 20px;">System-Wide Echo</h3>
+                <div class="glass-card" style="padding: 30px; max-width: 600px;">
+                    <form id="broadcastForm">
+                        <div class="form-group">
+                            <label>Broadcast Title</label>
+                            <input type="text" name="title" class="form-control" placeholder="Divine Announcement"
+                                required>
+                        </div>
+                        <div class="form-group">
+                            <label>Message Content</label>
+                            <textarea name="message" class="form-control" rows="5"
+                                placeholder="Share your words with the entire sanctuary..." required></textarea>
+                        </div>
+                        <div class="form-group"
+                            style="display: flex; gap: 10px; align-items: center; margin-bottom: 25px;">
+                            <input type="checkbox" name="sendEmail" id="sendEmail" style="width: auto;">
+                            <label for="sendEmail" style="margin: 0; font-size: 0.85rem;">Also transmit to the Inner
+                                Circle (Newsletter Subscribers)</label>
+                        </div>
+                        <button type="submit" class="btn-primary">Illuminate Sanctuary</button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Override Section -->
+            <section id="overrideSection" style="display: none;">
+                <h3 style="margin-bottom: 20px;">Manual Enrollment Override</h3>
+                <div class="glass-card" style="padding: 30px; max-width: 600px;">
+                    <form id="overrideForm">
+                        <div class="form-group">
+                            <label>Seeker Email</label>
+                            <input type="email" name="studentEmail" class="form-control"
+                                placeholder="seeker@example.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Select Pathway</label>
+                            <select name="courseID" id="overrideCourseSelect" class="form-control" required></select>
+                        </div>
+                        <button type="submit" class="btn-primary">Grant Divine Access</button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Banners Section -->
+            <section id="bannersSection" style="display: none;">
+                <h3 style="margin-bottom: 20px;">Marketplace Radiance (Banners)</h3>
+                <div class="glass-card" style="padding: 30px; max-width: 600px;">
+                    <form id="bannerForm">
+                        <div class="form-group">
+                            <label>Banner Title</label>
+                            <input type="text" name="title" class="form-control" placeholder="Summer Zen Sale" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Action Link</label>
+                            <input type="text" name="link" class="form-control" placeholder="https://...">
+                        </div>
+                        <div class="form-group">
+                            <label>Banner Image</label>
+                            <input type="file" name="file" class="form-control" required>
+                        </div>
+                        <button type="submit" class="btn-primary">Ignite Banner</button>
+                    </form>
+                </div>
+                <div id="bannerList" style="margin-top: 30px;"></div>
+            </section>
+
+            <!-- Manage Blogs Section -->
+            <section id="blogsSection" style="display: none;">
+                <h3 style="margin-bottom: 20px;">Inner Circle Chronicles</h3>
+                <div class="glass-card" style="padding: 30px; max-width: 700px;">
+                    <form id="blogForm">
+                        <div class="form-group">
+                            <label>Blog Title</label>
+                            <input type="text" name="title" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Category</label>
+                            <input type="text" name="category" class="form-control" placeholder="Wisdom / Mindfulness">
+                        </div>
+                        <div class="form-group">
+                            <label>Content</label>
+                            <textarea name="content" class="form-control" rows="8" required></textarea>
+                        </div>
+                        <button type="submit" class="btn-primary">Publish Insight</button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Manage Events Section -->
+            <section id="eventsSection" style="display: none;">
+                <h3 style="margin-bottom: 20px;">Sacred Gatherings</h3>
+                <div class="glass-card" style="padding: 30px; max-width: 700px;">
+                    <form id="eventForm">
+                        <div class="form-group">
+                            <label>Event Title</label>
+                            <input type="text" name="title" class="form-control" required>
+                        </div>
+                        <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div>
+                                <label>Date</label>
+                                <input type="date" name="date" class="form-control" required>
+                            </div>
+                            <div>
+                                <label>Location</label>
+                                <input type="text" name="location" class="form-control"
+                                    placeholder="Virtual Sanctuary / City">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Registration Link</label>
+                            <input type="text" name="registrationLink" class="form-control" placeholder="https://...">
+                        </div>
+                        <div class="form-group">
+                            <label>Description</label>
+                            <textarea name="description" class="form-control" rows="4"></textarea>
+                        </div>
+                        <button type="submit" class="btn-primary">Establish Gathering</button>
+                    </form>
+                </div>
+            </section>
+            <!-- Manage Staff Section -->
+            <section id="staffSection" style="display: none;">
+                <h3 style="margin-bottom: 20px;">Sanctuary Guardians (Staff)</h3>
+                <div class="glass-card" style="padding: 30px; max-width: 600px;">
+                    <form id="addStaffForm" onsubmit="event.preventDefault(); addStaff();">
+                        <h4 style="margin-bottom: 20px; color: var(--color-primary);">Ordain New Staff</h4>
+                        <div class="form-group">
+                            <label>Name</label>
+                            <input type="text" name="name" class="form-control" placeholder="Staff Name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" name="email" class="form-control" placeholder="staff@innerspark.com"
+                                required>
+                        </div>
+                        <div class="form-group">
+                            <label>Password</label>
+                            <input type="password" name="password" class="form-control" placeholder="Initial Password"
+                                required>
+                        </div>
+                        <div class="form-group">
+                            <label>Phone</label>
+                            <input type="text" name="phone" class="form-control" placeholder="Phone Number">
+                        </div>
+                        <button type="submit" class="btn-primary">Create Guardian</button>
+                    </form>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Review Modal -->
+    <div class="modal" id="reviewModal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000;">
+        <div class="modal-content glass-card"
+            style="background: white; padding: 30px; border-radius: 15px; width: 500px;">
+            <h2 id="reviewTitle">Review Content</h2>
+            <div id="filePreview"
+                style="margin: 20px 0; padding: 15px; background: #f8f8f8; border-radius: 8px; text-align: center;">
+                <!-- Link to file will be here -->
+            </div>
+            <textarea id="adminRemarks" class="form-control" placeholder="Admin remarks/feedback for staff..." rows="3"
+                style="width: 100%; margin-bottom: 20px;"></textarea>
+            <div style="display: flex; gap: 10px;">
+                <button onclick="submitReview('Approved')" class="btn-primary"
+                    style="background: var(--color-success); flex: 1;">Approve</button>
+                <button onclick="submitReview('Rejected')" class="btn-primary"
+                    style="background: var(--color-error); flex: 1;">Reject</button>
+                <button onclick="document.getElementById('reviewModal').style.display='none'" class="btn-primary"
+                    style="background: var(--color-text-secondary); flex: 1;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/utils.js"></script>
+    <script src="../js/admin.js"></script>
+    <script src="../js/chatbot.js"></script>
+</body>
+
+</html>
