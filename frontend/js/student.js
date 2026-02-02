@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const avatarEl = document.getElementById('userAvatar');
     if (user.profilePic) {
-        avatarEl.innerHTML = `<img src="${user.profilePic}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+        avatarEl.innerHTML = `<img src="${user.profilePic}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;" onerror="this.parentElement.textContent = '${(user.name || 'U').charAt(0)}'">`;
     } else {
         avatarEl.textContent = user.name.charAt(0);
     }
@@ -60,7 +60,28 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // Initialize Charts if Analytics Section exists
+    if (document.getElementById('activityChart')) {
+        loadCharts();
+    }
 });
+
+// Expose functions to global scope for HTML onclick attributes
+window.switchSection = switchSection;
+window.handleProfileUpload = handleProfileUpload;
+window.loadMarketplace = loadMarketplace;
+window.checkAndTakeExam = checkAndTakeExam;
+window.joinLive = joinLive;
+window.downloadCertificate = downloadCertificate;
+window.purchaseCourse = purchaseCourse;
+window.updateProfile = updateProfile;
+window.openChangePasswordModal = openChangePasswordModal;
+window.submitPasswordChange = submitPasswordChange;
+window.closeProfileModal = closeProfileModal;
+window.closeAffirmation = closeAffirmation;
+window.calculateAge = calculateAge;
+window.toggleSpouseFields = toggleSpouseFields;
 
 function switchSection(section) {
     // This was moved from HTML for cleanliness
@@ -175,71 +196,173 @@ async function checkAndTakeExam(courseID) {
     }
 }
 
-async function generateIDCard(user) {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({
-        orientation: 'landscape',
-        unit: 'mm',
-        format: [85, 55]
-    });
+async function generateIDCard(paramUser) {
+    try {
+        UI.showLoader();
+        // Fetch fresh profile data
+        const res = await fetch(`${Auth.apiBase}/auth/profile`, { headers: Auth.getHeaders() });
+        const user = await res.json();
 
-    // Premium Background - Suble Pattern
-    doc.setFillColor(255, 249, 238); // Cream
-    doc.rect(0, 0, 85, 55, 'F');
+        const { jsPDF } = window.jspdf;
+        // CR80 Size (Credit Card): 85.6mm x 53.98mm -> Round to 86x54
+        const width = 86;
+        const height = 54;
+        const doc = new jsPDF({
+            orientation: 'landscape',
+            unit: 'mm',
+            format: [width, height]
+        });
 
-    doc.setFillColor(255, 153, 51); // Saffron Header
-    doc.rect(0, 0, 85, 12, 'F');
+        // Colors
+        const saffron = [255, 153, 51];
+        const golden = [255, 195, 0];
+        const deepBlue = [20, 30, 60];
+        const white = [255, 255, 255];
+        const textGray = [80, 80, 80];
 
-    // Header Text
-    doc.setTextColor(255, 255, 255);
-    doc.setFont('times', 'bold');
-    doc.setFontSize(10);
-    doc.text('INNERSPARK SANCTUARY', 42.5, 8, { align: 'center' });
+        // Background
+        doc.setFillColor(255, 252, 245); // Warm cream
+        doc.rect(0, 0, width, height, 'F');
 
-    // Profile Photo
-    if (user.profilePic) {
-        try {
-            const img = new Image();
-            img.crossOrigin = 'Anonymous';
-            img.src = user.profilePic;
-            await new Promise((resolve) => {
-                img.onload = () => {
-                    doc.setDrawColor(255, 153, 51);
-                    doc.setLineWidth(1);
-                    doc.rect(5, 15, 20, 20);
-                    doc.addImage(img, 'JPEG', 5, 15, 20, 20);
-                    resolve();
-                };
-                img.onerror = resolve;
-            });
-        } catch (e) { }
-    } else {
-        doc.setDrawColor(200, 200, 200);
-        doc.rect(5, 15, 20, 20);
+        // --- HEADER ---
+        doc.setFillColor(...saffron);
+        doc.rect(0, 0, width, 14, 'F');
+        doc.setFillColor(...golden);
+        doc.rect(0, 14, width, 0.8, 'F');
+
+        // Branding
+        doc.setTextColor(...white);
+        doc.setFont('times', 'bold');
+        doc.setFontSize(10);
+        doc.text('INNERSPARK', 5, 6);
+
+        // Org Address (Right aligned in header)
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(4.5);
+        doc.setTextColor(255, 235, 200);
+        const orgAddr = "6, 2nd cross, Gowripuram Extension,\nGowripuram, Karur, Tamil Nadu 639002";
+        doc.text(orgAddr, width - 5, 5, { align: 'right', lineHeightFactor: 1.2 });
+
+        // --- CONTENT ---
+        const photoY = 19;
+        const photoSize = 18;
+        const photoX = 6;
+
+        // Photo Border
+        doc.setDrawColor(...golden);
+        doc.setLineWidth(0.5);
+
+        // Photo Placeholder/Image
+        if (user.profilePic) {
+            try {
+                const img = new Image();
+                img.crossOrigin = 'Anonymous';
+                img.src = user.profilePic;
+                await new Promise((resolve) => {
+                    img.onload = () => {
+                        doc.rect(photoX, photoY, photoSize, photoSize); // Border
+                        doc.addImage(img, 'JPEG', photoX, photoY, photoSize, photoSize);
+                        resolve();
+                    };
+                    img.onerror = resolve;
+                });
+            } catch (e) { }
+        } else {
+            doc.setFillColor(230, 230, 230);
+            doc.rect(photoX, photoY, photoSize, photoSize, 'F');
+            doc.rect(photoX, photoY, photoSize, photoSize); // Border
+            doc.setTextColor(150, 150, 150);
+            doc.setFontSize(14);
+            doc.text((user.name || 'U').charAt(0).toUpperCase(), photoX + (photoSize / 2), photoY + (photoSize / 2) + 2, { align: 'center' });
+        }
+
+        // Role Badge (Under Photo)
+        doc.setFillColor(...deepBlue);
+        doc.roundedRect(photoX, photoY + photoSize + 2, photoSize, 4, 1, 1, 'F');
+        doc.setTextColor(...white);
+        doc.setFontSize(5);
+        doc.setFont('helvetica', 'bold');
+        doc.text((user.role || 'STUDENT').toUpperCase(), photoX + (photoSize / 2), photoY + photoSize + 5, { align: 'center' });
+
+        // Details Column (Right of photo)
+        const col1X = 28;
+        let cursorY = 21;
+        const lineHeight = 3.5;
+
+        // Helper for rows
+        const addRow = (label, value) => {
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(5);
+            doc.setTextColor(120, 120, 120);
+            doc.text(label.toUpperCase(), col1X, cursorY);
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(7);
+            doc.setTextColor(...deepBlue);
+
+            // Handle long text (Address)
+            let val = value || '-';
+            if (label === 'Address') {
+                doc.setFontSize(6);
+                const lines = doc.splitTextToSize(val, 50);
+                doc.text(lines, col1X + 18, cursorY);
+                cursorY += (lines.length * 2.5) + 1;
+            } else {
+                doc.text(val, col1X + 18, cursorY);
+                cursorY += lineHeight;
+            }
+        };
+
+        const fullName = `${user.name || ''} ${user.initial || ''}`.trim().toUpperCase();
+        addRow('Name', fullName);
+        addRow('ID No.', user.studentID);
+        addRow('Phone', user.phone || user.whatsappNumber || '-');
+
+        const dob = user.dob ? new Date(user.dob).toLocaleDateString() : '-';
+        addRow('DOB', dob);
+
+        const joined = user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-';
+        addRow('Joined', joined);
+
+        // User Address
+        let userAddr = '-';
+        if (user.address) {
+            const { doorNumber, streetName, town, district, pincode } = user.address;
+            const parts = [doorNumber, streetName, town, district, pincode].filter(Boolean);
+            if (parts.length > 0) userAddr = parts.join(', ');
+        }
+        addRow('Address', userAddr);
+
+        // --- FOOTER ---
+        doc.setFillColor(...deepBlue);
+        doc.rect(0, height - 4, width, 4, 'F');
+        doc.setTextColor(...white);
+        doc.setFont('times', 'italic');
+        doc.setFontSize(6);
+        doc.text('"Be the Light"', width / 2, height - 1.5, { align: 'center' });
+
+        // --- PREVIEW ---
+        const pdfData = doc.output('datauristring');
+        const frame = document.getElementById('idCardFrame');
+        if (frame) frame.src = pdfData;
+
+        const modal = document.getElementById('idCardModal');
+        if (modal) modal.style.display = 'flex';
+
+        // Setup Download
+        const btn = document.getElementById('confirmDownloadIDBtn');
+        if (btn) {
+            btn.onclick = () => {
+                doc.save(`InnerSpark_ID_${user.studentID}.pdf`);
+            };
+        }
+
+    } catch (err) {
+        console.error(err);
+        UI.error('Could not generate ID card.');
+    } finally {
+        UI.hideLoader();
     }
-
-    // Details - Elegant Typography
-    doc.setTextColor(51, 51, 51);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
-    doc.text(user.name.toUpperCase(), 30, 22);
-
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7);
-    doc.setTextColor(100, 100, 100);
-    doc.text(`UID: ${user.studentID}`, 30, 27);
-    doc.text(`ROLE: ${user.role.toUpperCase()}`, 30, 31);
-    doc.text(`JOINED: ${new Date(user.createdAt || Date.now()).toLocaleDateString()}`, 30, 35);
-
-    doc.setFillColor(255, 195, 0); // Gold Bar
-    doc.rect(30, 38, 50, 0.5, 'F');
-
-    doc.setFontSize(6);
-    doc.text('This seeker is a recognized member of the sanctuary.', 30, 43);
-
-    // Save PDF
-    doc.save(`${user.studentID}_ID_Card.pdf`);
-    UI.success('Identity card materialized.');
 }
 
 async function loadTimetable() {
@@ -789,6 +912,15 @@ async function submitPasswordChange() {
     }
 }
 
+// Assuming initDashboard is a new function or an existing one where dashboard-related
+// initializations happen. Since it's not present, I'm creating a placeholder.
+// If you intended to call loadCharts() within an existing function, please specify.
+async function initDashboard() {
+    await loadEnrolledCourses();
+    loadCharts();
+    // Any other dashboard initialization logic can go here
+}
+
 // Check Profile Completion Percentage
 function checkProfileCompletion() {
     // We'll read from DOM inputs since `loadProfile` populates them.
@@ -829,3 +961,119 @@ function renderProfileWarning(percent) {
 function closeProfileModal() {
     document.getElementById('profileRestrictionModal').style.display = 'none';
 }
+
+// --- Charts ---
+async function loadCharts() {
+    try {
+        const analyticsSection = document.getElementById('analyticsSection');
+        if (analyticsSection) analyticsSection.style.display = 'block';
+
+        const ctx1 = document.getElementById('activityChart');
+        const ctx2 = document.getElementById('focusChart');
+
+        // Destroy existing charts if any
+        if (window.activityChartInstance) window.activityChartInstance.destroy();
+        if (window.focusChartInstance) window.focusChartInstance.destroy();
+
+        if (ctx1) {
+            window.activityChartInstance = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'Study Hours',
+                        data: [2, 4, 3, 5, 2, 4, 6],
+                        borderColor: '#FF9933',
+                        backgroundColor: 'rgba(255, 153, 51, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: { responsive: true }
+            });
+        }
+
+        if (ctx2) {
+            window.focusChartInstance = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Meditation', 'Yoga', 'Philosophy', 'Reading'],
+                    datasets: [{
+                        data: [35, 25, 20, 20],
+                        backgroundColor: ['#FF9933', '#FFC300', '#201E3C', '#AAAAAA']
+                    }]
+                },
+                options: { responsive: true }
+            });
+        }
+    } catch (e) {
+        console.error('Chart load error:', e);
+    }
+}
+
+// --- Profile Upload ---
+async function handleProfileUpload(input) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+
+        // Validation
+        const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+        if (!validTypes.includes(file.type)) {
+            UI.error('Invalid format. Use JPG/PNG.');
+            return;
+        }
+
+        if (file.size < 5120 || file.size > 51200) {
+            UI.error('Size must be between 5KB and 50KB.');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('profilePic', file);
+
+        try {
+            UI.showLoader();
+            const res = await fetch(`${Auth.apiBase}/auth/profile`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: formData
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                UI.success('Photo updated successfully!');
+                if (data.user && data.user.profilePic) {
+                    const avatar = document.getElementById('userAvatar');
+                    if (avatar) {
+                        avatar.innerHTML = `<img src="${data.user.profilePic}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+                    }
+                }
+            } else {
+                UI.error(data.message || 'Upload failed');
+            }
+        } catch (err) {
+            console.error(err);
+            UI.error('Server connection failed');
+        } finally {
+            UI.hideLoader();
+        }
+    }
+}
+
+// Ensure exports are available
+window.switchSection = switchSection;
+window.handleProfileUpload = handleProfileUpload;
+window.loadMarketplace = loadMarketplace;
+window.checkAndTakeExam = checkAndTakeExam;
+window.joinLive = joinLive;
+window.downloadCertificate = downloadCertificate;
+window.purchaseCourse = purchaseCourse;
+window.updateProfile = updateProfile;
+window.openChangePasswordModal = openChangePasswordModal;
+window.submitPasswordChange = submitPasswordChange;
+window.closeProfileModal = closeProfileModal;
+window.closeAffirmation = closeAffirmation;
+window.calculateAge = calculateAge;
+window.toggleSpouseFields = toggleSpouseFields;

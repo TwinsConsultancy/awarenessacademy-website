@@ -19,7 +19,7 @@ router.get('/profile', authorize(), authController.getProfile);
 
 // @route   PUT /api/auth/profile
 // @desc    Update User Profile
-router.put('/profile', authorize(), authController.updateProfile);
+router.put('/profile', authorize(), upload.single('profilePic'), authController.updateProfile);
 
 // @route   PUT /api/auth/change-password
 // @desc    Change Password

@@ -25,6 +25,10 @@ router.get('/enrolled', optionalAuth, courseController.getEnrolledCourses);
 // @desc    Get all published courses
 router.get('/marketplace', courseController.getMarketplace);
 
+// @route   GET /api/courses
+// @desc    Get all courses (alias for marketplace)
+router.get('/', courseController.getMarketplace);
+
 // @route   GET /api/courses/:id/preview
 // @desc    Get course preview metadata (Public)
 router.get('/:id/preview', courseController.getCoursePreview);

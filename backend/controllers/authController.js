@@ -106,6 +106,7 @@ exports.getProfile = async (req, res) => {
 };
 
 // Update Profile
+// Update Profile
 exports.updateProfile = async (req, res) => {
     try {
         const updates = req.body;
@@ -115,9 +116,25 @@ exports.updateProfile = async (req, res) => {
         delete updates.studentID;
         delete updates.email;
 
+        // Handle Profile Picture
+        if (req.file) {
+            // Validate Size (5KB - 50KB)
+            if (req.file.size < 5120 || req.file.size > 51200) {
+                // Delete invalid file
+                const fs = require('fs');
+                fs.unlinkSync(req.file.path);
+                return res.status(400).json({ message: 'File too large or too small. Size must be between 5KB and 50KB.' });
+            }
+            updates.profilePic = `/uploads/profiles/${req.file.filename}`;
+        }
+
         const user = await User.findByIdAndUpdate(req.user.id, updates, { new: true }).select('-password');
         res.status(200).json({ message: 'Profile updated successfully', user });
     } catch (err) {
+        if (req.file) {
+            const fs = require('fs');
+            try { fs.unlinkSync(req.file.path); } catch (e) { }
+        }
         res.status(500).json({ message: 'Update failed', error: err.message });
     }
 };
