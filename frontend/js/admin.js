@@ -10,6 +10,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const authData = Auth.checkAuth(['Admin']);
     if (!authData) return;
 
+    // Set admin name and avatar in top header
+    const { user } = authData;
+    if (user) {
+        document.getElementById('adminName').textContent = user.name || 'Admin';
+        const avatar = document.getElementById('adminAvatar');
+        avatar.textContent = (user.name || 'A').charAt(0).toUpperCase();
+    }
+
     // 2. Load Dashboard Stats
     loadStats();
 
@@ -32,10 +40,21 @@ function switchSection(section) {
     // Show target section
     const target = document.getElementById(section + 'Section');
     if (target) {
-        if (section === 'users') {
-            target.classList.add('active-flex'); // Use flex for users section
-            // We don't set style.display = 'block' here to avoid conflict, 
-            // or we rely on the !important in CSS for active-flex
+        // First, remove active-flex from all sections
+        ['usersSection', 'coursesSection'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.classList.remove('active-flex');
+                if (id !== section + 'Section') {
+                    el.style.display = 'none';
+                }
+            }
+        });
+
+        // Reset specific class for users/courses section if leaving it, 
+        // OR add it if entering it.
+        if (section === 'users' || section === 'courses') {
+            target.classList.add('active-flex');
             target.style.display = 'flex';
         } else {
             target.style.display = 'block';
@@ -460,18 +479,30 @@ async function deleteUser(id) {
 }
 
 
-/* --- COURSES --- */
+/* --- SUB SECTIONS --- */
 function showCourseSubSection(sub) {
-    ['queue', 'certificates', 'override'].forEach(s => {
-        document.getElementById(`course${s.charAt(0).toUpperCase() + s.slice(1)}Sub`).style.display = 'none';
+    const subs = ['manage', 'queue', 'certificates', 'override'];
+    subs.forEach(s => {
+        const el = document.getElementById(`course${s.charAt(0).toUpperCase() + s.slice(1)}Sub`);
+        if (el) el.style.display = 'none';
     });
-    document.getElementById(`course${sub.charAt(0).toUpperCase() + sub.slice(1)}Sub`).style.display = 'block';
+
+    const target = document.getElementById(`course${sub.charAt(0).toUpperCase() + sub.slice(1)}Sub`);
+    if (target) {
+        // Manage section needs flex for the internal scrolling layout
+        target.style.display = (sub === 'manage') ? 'flex' : 'block';
+        if (sub === 'manage') target.style.flexDirection = 'column';
+    }
 
     // Toggle active tabs
     const container = document.getElementById('coursesSection');
     container.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    // (Simple logic, can be improved with IDs on buttons)
+    // Highlight clicked button (approximate match via text or onclick attribute)
+    // Ideally user clicking sets active, but we can search by onclick
+    const clickedBtn = Array.from(container.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick').includes(sub));
+    if (clickedBtn) clickedBtn.classList.add('active');
 
+    if (sub === 'manage') loadCourses();
     if (sub === 'queue') loadQueue();
     if (sub === 'certificates') loadCertificates();
     if (sub === 'override') loadOverrideCourses();
@@ -652,16 +683,778 @@ function openReviewModal(id, url, label, type) {
 }
 
 async function submitReview(status) {
-    // ... same logic
     const remarks = document.getElementById('adminRemarks').value;
     try {
-        await fetch(`${Auth.apiBase}/admin/review`, {
+        UI.showLoader();
+        const res = await fetch(`${Auth.apiBase}/admin/review`, {
             method: 'POST',
-            headers: Auth.getHeaders(),
-            body: JSON.stringify({ itemID: selectedContentID, itemType: selectedItemType, status, adminRemarks: remarks })
+            headers: { ...Auth.getHeaders(), 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contentType: selectedItemType, // 'course' or 'exam' or 'content'?
+                contentID: selectedContentID,
+                status: status,
+                remarks: remarks
+            })
         });
-        document.getElementById('reviewModal').style.display = 'none';
-        loadQueue();
-    } catch (e) { UI.error('Failed'); }
+        if (res.ok) {
+            UI.success(`Content ${status}`);
+            document.getElementById('reviewModal').style.display = 'none';
+            // Reload queue
+            loadQueue();
+        } else {
+            UI.error('Action failed');
+        }
+    } catch (e) { UI.error('Error'); }
+    finally { UI.hideLoader(); }
 }
 
+/* --- COURSE MANAGEMENT LOGIC --- */
+function switchCourseTab(tabName, btn, index) {
+    document.querySelectorAll('.course-section').forEach(el => el.style.display = 'none');
+    document.getElementById(`courseTab_${tabName}`).style.display = 'block';
+
+    const buttons = document.querySelectorAll('.course-tab-btn');
+    buttons.forEach(b => {
+        b.style.borderBottom = '2px solid transparent';
+        b.style.color = '#666';
+        b.classList.remove('active');
+    });
+
+    if (!btn && index !== undefined) btn = buttons[index];
+    if (btn) {
+        btn.style.borderBottom = '2px solid var(--color-primary)';
+        btn.style.color = 'var(--color-primary)';
+        btn.classList.add('active');
+    }
+}
+
+
+let courseSearchTimeout;
+function debounceLoadCourses() {
+    clearTimeout(courseSearchTimeout);
+    courseSearchTimeout = setTimeout(loadCourses, 300);
+}
+
+async function loadCourses() {
+    const container = document.getElementById('courseListContainer');
+    const search = document.getElementById('courseSearchInput') ? document.getElementById('courseSearchInput').value.toLowerCase() : '';
+    const statusFilter = document.getElementById('courseStatusFilter') ? document.getElementById('courseStatusFilter').value : '';
+
+    container.innerHTML = '<div style="text-align:center; padding:20px; color:#666;">Loading courses...</div>';
+    try {
+        const res = await fetch(`${Auth.apiBase}/courses/admin/all`, { headers: Auth.getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch');
+        let courses = await res.json();
+
+        // Filter
+        if (search) {
+            courses = courses.filter(c => c.title.toLowerCase().includes(search) || c.category.toLowerCase().includes(search));
+        }
+        if (statusFilter) {
+            courses = courses.filter(c => c.status === statusFilter);
+        }
+
+        renderCourses(courses);
+    } catch (err) {
+        console.error(err);
+        container.innerHTML = '<p style="color:red; text-align:center;">Failed to load courses. Ensure Backend is running.</p>';
+    }
+}
+
+function renderCourses(courses) {
+    const container = document.getElementById('courseListContainer');
+    if (!courses || courses.length === 0) {
+        container.innerHTML = '<div style="text-align:center; padding:40px; color:#999;">No courses found. Click "+" to create one.</div>';
+        return;
+    }
+
+    // Helper function to get status badge color
+    const getStatusColor = (status) => {
+        const colors = {
+            'Published': { bg: '#e6f4ea', text: '#1e7e34' },
+            'Draft': { bg: '#fff3cd', text: '#856404' },
+            'Yet to Approve': { bg: '#d1ecf1', text: '#0c5460' },
+            'Deleted': { bg: '#f8d7da', text: '#721c24' }
+        };
+        return colors[status] || colors['Draft'];
+    };
+
+    container.innerHTML = `
+        <div class="glass-card" style="overflow:hidden; padding:0;">
+            <table class="data-table" style="width:100%; border-collapse:collapse;">
+                <thead style="position: sticky; top: 0; background:#fafafa; border-bottom:1px solid #eee; z-index: 5;">
+                    <tr>
+                        <th style="padding:15px;">Title & Category</th>
+                        <th style="padding:15px;">Mentors</th>
+                        <th style="padding:15px;">Price</th>
+                        <th style="padding:15px; text-align: center;">Materials</th>
+                        <th style="padding:15px;">Status</th>
+                        <th style="padding:15px; text-align:right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${courses.map(c => {
+        const statusColor = getStatusColor(c.status);
+        return `
+                        <tr style="border-bottom:1px solid #f9f9f9; transition:background 0.2s;">
+                            <td style="padding:15px;">
+                                <div style="font-weight: 600; color:var(--color-text-primary);">${c.title}</div>
+                                <small style="color:#888;">${c.category || 'General'} • ${c.duration || 'N/A'}</small>
+                            </td>
+                            <td style="padding:15px;">
+                                ${(c.mentors && c.mentors.length > 0)
+                ? c.mentors.map(m => m.name).join(', ')
+                : '<span style="color:#999;">None</span>'}
+                            </td>
+                            <td style="padding:15px; font-weight:500;">₹${c.price}</td>
+                            <td style="padding:15px; text-align: center;">
+                                <button class="btn-primary" 
+                                    title="View Course Materials" 
+                                    style="padding:10px 16px; font-size:1.1rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; transition: all 0.3s;" 
+                                    onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 4px 12px rgba(102,126,234,0.4)'"
+                                    onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none'"
+                                    onclick="openMaterialsModal('${c._id}', '${c.title.replace(/'/g, "&#39;")}')">
+                                    <i class="fas fa-book"></i>
+                                </button>
+                            </td>
+                            <td style="padding:15px;">
+                                <span style="padding:4px 8px; border-radius:12px; font-size:0.75rem; font-weight:600; 
+                                    background:${statusColor.bg}; color:${statusColor.text};">
+                                    ${c.status || 'Draft'}
+                                </span>
+                            </td>
+                            <td style="padding:15px; text-align:right;">
+                                <button class="btn-primary" title="View Details" style="padding:6px 10px; font-size:0.8rem; margin-right:5px; background: #17a2b8;" 
+                                    onclick="viewCourseDetails('${c._id}')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn-primary" title="Edit" style="padding:6px 10px; font-size:0.8rem; margin-right:5px;" 
+                                    onclick='openCourseModal(${JSON.stringify(c).replace(/'/g, "&#39;")})'>
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn-primary" title="Delete" style="background: #fff; border:1px solid #d9534f; color:#d9534f; padding:6px 10px; font-size:0.8rem;" 
+                                    onclick="deleteCourse('${c._id}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `}).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+async function openCourseModal(course = null) {
+    const modal = document.getElementById('courseModal');
+    const title = document.getElementById('courseModalTitle');
+
+    switchCourseTab('details', null, 0); // Reset to first tab
+
+    // Load Mentors and render Checkboxes
+    await loadMentorsForDropdown(course ? (course.mentors || []) : []);
+
+    if (course) {
+        title.innerText = 'Edit Course';
+        document.getElementById('courseId').value = course._id;
+        document.getElementById('courseTitle').value = course.title || '';
+        document.getElementById('courseDesc').value = course.description || '';
+        document.getElementById('coursePrice').value = course.price || 0;
+        document.getElementById('courseDifficulty').value = course.difficulty || 'Beginner';
+        document.getElementById('courseCategory').value = course.category || '';
+        document.getElementById('courseDuration').value = course.duration || '';
+        document.getElementById('courseThumb').value = course.thumbnail || '';
+    } else {
+        title.innerText = 'Add New Course';
+        document.getElementById('courseForm').reset();
+        document.getElementById('courseId').value = '';
+        // Uncheck all
+        document.querySelectorAll('input[name="mentorId"]').forEach(cb => cb.checked = false);
+    }
+    modal.style.display = 'flex';
+}
+
+async function loadMentorsForDropdown(selectedMentors = []) {
+    try {
+        const res = await fetch(`${Auth.apiBase}/admin/users`, { headers: Auth.getHeaders() });
+        const users = await res.json();
+        const mentors = users.filter(u => u.role === 'Staff' || u.role === 'Admin');
+
+        const container = document.getElementById('mentorListContainer');
+        const selectedIds = selectedMentors.map(m => (m._id || m).toString());
+
+        container.innerHTML = mentors.map(m => `
+            <label style="display:flex; align-items:center; gap:10px; padding:5px; border-bottom:1px solid #eee; cursor:pointer;">
+                <input type="checkbox" name="mentorId" value="${m._id}" 
+                    ${selectedIds.includes(m._id.toString()) ? 'checked' : ''}>
+                <span style="font-size:0.9rem;">${m.name} <span style="color:#999;">(${m.role})</span></span>
+            </label>
+        `).join('');
+    } catch (e) { console.error('Mentor load failed', e); }
+}
+
+async function saveCourse(e, status) {
+    if (e) e.preventDefault();
+    const id = document.getElementById('courseId').value;
+
+    // Gather Checkboxes
+    const mentorCheckboxes = document.querySelectorAll('input[name="mentorId"]:checked');
+    const selectedMentors = Array.from(mentorCheckboxes).map(cb => cb.value);
+
+    // Validation
+    if (!document.getElementById('courseTitle').value || !document.getElementById('coursePrice').value) {
+        UI.error('Please fill all mandatory (*) fields in Details tab.');
+        return;
+    }
+
+    if (status === 'Published' && selectedMentors.length === 0) {
+        UI.error('Disclaimer: You must assign at least one mentor to Publish.');
+        switchCourseTab('logistics', null, 1); // Switch to tab to show error context
+        return;
+    }
+
+    const data = {
+        title: document.getElementById('courseTitle').value,
+        description: document.getElementById('courseDesc').value,
+        price: document.getElementById('coursePrice').value,
+        difficulty: document.getElementById('courseDifficulty').value,
+        category: document.getElementById('courseCategory').value,
+        duration: document.getElementById('courseDuration').value,
+        thumbUrl: document.getElementById('courseThumb').value,
+        mentors: selectedMentors,
+        status: status
+    };
+
+    try {
+        UI.showLoader();
+        const method = id ? 'PUT' : 'POST';
+        const url = id ? `${Auth.apiBase}/courses/${id}` : `${Auth.apiBase}/courses`;
+
+        const res = await fetch(url, {
+            method: method,
+            headers: { ...Auth.getHeaders(), 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        if (res.ok) {
+            UI.success(`Course ${status === 'Published' ? 'Published' : 'Saved'}!`);
+            document.getElementById('courseModal').style.display = 'none';
+            loadCourses();
+        } else {
+            const err = await res.json();
+            UI.error(err.message || 'Save failed');
+        }
+    } catch (error) {
+        UI.error('Error saving course');
+    } finally {
+        UI.hideLoader();
+    }
+}
+
+let courseToDelete = null;
+let deleteCourseData = null;
+let currentDeleteStage = 1;
+
+async function deleteCourse(id) {
+    courseToDelete = id;
+    currentDeleteStage = 1;
+
+    try {
+        UI.showLoader();
+        // First, get course details with enrollments
+        const res = await fetch(`${Auth.apiBase}/courses/admin/view/${id}`, {
+            headers: Auth.getHeaders()
+        });
+
+        if (!res.ok) throw new Error('Failed to fetch course details');
+
+        deleteCourseData = await res.json();
+
+        // Set course ID for confirmation
+        document.getElementById('deleteCourseIdDisplay').textContent = deleteCourseData.course._id;
+
+        // Load Stage 1 content
+        loadDeleteStage1();
+
+        // Show modal
+        document.getElementById('deleteCourseModal').style.display = 'flex';
+        updateDeleteStageUI(1);
+
+    } catch (error) {
+        console.error(error);
+        UI.error('Failed to load course details');
+    } finally {
+        UI.hideLoader();
+    }
+}
+
+function loadDeleteStage1() {
+    const course = deleteCourseData.course;
+    document.getElementById('deleteCourseDetailsContent').innerHTML = `
+        <div style="text-align: center; margin-bottom: 15px;">
+            <h3 style="margin: 0 0 5px 0; color: #333;">${course.title}</h3>
+            <p style="margin: 0; color: #666; font-size: 0.9rem;">${course.category}</p>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; text-align: left;">
+            <div style="padding: 12px; background: white; border-radius: 6px;">
+                <div style="font-size: 0.8rem; color: #999; margin-bottom: 5px;">Course ID</div>
+                <div style="font-weight: 600; font-family: monospace; font-size: 0.9rem;">${course._id}</div>
+            </div>
+            <div style="padding: 12px; background: white; border-radius: 6px;">
+                <div style="font-size: 0.8rem; color: #999; margin-bottom: 5px;">Status</div>
+                <div style="font-weight: 600;">${course.status}</div>
+            </div>
+            <div style="padding: 12px; background: white; border-radius: 6px;">
+                <div style="font-size: 0.8rem; color: #999; margin-bottom: 5px;">Price</div>
+                <div style="font-weight: 600;">₹${course.price}</div>
+            </div>
+            <div style="padding: 12px; background: white; border-radius: 6px;">
+                <div style="font-size: 0.8rem; color: #999; margin-bottom: 5px;">Difficulty</div>
+                <div style="font-weight: 600;">${course.difficulty || 'N/A'}</div>
+            </div>
+            <div style="padding: 12px; background: white; border-radius: 6px; grid-column: 1 / -1;">
+                <div style="font-size: 0.8rem; color: #999; margin-bottom: 5px;">Mentors</div>
+                <div style="font-weight: 600;">${course.mentors && course.mentors.length > 0 ? course.mentors.map(m => m.name).join(', ') : 'None'}</div>
+            </div>
+            <div style="padding: 12px; background: white; border-radius: 6px; grid-column: 1 / -1;">
+                <div style="font-size: 0.8rem; color: #999; margin-bottom: 5px;">Description</div>
+                <div style="font-size: 0.9rem; line-height: 1.5;">${course.description || 'No description'}</div>
+            </div>
+        </div>
+    `;
+}
+
+function loadDeleteStage2() {
+    const currentEnrollments = deleteCourseData.students.filter(s => !s.completed);
+    const completedEnrollments = deleteCourseData.students.filter(s => s.completed);
+
+    let html = `
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px;">
+            <div style="text-align: center; padding: 20px; background: #f8f8f8; border-radius: 8px;">
+                <div style="font-size: 2rem; font-weight: 600; color: var(--color-saffron);">${deleteCourseData.stats.totalEnrolled}</div>
+                <div style="font-size: 0.85rem; color: #666; margin-top: 5px;">Total Enrolled</div>
+            </div>
+            <div style="text-align: center; padding: 20px; background: #f8f8f8; border-radius: 8px;">
+                <div style="font-size: 2rem; font-weight: 600; color: ${currentEnrollments.length > 0 ? 'var(--color-error)' : 'var(--color-success)'};">${currentEnrollments.length}</div>
+                <div style="font-size: 0.85rem; color: #666; margin-top: 5px;">Currently Enrolled</div>
+            </div>
+            <div style="text-align: center; padding: 20px; background: #f8f8f8; border-radius: 8px;">
+                <div style="font-size: 2rem; font-weight: 600; color: var(--color-success);">${completedEnrollments.length}</div>
+                <div style="font-size: 0.85rem; color: #666; margin-top: 5px;">Completed</div>
+            </div>
+        </div>
+    `;
+
+    if (currentEnrollments.length > 0) {
+        html += `
+            <div style="padding: 15px; background: #f8d7da; border-left: 4px solid #dc3545; border-radius: 8px; margin-bottom: 15px;">
+                <h4 style="margin: 0 0 10px 0; color: #721c24;">
+                    <i class="fas fa-exclamation-circle"></i> Active Students (${currentEnrollments.length})
+                </h4>
+                <div style="max-height: 150px; overflow-y: auto;">
+                    <table style="width: 100%; font-size: 0.85rem;">
+                        <thead style="position: sticky; top: 0; background: #f8d7da;">
+                            <tr style="text-align: left;">
+                                <th style="padding: 5px;">Name</th>
+                                <th style="padding: 5px;">Email</th>
+                                <th style="padding: 5px; text-align: center;">Progress</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${currentEnrollments.map(s => `
+                                <tr>
+                                    <td style="padding: 5px;">${s.name}</td>
+                                    <td style="padding: 5px;">${s.email}</td>
+                                    <td style="padding: 5px; text-align: center;">${s.progress}%</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    }
+
+    if (completedEnrollments.length > 0) {
+        html += `
+            <div style="padding: 15px; background: #d1ecf1; border-left: 4px solid #0c5460; border-radius: 8px;">
+                <h4 style="margin: 0 0 10px 0; color: #0c5460;">
+                    <i class="fas fa-check-circle"></i> Completed Students (${completedEnrollments.length})
+                </h4>
+                <div style="max-height: 100px; overflow-y: auto;">
+                    <ul style="margin: 0; padding-left: 20px; font-size: 0.85rem;">
+                        ${completedEnrollments.map(s => `
+                            <li style="margin: 5px 0;">${s.name} (${s.email})</li>
+                        `).join('')}
+                    </ul>
+                </div>
+            </div>
+        `;
+    }
+
+    if (currentEnrollments.length === 0 && completedEnrollments.length === 0) {
+        html += `
+            <div style="padding: 30px; text-align: center; background: #d1ecf1; border-radius: 8px;">
+                <i class="fas fa-info-circle" style="font-size: 2rem; color: #0c5460; margin-bottom: 10px;"></i>
+                <p style="margin: 0; color: #0c5460; font-weight: 600;">No students have enrolled in this course yet.</p>
+            </div>
+        `;
+    }
+
+    document.getElementById('deleteCourseEnrollmentsContent').innerHTML = html;
+}
+
+function updateDeleteStageUI(stage) {
+    currentDeleteStage = stage;
+
+    // Update progress indicators
+    document.querySelectorAll('.delete-step-indicator').forEach((indicator, index) => {
+        const stepNum = index + 1;
+        const circle = indicator.querySelector('.step-circle');
+        const label = indicator.querySelector('span');
+
+        if (stepNum < stage) {
+            // Completed step
+            circle.style.background = 'var(--color-success)';
+            circle.style.color = 'white';
+            label.style.color = 'var(--color-success)';
+        } else if (stepNum === stage) {
+            // Current step
+            circle.style.background = 'var(--color-saffron)';
+            circle.style.color = 'white';
+            label.style.color = '#333';
+        } else {
+            // Future step
+            circle.style.background = '#ddd';
+            circle.style.color = '#999';
+            label.style.color = '#999';
+        }
+    });
+
+    // Show/hide stages
+    document.querySelectorAll('.delete-stage').forEach((stageEl, index) => {
+        stageEl.style.display = (index + 1 === stage) ? 'block' : 'none';
+    });
+
+    // Update buttons
+    const buttonsContainer = document.getElementById('deleteStageButtons');
+    const currentEnrollments = deleteCourseData ? deleteCourseData.students.filter(s => !s.completed) : [];
+
+    if (stage === 1) {
+        buttonsContainer.innerHTML = `
+            <button onclick="closeCourseDeleteModal()" class="btn-primary" style="background: #999; flex: 1;">
+                Cancel
+            </button>
+            <button onclick="nextDeleteStage()" class="btn-primary" style="flex: 1;">
+                Next <i class="fas fa-arrow-right"></i>
+            </button>
+        `;
+    } else if (stage === 2) {
+        if (currentEnrollments.length > 0) {
+            buttonsContainer.innerHTML = `
+                <button onclick="previousDeleteStage()" class="btn-primary" style="background: #999; flex: 1;">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+                <button onclick="viewCourseFromDelete()" class="btn-primary" style="background: var(--color-primary); flex: 1;">
+                    <i class="fas fa-eye"></i> View & Manage Students
+                </button>
+            `;
+        } else {
+            buttonsContainer.innerHTML = `
+                <button onclick="previousDeleteStage()" class="btn-primary" style="background: #999; flex: 1;">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+                <button onclick="nextDeleteStage()" class="btn-primary" style="flex: 1;">
+                    Proceed to Delete <i class="fas fa-arrow-right"></i>
+                </button>
+            `;
+        }
+    } else if (stage === 3) {
+        buttonsContainer.innerHTML = `
+            <button onclick="previousDeleteStage()" class="btn-primary" style="background: #999; flex: 1;">
+                <i class="fas fa-arrow-left"></i> Back
+            </button>
+            <button onclick="confirmCourseDeletion()" class="btn-primary" style="background: var(--color-error); flex: 1;">
+                <i class="fas fa-trash"></i> Confirm Delete
+            </button>
+        `;
+    }
+}
+
+function nextDeleteStage() {
+    if (currentDeleteStage === 1) {
+        loadDeleteStage2();
+        updateDeleteStageUI(2);
+    } else if (currentDeleteStage === 2) {
+        // Clear input field
+        document.getElementById('deleteCourseIdInput').value = '';
+        updateDeleteStageUI(3);
+    }
+}
+
+function previousDeleteStage() {
+    if (currentDeleteStage > 1) {
+        updateDeleteStageUI(currentDeleteStage - 1);
+    }
+}
+
+function closeCourseDeleteModal() {
+    document.getElementById('deleteCourseModal').style.display = 'none';
+    courseToDelete = null;
+    deleteCourseData = null;
+    currentDeleteStage = 1;
+}
+
+function viewCourseFromDelete() {
+    closeCourseDeleteModal();
+    viewCourseDetails(courseToDelete);
+}
+
+async function confirmCourseDeletion() {
+    const inputId = document.getElementById('deleteCourseIdInput').value.trim();
+    const actualId = document.getElementById('deleteCourseIdDisplay').textContent.trim();
+
+    if (inputId !== actualId) {
+        UI.error('Course ID does not match! Please enter the exact Course ID shown above.');
+        document.getElementById('deleteCourseIdInput').focus();
+        return;
+    }
+
+    try {
+        UI.showLoader();
+        const res = await fetch(`${Auth.apiBase}/courses/${courseToDelete}`, {
+            method: 'DELETE',
+            headers: Auth.getHeaders()
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            throw new Error(data.message || 'Failed to delete course');
+        }
+
+        UI.success('Course has been marked as deleted successfully');
+        closeCourseDeleteModal();
+        loadCourses();
+
+    } catch (error) {
+        console.error(error);
+        UI.error(error.message || 'Failed to delete course');
+    } finally {
+        UI.hideLoader();
+    }
+}
+
+// View course details with enrolled students
+let currentCourseId = null;
+let currentCourseStudents = [];
+
+async function viewCourseDetails(courseId) {
+    currentCourseId = courseId;
+    try {
+        UI.showLoader();
+        const res = await fetch(`${Auth.apiBase}/courses/admin/view/${courseId}`, {
+            headers: Auth.getHeaders()
+        });
+
+        if (!res.ok) throw new Error('Failed to fetch course details');
+
+        const data = await res.json();
+        currentCourseStudents = data.students;
+
+        // Update modal title
+        document.getElementById('viewCourseTitle').textContent = data.course.title;
+
+        // Update course info
+        const infoHtml = `
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                <div><strong>Category:</strong> ${data.course.category || 'N/A'}</div>
+                <div><strong>Price:</strong> ₹${data.course.price}</div>
+                <div><strong>Status:</strong> <span style="padding: 2px 8px; border-radius: 8px; background: #e6f4ea; color: #1e7e34; font-size: 0.85rem;">${data.course.status}</span></div>
+                <div><strong>Duration:</strong> ${data.course.duration || 'N/A'}</div>
+                <div><strong>Mentors:</strong> ${data.course.mentors.map(m => m.name).join(', ') || 'None'}</div>
+                <div><strong>Difficulty:</strong> ${data.course.difficulty || 'N/A'}</div>
+            </div>
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #ddd;">
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; text-align: center;">
+                    <div>
+                        <div style="font-size: 2rem; color: var(--color-saffron); font-weight: 600;">${data.stats.totalEnrolled}</div>
+                        <div style="color: #666; font-size: 0.85rem;">Total Enrolled</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 2rem; color: var(--color-success); font-weight: 600;">${data.stats.completed}</div>
+                        <div style="color: #666; font-size: 0.85rem;">Completed</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 2rem; color: var(--color-primary); font-weight: 600;">${data.stats.inProgress}</div>
+                        <div style="color: #666; font-size: 0.85rem;">In Progress</div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.getElementById('viewCourseInfo').innerHTML = infoHtml;
+
+        // Render students table
+        renderCourseStudents(data.students);
+
+        // Show modal
+        document.getElementById('viewCourseModal').style.display = 'flex';
+
+    } catch (error) {
+        console.error(error);
+        UI.error('Failed to load course details');
+    } finally {
+        UI.hideLoader();
+    }
+}
+
+function renderCourseStudents(students) {
+    const tbody = document.getElementById('viewCourseStudents');
+
+    if (!students || students.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #999;">No students enrolled yet</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = students.map(s => `
+        <tr>
+            <td style="padding: 12px;">
+                <input type="checkbox" class="student-checkbox" value="${s.studentId}" data-enrollment-id="${s.enrollmentId}">
+            </td>
+            <td style="padding: 12px;">${s.studentID || 'N/A'}</td>
+            <td style="padding: 12px;">${s.name}</td>
+            <td style="padding: 12px;">${s.email}</td>
+            <td style="padding: 12px;">${new Date(s.enrolledAt).toLocaleDateString()}</td>
+            <td style="padding: 12px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="flex: 1; background: #eee; border-radius: 10px; height: 8px; overflow: hidden;">
+                        <div style="width: ${s.progress}%; background: var(--color-success); height: 100%;"></div>
+                    </div>
+                    <span style="font-size: 0.85rem; color: #666;">${s.progress}%</span>
+                    ${s.completed ? '<i class="fas fa-check-circle" style="color: var(--color-success);"></i>' : ''}
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function toggleAllStudents(checkbox) {
+    const checkboxes = document.querySelectorAll('.student-checkbox');
+    checkboxes.forEach(cb => cb.checked = checkbox.checked);
+}
+
+function selectAllStudents() {
+    const checkboxes = document.querySelectorAll('.student-checkbox');
+    checkboxes.forEach(cb => cb.checked = true);
+    document.getElementById('selectAllCheckbox').checked = true;
+}
+
+async function removeSelectedStudents() {
+    const checkboxes = document.querySelectorAll('.student-checkbox:checked');
+
+    if (checkboxes.length === 0) {
+        UI.error('Please select at least one student to remove');
+        return;
+    }
+
+    const studentIds = Array.from(checkboxes).map(cb => cb.value);
+    const confirmMsg = `Are you sure you want to remove ${studentIds.length} student(s) from this course?\n\nThis action cannot be undone.`;
+
+    if (!confirm(confirmMsg)) return;
+
+    try {
+        UI.showLoader();
+        const res = await fetch(`${Auth.apiBase}/courses/${currentCourseId}/remove-students`, {
+            method: 'POST',
+            headers: Auth.getHeaders(),
+            body: JSON.stringify({ studentIds })
+        });
+
+        if (!res.ok) throw new Error('Failed to remove students');
+
+        const data = await res.json();
+        UI.success(`${data.count} student(s) removed successfully`);
+
+        // Reload course details
+        viewCourseDetails(currentCourseId);
+
+    } catch (error) {
+        console.error(error);
+        UI.error('Failed to remove students');
+    } finally {
+        UI.hideLoader();
+    }
+}
+
+/* --- SETTINGS --- */
+let currentSettings = {};
+
+async function loadSettings() {
+    try {
+        const res = await fetch(`${Auth.apiBase}/settings`, { headers: Auth.getHeaders() });
+        currentSettings = await res.json();
+
+        // Populate UI
+        document.getElementById('maintenanceToggle').checked = currentSettings.isMaintenanceMode;
+        document.getElementById('rightClickToggle').checked = currentSettings.disableRightClick;
+        document.getElementById('maintenanceMessageInput').value = currentSettings.maintenanceMessage || '';
+        document.getElementById('siteTitleInput').value = currentSettings.siteTitle || '';
+        document.getElementById('supportEmailInput').value = currentSettings.supportEmail || '';
+
+    } catch (err) {
+        console.error(err);
+        UI.error('Failed to load settings');
+    }
+}
+
+async function toggleSetting(key, value) {
+    try {
+        const update = {};
+        update[key] = value;
+
+        const res = await fetch(`${Auth.apiBase}/settings`, {
+            method: 'PUT',
+            headers: Auth.getHeaders(),
+            body: JSON.stringify(update)
+        });
+
+        if (res.ok) {
+            UI.success('Setting updated');
+            currentSettings[key] = value;
+        } else {
+            UI.error('Failed to update setting');
+            // Revert Toggle
+            document.getElementById(key === 'isMaintenanceMode' ? 'maintenanceToggle' : 'rightClickToggle').checked = !value;
+        }
+    } catch (err) {
+        UI.error('Error updating setting');
+    }
+}
+
+async function updateMaintenanceMessage() {
+    const msg = document.getElementById('maintenanceMessageInput').value;
+    if (!msg) return UI.error('Message cannot be empty');
+
+    toggleSetting('maintenanceMessage', msg);
+}
+
+async function updatePlatformInfo() {
+    const siteTitle = document.getElementById('siteTitleInput').value;
+    const supportEmail = document.getElementById('supportEmailInput').value;
+
+    try {
+        const res = await fetch(`${Auth.apiBase}/settings`, {
+            method: 'PUT',
+            headers: Auth.getHeaders(),
+            body: JSON.stringify({ siteTitle, supportEmail })
+        });
+
+        if (res.ok) {
+            UI.success('Platform info updated');
+        } else {
+            UI.error('Failed to update info');
+        }
+    } catch (err) {
+        UI.error('Error updating info');
+    }
+}

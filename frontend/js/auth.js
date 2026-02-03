@@ -39,7 +39,7 @@ const Auth = {
     },
 
     // API Base URL
-    apiBase: (typeof CONFIG !== 'undefined' ? CONFIG.API_BASE_URL : 'http://localhost:5000/api')
+    apiBase: (typeof CONFIG !== 'undefined' ? CONFIG.API_BASE_URL : 'http://localhost:5001/api')
 };
 
 // Global Logout Handler

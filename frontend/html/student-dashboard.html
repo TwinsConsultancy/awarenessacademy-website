@@ -79,9 +79,100 @@
             color: var(--color-saffron);
         }
 
+        /* Top Header Bar */
+        .top-header {
+            background: #ffffff;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 12px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .top-header-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: var(--font-heading);
+            font-size: 1.2rem;
+            color: var(--color-golden);
+            font-weight: 700;
+        }
+
+        .top-header-right {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+        }
+
+        .notification-icon {
+            position: relative;
+            cursor: pointer;
+            color: #666;
+            font-size: 1.2rem;
+            transition: color 0.3s;
+        }
+
+        .notification-icon:hover {
+            color: var(--color-saffron);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: var(--color-error);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 0.65rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        .user-profile-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 25px;
+            transition: background 0.3s;
+        }
+
+        .user-profile-header:hover {
+            background: rgba(0,0,0,0.05);
+        }
+
+        .user-avatar-header {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--color-golden) 0%, var(--color-saffron) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .user-name-header {
+            font-weight: 600;
+            color: #333;
+            font-size: 0.9rem;
+        }
+
         /* Main Content */
         .main-content {
-            padding: 40px;
+            padding: 0;
             background: #fdfaf7;
             overflow-y: auto;
         }
@@ -233,6 +324,25 @@
 
         <!-- Main Content -->
         <main class="main-content">
+            <!-- Top Header Bar -->
+            <div class="top-header">
+                <div class="top-header-brand">
+                    <i class="fas fa-bolt"></i>
+                    <span>InnerSpark</span>
+                </div>
+                <div class="top-header-right">
+                    <div class="notification-icon" title="Notifications">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge">5</span>
+                    </div>
+                    <div class="user-profile-header">
+                        <div class="user-avatar-header" id="studentAvatar">S</div>
+                        <span class="user-name-header" id="studentName">Seeker</span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="padding: 40px;">
             <header class="welcome-header">
                 <div>
                     <h1>Peace be with you, <span id="welcomeName">Seeker</span></h1>
@@ -650,6 +760,9 @@
                     style="background: #666;">Close</button>
             </div>
         </div>
+    </div>
+    </div>
+    </main>
     </div>
 
     <script src="../js/auth.js"></script>

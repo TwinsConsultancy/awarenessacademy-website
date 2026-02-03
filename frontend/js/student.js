@@ -14,6 +14,13 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('welcomeName').textContent = user.name.split(' ')[0];
     document.getElementById('userUID').textContent = user.studentID;
 
+    // Set student name and avatar in top header
+    if (user) {
+        document.getElementById('studentName').textContent = user.name || 'Seeker';
+        const avatar = document.getElementById('studentAvatar');
+        avatar.textContent = (user.name || 'S').charAt(0).toUpperCase();
+    }
+
     const avatarEl = document.getElementById('userAvatar');
     if (user.profilePic) {
         avatarEl.innerHTML = `<img src="${user.profilePic}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;" onerror="this.parentElement.textContent = '${(user.name || 'U').charAt(0)}'">`;

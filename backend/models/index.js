@@ -69,11 +69,15 @@ const courseSchema = new Schema({
     title: { type: String, required: true },
     description: { type: String, required: true },
     category: { type: String, required: true }, // Meditation/Motivation/etc.
-    price: { type: Number, required: true },
-    mentorID: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    price: { type: Number, required: true }, // In Rupees
+    difficulty: { type: String, enum: ['Beginner', 'Intermediate', 'Advanced'], required: true },
+    duration: { type: String, required: true }, // e.g., "10 Hours"
+    mentors: [{ type: Schema.Types.ObjectId, ref: 'User' }], // Multiple, Optional for Draft
     thumbnail: { type: String },
-    status: { type: String, enum: ['Draft', 'Published', 'Inactive'], default: 'Draft' },
+    status: { type: String, enum: ['Draft', 'Published', 'Inactive', 'Yet to Approve', 'Deleted'], default: 'Draft' },
     totalLessons: { type: Number, default: 0 },
+    createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
+    deletedAt: { type: Date },
     createdAt: { type: Date, default: Date.now }
 });
 
@@ -112,12 +116,20 @@ const paymentSchema = new Schema({
 const contentSchema = new Schema({
     courseID: { type: Schema.Types.ObjectId, ref: 'Course', required: true },
     uploadedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    type: { type: String, enum: ['Video', 'PDF', 'Note'], required: true },
+    title: { type: String, required: true },
+    type: { type: String, enum: ['Video', 'PDF', 'Audio', 'Note'], required: true },
+    category: { type: String, enum: ['pdf', 'audio', 'video'], required: true }, // Lowercase for consistency
     fileUrl: { type: String, required: true },
+    fileName: { type: String }, // Original filename
+    fileSize: { type: Number }, // In bytes
     previewDuration: { type: Number, default: 0 }, // Seconds
     approvalStatus: { type: String, enum: ['Pending', 'Approved', 'Rejected'], default: 'Pending' },
     adminRemarks: { type: String },
-    createdAt: { type: Date, default: Date.now }
+    rejectionReason: { type: String }, // Corrections needed from admin
+    approvedAt: { type: Date },
+    approvedBy: { type: Schema.Types.ObjectId, ref: 'User' },
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now }
 });
 
 // 7. Chatbot/FAQ Collection
@@ -169,6 +181,9 @@ const impressionSchema = new Schema({
     timestamp: { type: Date, default: Date.now }
 });
 
+// 12. System Settings (Singleton Document)
+// 12. System Settings (Moved to independent file Settings.js)
+
 module.exports = {
     User: mongoose.model('User', userSchema),
     Course: mongoose.model('Course', courseSchema),
@@ -193,7 +208,9 @@ module.exports = {
         courseID: { type: Schema.Types.ObjectId, ref: 'Course', required: true },
         enrolledAt: { type: Date, default: Date.now },
         expiryDate: { type: Date },
-        status: { type: String, enum: ['Active', 'Expired'], default: 'Active' }
+        status: { type: String, enum: ['Active', 'Expired'], default: 'Active' },
+        progress: { type: Number, default: 0, min: 0, max: 100 },
+        completed: { type: Boolean, default: false }
     })),
     Ticket: mongoose.model('Ticket', new Schema({
         studentID: { type: Schema.Types.ObjectId, ref: 'User', required: true },

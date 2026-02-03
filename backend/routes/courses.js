@@ -1,7 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const courseController = require('../controllers/courseController');
+const materialController = require('../controllers/materialController');
 const jwt = require('jsonwebtoken');
+const upload = require('../middleware/upload');
 
 // Utility to handle optional authentication for access checks
 const optionalAuth = (req, res, next) => {
@@ -33,6 +35,15 @@ router.get('/', courseController.getMarketplace);
 // @desc    Get course preview metadata (Public)
 router.get('/:id/preview', courseController.getCoursePreview);
 
+// --- Admin Management Routes ---
+const authorize = require('../middleware/auth');
+
+// @route   GET /api/courses/admin/all
+router.get('/admin/all', authorize(['Admin']), courseController.getAllCoursesAdmin);
+
+// @route   GET /api/courses/admin/view/:id (Must be before /:id route)
+router.get('/admin/view/:id', authorize(['Admin']), courseController.getCourseWithEnrollments);
+
 // @route   GET /api/courses/:id
 // @desc    Get course details with optional auth for access check
 router.get('/:id', optionalAuth, courseController.getCourseDetails);
@@ -40,5 +51,68 @@ router.get('/:id', optionalAuth, courseController.getCourseDetails);
 // @route   POST /api/courses/track
 // @desc    Track video play impression (Anonymous or Student)
 router.post('/track', optionalAuth, courseController.trackImpression);
+
+// @route   POST /api/courses
+router.post('/', authorize(['Admin', 'Staff']), courseController.createCourse);
+
+// @route   PUT /api/courses/:id
+router.put('/:id', authorize(['Admin']), courseController.updateCourse);
+
+// @route   DELETE /api/courses/:id
+router.delete('/:id', authorize(['Admin']), courseController.deleteCourse);
+
+// @route   POST /api/courses/:id/remove-students
+router.post('/:id/remove-students', authorize(['Admin']), courseController.removeStudentsFromCourse);
+
+// ========== MATERIAL MANAGEMENT ROUTES ==========
+
+// @route   GET /api/courses/materials/my
+// @desc    Get staff's uploaded materials (MUST BE BEFORE /:id routes)
+router.get('/materials/my', authorize(['Staff', 'Admin']), materialController.getMyMaterials);
+
+// @route   POST /api/courses/materials/upload
+// @desc    Upload new material (Staff/Admin)
+router.post('/materials/upload', 
+    authorize(['Admin', 'Staff']), 
+    upload.single('file'), 
+    materialController.uploadMaterial
+);
+
+// @route   GET /api/courses/materials/:id
+// @desc    Get single material details
+router.get('/materials/:id', authorize(['Admin', 'Staff']), materialController.getMaterial);
+
+// @route   PUT /api/courses/materials/:id
+// @desc    Update material (Staff - only pending materials)
+router.put('/materials/:id', 
+    authorize(['Admin', 'Staff']), 
+    upload.single('file'), 
+    materialController.updateMaterial
+);
+
+// @route   POST /api/courses/materials/:id/approve
+// @desc    Approve material (Admin only)
+router.post('/materials/:id/approve', 
+    authorize(['Admin']), 
+    materialController.approveMaterial
+);
+
+// @route   POST /api/courses/materials/:id/corrections
+// @desc    Request corrections (Admin only)
+router.post('/materials/:id/corrections', 
+    authorize(['Admin']), 
+    materialController.requestCorrections
+);
+
+// @route   DELETE /api/courses/materials/:id
+// @desc    Delete material permanently (Admin only)
+router.delete('/materials/:id', 
+    authorize(['Admin']), 
+    materialController.deleteMaterial
+);
+
+// @route   GET /api/courses/:id/materials
+// @desc    Get all materials for a course with stats (MUST BE AFTER /materials/* routes)
+router.get('/:id/materials', authorize(['Admin', 'Staff']), materialController.getCourseMaterials);
 
 module.exports = router;

@@ -9,6 +9,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const { user } = authData;
     document.getElementById('mentorName').textContent = user.name;
+    
+    // Set staff name and avatar in top header
+    if (user) {
+        document.getElementById('staffName').textContent = user.name || 'Mentor';
+        const avatar = document.getElementById('staffAvatar');
+        avatar.textContent = (user.name || 'M').charAt(0).toUpperCase();
+    }
 
     // 2. Modals Logic
     const courseModal = document.getElementById('courseModal');
@@ -49,28 +56,52 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('uploadForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
+        
+        // Add title field if not present (use filename as title)
+        if (!formData.get('title')) {
+            const fileInput = e.target.querySelector('input[type="file"]');
+            const fileName = fileInput.files[0]?.name || 'Untitled Material';
+            formData.append('title', fileName.split('.')[0]);
+        }
+        
+        // Add category based on type
+        const type = formData.get('type');
+        const categoryMap = {
+            'Video': 'video',
+            'PDF': 'pdf',
+            'Audio': 'audio',
+            'Note': 'pdf'
+        };
+        formData.append('category', categoryMap[type] || 'pdf');
+        
         const btn = e.target.querySelector('button[type="submit"]');
         const originalText = btn.textContent;
-        btn.textContent = 'Transmitting...';
+        btn.textContent = 'Uploading...';
         btn.disabled = true;
 
         try {
             UI.showLoader();
-            const res = await fetch(`${Auth.apiBase}/staff/content`, {
+            const res = await fetch(`${Auth.apiBase}/courses/materials/upload`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
                 body: formData
             });
 
             if (res.ok) {
-                UI.success("Material transmitted! Awaiting Admin's enlightenment.");
+                UI.success("Material uploaded successfully! Awaiting admin approval.");
                 uploadModal.style.display = 'none';
+                e.target.reset();
+                // Reload materials if on materials section
+                if (currentSection === 'materials') {
+                    loadMyMaterials();
+                }
             } else {
                 const err = await res.json();
-                UI.error('Transmission failed: ' + err.message);
+                UI.error('Upload failed: ' + err.message);
             }
         } catch (err) {
-            UI.error('The signal is lost in the void.');
+            console.error(err);
+            UI.error('Upload failed. Please try again.');
         } finally {
             btn.textContent = originalText;
             btn.disabled = false;
@@ -149,7 +180,7 @@ let currentSection = 'courses';
 
 function switchSection(section) {
     currentSection = section;
-    const sections = ['courses', 'students', 'live'];
+    const sections = ['courses', 'materials', 'students', 'live'];
     sections.forEach(s => {
         document.getElementById(s + 'Section').style.display = s === section ? 'block' : 'none';
     });
@@ -163,6 +194,7 @@ function switchSection(section) {
     if (section === 'students') loadStudentInsights();
     if (section === 'live') loadSchedules();
     if (section === 'courses') loadCourses();
+    if (section === 'materials') loadMyMaterials();
 }
 
 async function loadStudentInsights() {
@@ -315,4 +347,213 @@ function openScheduleModal() {
     const courses = JSON.parse(localStorage.getItem('staffCourses') || '[]');
     select.innerHTML = courses.map(c => `<option value="${c._id}">${c.title}</option>`).join('');
     document.getElementById('scheduleModal').style.display = 'flex';
+}
+// My Materials Management
+async function loadMyMaterials() {
+    try {
+        UI.showLoader();
+        const res = await fetch(`${Auth.apiBase}/courses/materials/my`, {
+            headers: Auth.getHeaders()
+        });
+        
+        if (!res.ok) throw new Error('Failed to load materials');
+        
+        const materials = await res.json();
+        const list = document.getElementById('myMaterialsList');
+        
+        if (materials.length === 0) {
+            list.innerHTML = '<p style="color: var(--color-text-secondary);">No materials uploaded yet.</p>';
+            return;
+        }
+        
+        // Group by approval status
+        const pending = materials.filter(m => m.approvalStatus === 'Pending');
+        const approved = materials.filter(m => m.approvalStatus === 'Approved');
+        const rejected = materials.filter(m => m.approvalStatus === 'Rejected');
+        
+        let html = '';
+        
+        // Pending Materials
+        if (pending.length > 0) {
+            html += `
+                <h4 style="color: var(--color-saffron); margin-bottom: 15px;">
+                    <i class="fas fa-clock"></i> Pending Approval (${pending.length})
+                </h4>
+                <div style="margin-bottom: 30px;">
+                    ${pending.map(m => renderMaterialCard(m, true)).join('')}
+                </div>
+            `;
+        }
+        
+        // Rejected Materials
+        if (rejected.length > 0) {
+            html += `
+                <h4 style="color: var(--color-error); margin-bottom: 15px;">
+                    <i class="fas fa-times-circle"></i> Needs Corrections (${rejected.length})
+                </h4>
+                <div style="margin-bottom: 30px;">
+                    ${rejected.map(m => renderMaterialCard(m, true)).join('')}
+                </div>
+            `;
+        }
+        
+        // Approved Materials
+        if (approved.length > 0) {
+            html += `
+                <h4 style="color: var(--color-success); margin-bottom: 15px;">
+                    <i class="fas fa-check-circle"></i> Approved Materials (${approved.length})
+                </h4>
+                <div>
+                    ${approved.map(m => renderMaterialCard(m, false)).join('')}
+                </div>
+            `;
+        }
+        
+        list.innerHTML = html;
+    } catch (err) {
+        console.error(err);
+        UI.error('Failed to load materials');
+    } finally {
+        UI.hideLoader();
+    }
+}
+
+function renderMaterialCard(material, canEdit) {
+    const statusColors = {
+        'Pending': 'var(--color-saffron)',
+        'Approved': 'var(--color-success)',
+        'Rejected': 'var(--color-error)'
+    };
+    
+    const icons = {
+        'video': 'fa-video',
+        'pdf': 'fa-file-pdf',
+        'audio': 'fa-music'
+    };
+    
+    return `
+        <div class="course-list-item" style="margin-bottom: 15px;">
+            <div style="flex: 1;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i class="fas ${icons[material.category] || 'fa-file'}" 
+                       style="font-size: 1.5rem; color: ${statusColors[material.approvalStatus]};"></i>
+                    <div>
+                        <strong>${material.title}</strong>
+                        <p style="font-size: 0.85rem; color: var(--color-text-secondary); margin-top: 5px;">
+                            ${material.type} | 
+                            <span style="color: ${statusColors[material.approvalStatus]}; font-weight: 600;">
+                                ${material.approvalStatus}
+                            </span>
+                        </p>
+                        ${material.rejectionReason ? `
+                            <div style="background: rgba(239, 68, 68, 0.1); padding: 10px; border-radius: 8px; margin-top: 10px;">
+                                <strong style="color: var(--color-error); font-size: 0.85rem;">
+                                    <i class="fas fa-exclamation-circle"></i> Corrections Needed:
+                                </strong>
+                                <p style="color: var(--color-error); font-size: 0.85rem; margin-top: 5px;">
+                                    ${material.rejectionReason}
+                                </p>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                ${canEdit ? `
+                    <button class="btn-primary" onclick="openEditMaterial('${material._id}')" 
+                            style="padding: 8px 16px; font-size: 0.85rem; background: var(--color-golden);">
+                        <i class="fas fa-edit"></i> Edit
+                    </button>
+                ` : `
+                    <button class="btn-primary" onclick="viewMaterial('${material._id}')" 
+                            style="padding: 8px 16px; font-size: 0.85rem;">
+                        <i class="fas fa-eye"></i> View
+                    </button>
+                `}
+            </div>
+        </div>
+    `;
+}
+
+async function openEditMaterial(materialId) {
+    try {
+        UI.showLoader();
+        const res = await fetch(`${Auth.apiBase}/courses/materials/${materialId}`, {
+            headers: Auth.getHeaders()
+        });
+        
+        if (!res.ok) throw new Error('Failed to load material');
+        
+        const material = await res.json();
+        
+        // Populate edit form
+        document.getElementById('editMaterialId').value = material._id;
+        document.getElementById('editMaterialTitle').value = material.title;
+        document.getElementById('editMaterialType').value = material.type;
+        document.getElementById('editPreviewDuration').value = material.previewDuration || 30;
+        
+        // Show modal
+        document.getElementById('editMaterialModal').style.display = 'flex';
+    } catch (err) {
+        console.error(err);
+        UI.error('Failed to load material for editing');
+    } finally {
+        UI.hideLoader();
+    }
+}
+
+document.getElementById('closeEditMaterialModal').addEventListener('click', () => {
+    document.getElementById('editMaterialModal').style.display = 'none';
+    document.getElementById('editMaterialForm').reset();
+});
+
+document.getElementById('editMaterialForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const materialId = document.getElementById('editMaterialId').value;
+    const formData = new FormData();
+    
+    formData.append('title', document.getElementById('editMaterialTitle').value);
+    formData.append('previewDuration', document.getElementById('editPreviewDuration').value);
+    
+    const fileInput = document.getElementById('editMaterialFile');
+    if (fileInput.files[0]) {
+        formData.append('file', fileInput.files[0]);
+    }
+    
+    const btn = e.target.querySelector('button[type="submit"]');
+    const originalText = btn.textContent;
+    btn.textContent = 'Updating...';
+    btn.disabled = true;
+    
+    try {
+        UI.showLoader();
+        const res = await fetch(`${Auth.apiBase}/courses/materials/${materialId}`, {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+            body: formData
+        });
+        
+        if (res.ok) {
+            UI.success('Material updated successfully!');
+            document.getElementById('editMaterialModal').style.display = 'none';
+            loadMyMaterials(); // Reload the list
+        } else {
+            const err = await res.json();
+            UI.error('Update failed: ' + err.message);
+        }
+    } catch (err) {
+        console.error(err);
+        UI.error('Update failed. Please try again.');
+    } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
+        UI.hideLoader();
+    }
+});
+
+function viewMaterial(materialId) {
+    // For approved materials, just show a success message
+    // In a full implementation, this would open the material in a viewer
+    UI.success('Material viewer coming soon! Material ID: ' + materialId);
 }

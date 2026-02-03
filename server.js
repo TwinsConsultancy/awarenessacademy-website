@@ -10,7 +10,7 @@ const cors = require('cors');
 const path = require('path');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 // Middleware
 app.use(cors());
@@ -55,6 +55,7 @@ app.use('/api/forum', require('./backend/routes/forum'));
 app.use('/api/certificates', require('./backend/routes/certificates'));
 app.use('/api/extra', require('./backend/routes/extra'));
 app.use('/api/analytics', require('./backend/routes/analytics'));
+app.use('/api/settings', require('./backend/routes/settings'));
 
 // Basic Route
 app.get('/', (req, res) => {

@@ -9,7 +9,7 @@ const authorize = (roles = []) => {
         roles = [roles];
     }
 
-    return (req, res, next) => {
+    return async (req, res, next) => {
         const token = req.headers.authorization?.split(' ')[1];
 
         if (!token) {
@@ -19,6 +19,16 @@ const authorize = (roles = []) => {
         try {
             const decoded = jwt.verify(token, process.env.JWT_SECRET || 'innerspark_secret_key');
             req.user = decoded;
+
+            // Check Maintenance Mode
+            const Settings = require('../models/Settings');
+            const settings = await Settings.findOne();
+            if (settings && settings.isMaintenanceMode && req.user.role !== 'Admin') {
+                return res.status(503).json({
+                    message: settings.maintenanceMessage || 'System under maintenance',
+                    maintenance: true
+                });
+            }
 
             if (roles.length && !roles.includes(req.user.role)) {
                 return res.status(403).json({ message: 'Forbidden: Insufficient permissions' });

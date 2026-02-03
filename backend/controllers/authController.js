@@ -80,6 +80,16 @@ exports.login = async (req, res) => {
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
 
+        // Check Maintenance Mode
+        const Settings = require('../models/Settings');
+        const settings = await Settings.findOne();
+        if (settings && settings.isMaintenanceMode && user.role !== 'Admin') {
+            return res.status(503).json({
+                message: settings.maintenanceMessage || 'System under maintenance. Only Admins can log in.',
+                maintenance: true
+            });
+        }
+
         // Check Verification Status
         if (!user.isVerified) {
             return res.status(403).json({

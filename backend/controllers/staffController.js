@@ -3,7 +3,7 @@ const { Course, Content, User, Exam, Result, Certificate } = require('../models/
 // Create Course
 exports.createCourse = async (req, res) => {
     try {
-        const { title, description, category, price } = req.body;
+        const { title, description, category, price, difficulty, duration } = req.body;
         const mentorID = req.user.id;
 
         const newCourse = new Course({
@@ -11,12 +11,16 @@ exports.createCourse = async (req, res) => {
             description,
             category,
             price,
-            mentorID,
-            status: 'Draft'
+            mentors: [mentorID], // Assign creator as mentor
+            difficulty: difficulty || 'Beginner',
+            duration: duration || '4 Weeks',
+            status: 'Yet to Approve',
+            createdBy: mentorID,
+            thumbnail: 'https://via.placeholder.com/300x200'
         });
 
         await newCourse.save();
-        res.status(201).json({ message: 'Course created as draft', course: newCourse });
+        res.status(201).json({ message: 'Course draft created and awaiting approval.', course: newCourse });
     } catch (err) {
         res.status(500).json({ message: 'Failed to create course', error: err.message });
     }
@@ -154,7 +158,7 @@ exports.getEnrolledStudents = async (req, res) => {
         const { Enrollment, User, Course } = require('../models/index');
 
         // 1. Find all courses by this mentor
-        const myCourses = await Course.find({ mentorID: req.user.id }).select('_id title');
+        const myCourses = await Course.find({ mentors: { $in: [req.user.id] } }).select('_id title');
         const courseIDs = myCourses.map(c => c._id);
 
         // 2. Find all enrollments for these courses
@@ -184,7 +188,7 @@ exports.getEnrolledStudents = async (req, res) => {
 // Get Staff Courses
 exports.getStaffCourses = async (req, res) => {
     try {
-        const courses = await Course.find({ mentorID: req.user.id });
+        const courses = await Course.find({ mentors: { $in: [req.user.id] } });
         res.status(200).json(courses);
     } catch (err) {
         res.status(500).json({ message: 'Failed to fetch courses', error: err.message });
