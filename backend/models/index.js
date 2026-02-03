@@ -17,6 +17,12 @@ const userSchema = new Schema({
     profilePic: { type: String },
     active: { type: Boolean, default: true },
 
+    // Verification & Security
+    isVerified: { type: Boolean, default: false },
+    verificationToken: { type: String },
+    resetPasswordToken: { type: String },
+    resetPasswordExpires: { type: Date },
+
     // Extended Profile
     initial: { type: String },
     fatherName: { type: String },
