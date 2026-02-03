@@ -11,16 +11,55 @@
         href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;600&display=swap"
         rel="stylesheet">
     <style>
-        .dashboard-container {
-            display: grid;
-            grid-template-columns: 280px 1fr;
-            min-height: 100vh;
+        :root {
+            --sidebar-width: 80px;
+            --sidebar-expanded: 260px;
         }
-
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+            width: 100%;
+        }
         .sidebar {
+            width: var(--sidebar-width);
             background: white;
-            padding: 30px;
             border-right: 1px solid rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            padding: 20px 10px;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: hidden;
+        }
+        .sidebar:hover {
+            width: var(--sidebar-expanded);
+            align-items: flex-start;
+            padding-left: 20px;
+        }
+        .brand-text {
+            font-family: var(--font-heading);
+            color: var(--color-golden);
+            font-size: 1.2rem;
+            margin-left: 10px;
+            opacity: 0;
+            display: none;
+            transition: opacity 0.3s;
+        }
+        .sidebar:hover .brand-text {
+            display: inline-block;
+            opacity: 1;
+        }
+        .link-text {
+            margin-left: 15px;
+            opacity: 0;
+            display: none;
+        }
+        .sidebar:hover .link-text {
+            display: inline;
+            opacity: 1;
         }
 
         /* Top Header Bar */
@@ -172,30 +211,21 @@
 </head>
 
 <body>
+
     <div class="dashboard-container">
         <aside class="sidebar">
-            <div style="text-align: center; margin-bottom: 40px;">
-                <a href="index.html" style="text-decoration: none;">
-                    <h2 style="font-family: var(--font-heading); color: var(--color-golden);">InnerSpark</h2>
-                </a>
-                <p style="font-size: 0.8rem; font-weight: 600; color: var(--color-saffron);">MENTOR SUITE</p>
+            <div class="brand" style="margin-bottom: 40px;">
+                <i class="fas fa-bolt" style="color: var(--color-golden); font-size: 1.7rem;"></i>
+                <span class="brand-text">InnerSpark</span>
             </div>
-            <ul style="list-style: none;">
-                <li style="margin-bottom: 10px;">
-                    <a href="#" class="btn-primary" id="newCourseBtn"
-                        style="display: block; text-align: center; text-decoration: none;">+ New Course</a>
-                </li>
-                <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;">
-                <li><a href="#" class="nav-link active" onclick="switchSection('courses')"><i
-                            class="fas fa-swatchbook"></i> My Courses</a></li>
-                <li><a href="#" class="nav-link" onclick="switchSection('materials')"><i
-                            class="fas fa-book"></i> My Materials</a></li>
-                <li><a href="#" class="nav-link" onclick="switchSection('students')"><i class="fas fa-users"></i>
-                        Student Insights</a></li>
-                <li><a href="#" class="nav-link" onclick="switchSection('live')"><i class="fas fa-video"></i> Live
-                        Classroom</a></li>
-                <li><a href="#" id="logoutBtn" class="nav-link" style="color: var(--color-error); margin-top: 50px;"><i
-                            class="fas fa-sign-out-alt"></i> Logout</a></li>
+            <ul class="nav-menu">
+                <li><a href="#" class="nav-link active" onclick="switchSection('overview')"><i class="fas fa-home"></i><span class="link-text">Overview</span></a></li>
+                <li><a href="#" class="nav-link" onclick="switchSection('analytics')"><i class="fas fa-chart-pie"></i><span class="link-text">Analytics</span></a></li>
+                <li><a href="#" class="nav-link" onclick="switchSection('courses')"><i class="fas fa-swatchbook"></i><span class="link-text">My Courses</span></a></li>
+                <li><a href="#" class="nav-link" onclick="switchSection('materials')"><i class="fas fa-book"></i><span class="link-text">My Materials</span></a></li>
+                <li><a href="#" class="nav-link" onclick="switchSection('live')"><i class="fas fa-video"></i><span class="link-text">Live Class Hosting</span></a></li>
+                <li><a href="#" class="nav-link" onclick="switchSection('profile')"><i class="fas fa-user"></i><span class="link-text">My Profile</span></a></li>
+                <li><a href="#" id="logoutBtn" class="nav-link" style="color: var(--color-error); margin-top: 50px;"><i class="fas fa-sign-out-alt"></i><span class="link-text">Logout</span></a></li>
             </ul>
         </aside>
 
@@ -218,62 +248,102 @@
                 </div>
             </div>
 
-            <div style="padding: 40px;">
-            <header style="margin-bottom: 40px; display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <h1>Mentor Workshop</h1>
-                    <p>Welcome, <span id="mentorName">Mentor</span>. Your wisdom empowers many.</p>
+            <div style="padding: 40px; width: 100%;">
+                <div class="tabs" style="margin-bottom: 30px;">
+                    <button class="tab-btn active" id="tab-overview" onclick="switchSection('overview')">Overview</button>
+                    <button class="tab-btn" id="tab-analytics" onclick="switchSection('analytics')">Analytics</button>
+                    <button class="tab-btn" id="tab-courses" onclick="switchSection('courses')">My Courses</button>
+                    <button class="tab-btn" id="tab-materials" onclick="switchSection('materials')">My Materials</button>
+                    <button class="tab-btn" id="tab-live" onclick="switchSection('live')">Live Class Hosting</button>
+                    <button class="tab-btn" id="tab-profile" onclick="switchSection('profile')">My Profile</button>
                 </div>
-                <button class="btn-primary" id="newExamBtn" style="background: var(--color-golden);">+ Create
-                    Assessment</button>
-            </header>
 
-            <section id="coursesSection">
-                <h3 style="margin-bottom: 20px;">Manage Your Courses</h3>
-                <div id="courseList">
-                    <!-- Courses will be loaded here -->
-                    <p style="color: var(--color-text-secondary);">Loading your sanctuary projects...</p>
-                </div>
-            </section>
+                <!-- Overview Section -->
+                <section id="overviewSection">
+                    <header style="margin-bottom: 40px; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h1>Mentor Workshop</h1>
+                            <p>Welcome, <span id="mentorName">Mentor</span>. Your wisdom empowers many.</p>
+                        </div>
+                        <button class="btn-primary" id="newExamBtn" style="background: var(--color-golden);">+ Create Assessment</button>
+                    </header>
+                    <div class="glass-card" style="padding: 30px; margin-bottom: 30px;">
+                        <h3>Quick Stats</h3>
+                        <div id="mentorStats" style="display: flex; gap: 30px; margin-top: 20px;">
+                            <!-- Stats will be loaded here -->
+                        </div>
+                    </div>
+                </section>
 
-            <!-- My Materials Section -->
-            <section id="materialsSection" style="display: none;">
-                <h3 style="margin-bottom: 20px;">My Uploaded Materials</h3>
-                <div id="myMaterialsList">
-                    <p style="color: var(--color-text-secondary);">Loading your materials...</p>
-                </div>
-            </section>
+                <!-- Analytics Section -->
+                <section id="analyticsSection" style="display: none;">
+                    <div class="glass-card" style="padding: 30px; margin-bottom: 30px;">
+                        <h3>Analytics</h3>
+                        <div id="mentorAnalytics">
+                            <!-- Analytics content here -->
+                            <p>Coming soon: Engagement, course performance, and more.</p>
+                        </div>
+                    </div>
+                </section>
 
-            <!-- Student Insights Section -->
-            <section id="studentsSection" style="display: none;">
-                <h3 style="margin-bottom: 20px;">Seeker Engagement</h3>
-                <div class="glass-card" style="padding: 0; overflow: hidden;">
-                    <table style="width: 100%; border-collapse: collapse; text-align: left;">
-                        <thead style="background: rgba(0,0,0,0.02);">
-                            <tr>
-                                <th style="padding: 15px;">Seeker</th>
-                                <th style="padding: 15px;">Course</th>
-                                <th style="padding: 15px;">Enrolled On</th>
-                                <th style="padding: 15px;">Progress</th>
-                            </tr>
-                        </thead>
-                        <tbody id="studentInsightList">
-                            <!-- Data loads here -->
-                        </tbody>
-                    </table>
-                </div>
-            </section>
+                <!-- My Courses Section -->
+                <section id="coursesSection" style="display: none;">
+                    <h3 style="margin-bottom: 20px;">Manage Your Courses</h3>
+                    <div id="courseList">
+                        <!-- Courses will be loaded here -->
+                        <p style="color: var(--color-text-secondary);">Loading your sanctuary projects...</p>
+                    </div>
+                </section>
 
-            <!-- Live Classroom Section -->
-            <section id="liveSection" style="display: none;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-                    <h3>Live Flows & Schedules</h3>
-                    <button class="btn-primary" onclick="openScheduleModal()">+ Schedule New Flow</button>
-                </div>
-                <div id="scheduleList">
-                    <!-- Schedules load here -->
-                </div>
-            </section>
+                <!-- My Materials Section -->
+                <section id="materialsSection" style="display: none;">
+                    <h3 style="margin-bottom: 20px;">My Uploaded Materials</h3>
+                    <div id="myMaterialsList">
+                        <p style="color: var(--color-text-secondary);">Loading your materials...</p>
+                    </div>
+                </section>
+
+                <!-- Live Class Hosting Section -->
+                <section id="liveSection" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                        <h3>Live Flows & Schedules</h3>
+                        <button class="btn-primary" onclick="openScheduleModal()">+ Schedule New Flow</button>
+                    </div>
+                    <div id="scheduleList">
+                        <!-- Schedules load here -->
+                    </div>
+                </section>
+
+                <!-- Student Insights Section (Analytics Tab) -->
+                <section id="studentsSection" style="display: none;">
+                    <h3 style="margin-bottom: 20px;">Seeker Engagement</h3>
+                    <div class="glass-card" style="padding: 0; overflow: hidden;">
+                        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                            <thead style="background: rgba(0,0,0,0.02);">
+                                <tr>
+                                    <th style="padding: 15px;">Seeker</th>
+                                    <th style="padding: 15px;">Course</th>
+                                    <th style="padding: 15px;">Enrolled On</th>
+                                    <th style="padding: 15px;">Progress</th>
+                                </tr>
+                            </thead>
+                            <tbody id="studentInsightList">
+                                <!-- Data loads here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- My Profile Section -->
+                <section id="profileSection" style="display: none;">
+                    <div class="glass-card" style="padding: 30px; max-width: 600px;">
+                        <h3>My Profile</h3>
+                        <div id="profileDetails">
+                            <!-- Profile details will be loaded here -->
+                            <p>Coming soon: Profile editing and settings.</p>
+                        </div>
+                    </div>
+                </section>
             </div>
         </main>
     </div>

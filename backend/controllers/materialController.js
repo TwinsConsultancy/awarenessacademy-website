@@ -39,11 +39,13 @@ exports.uploadMaterial = async (req, res) => {
     try {
         const { courseID, title, type, category, previewDuration } = req.body;
         const file = req.file;
-        
-        if (!file) {
-            return res.status(400).json({ message: 'File is required' });
+
+        // Validation: All required fields
+        if (!courseID || !type || !file) {
+            console.error('[Material Upload] Missing required fields:', { courseID, type, file: !!file });
+            return res.status(400).json({ message: 'Missing required fields: courseID, type, or file.' });
         }
-        
+
         // Validate category matches type
         const categoryMap = {
             'PDF': 'pdf',
@@ -51,17 +53,25 @@ exports.uploadMaterial = async (req, res) => {
             'Audio': 'audio',
             'Note': 'pdf'
         };
-        
+
         // Auto-approve if uploaded by Admin
         const isAdmin = req.user.role === 'Admin';
-        
+
+        // Use consistent fileUrl (relative path for frontend)
+        let fileUrl = file.path;
+        if (fileUrl.startsWith('uploads') || fileUrl.startsWith('/uploads')) {
+            fileUrl = '/' + fileUrl.replace(/\\/g, '/');
+        } else if (!fileUrl.startsWith('/')) {
+            fileUrl = '/' + fileUrl.replace(/\\/g, '/');
+        }
+
         const material = new Content({
             courseID,
             uploadedBy: req.user.id,
             title: title || file.originalname,
             type,
             category: category || categoryMap[type] || 'pdf',
-            fileUrl: file.path,
+            fileUrl,
             fileName: file.originalname,
             fileSize: file.size,
             previewDuration: previewDuration || 0,
@@ -69,19 +79,20 @@ exports.uploadMaterial = async (req, res) => {
             approvedBy: isAdmin ? req.user.id : null,
             approvedAt: isAdmin ? new Date() : null
         });
-        
+
         await material.save();
-        
+
         // Update course totalLessons count
         await Course.findByIdAndUpdate(courseID, {
             $inc: { totalLessons: 1 }
         });
-        
-        res.status(201).json({ 
-            message: 'Material uploaded successfully', 
-            material 
+
+        res.status(201).json({
+            message: 'Material uploaded successfully',
+            material
         });
     } catch (err) {
+        console.error('[Material Upload] Error:', err);
         res.status(500).json({ message: 'Upload failed', error: err.message });
     }
 };

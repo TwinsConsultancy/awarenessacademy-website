@@ -1,37 +1,49 @@
-const { S3Client } = require('@aws-sdk/client-s3');
 const multer = require('multer');
-const multerS3 = require('multer-s3');
 const path = require('path');
-require('dotenv').config({ path: './backend/.env' });
+const fs = require('fs');
 
-// Configure Cloudflare R2 Client
-const s3 = new S3Client({
-    region: 'auto',
-    endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-    credentials: {
-        accessKeyId: process.env.R2_ACCESS_KEY,
-        secretAccessKey: process.env.R2_SECRET_KEY,
+// Ensure upload directories exist
+const uploadDirs = [
+    './backend/uploads',
+    './backend/uploads/profiles',
+    './backend/uploads/thumbnails',
+    './backend/uploads/videos',
+    './backend/uploads/pdfs'
+];
+
+uploadDirs.forEach(dir => {
+    if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
     }
 });
 
-// Configure Multer to use S3/R2
-const upload = multer({
-    storage: multerS3({
-        s3: s3,
-        bucket: process.env.R2_BUCKET_NAME,
-        acl: 'public-read', // Note: R2 might not support ACLs the same way, usually handled by bucket public access
-        contentType: multerS3.AUTO_CONTENT_TYPE,
-        metadata: function (req, file, cb) {
-            cb(null, { fieldName: file.fieldname });
-        },
-        key: function (req, file, cb) {
-            // Unique filename: fieldname-timestamp-random.ext
-            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-            const ext = path.extname(file.originalname);
-            cb(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
+// Configure Multer to use local disk storage
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        // Determine destination based on file type
+        let uploadPath = './backend/uploads';
+        
+        if (file.mimetype.startsWith('image/')) {
+            uploadPath = file.fieldname === 'profilePic' ? './backend/uploads/profiles' : './backend/uploads/thumbnails';
+        } else if (file.mimetype.startsWith('video/')) {
+            uploadPath = './backend/uploads/videos';
+        } else if (file.mimetype === 'application/pdf') {
+            uploadPath = './backend/uploads/pdfs';
         }
-    }),
-    limits: { fileSize: 50 * 1024 * 1024 }, // Limit to 50MB (adjust as needed for videos)
+        
+        cb(null, uploadPath);
+    },
+    filename: function (req, file, cb) {
+        // Unique filename: fieldname-timestamp-random.ext
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const ext = path.extname(file.originalname);
+        cb(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
+    }
+});
+
+const upload = multer({
+    storage: storage,
+    limits: { fileSize: 50 * 1024 * 1024 }, // Limit to 50MB
     fileFilter: (req, file, cb) => {
         // Allow images, videos, audio, pdf
         const allowedTypes = /jpeg|jpg|png|gif|mp4|webm|mp3|wav|pdf/;
