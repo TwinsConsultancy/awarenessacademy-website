@@ -146,12 +146,13 @@
         .tab-btn {
             background: none;
             border: none;
-            padding: 10px 20px;
+            padding: 8px 18px;
             border-radius: 20px;
             cursor: pointer;
             font-weight: 500;
             color: var(--color-text-secondary);
             transition: all 0.2s;
+            font-size: 0.9rem;
         }
 
         .tab-btn.active {
@@ -163,9 +164,11 @@
         /* Stats */
         .stats-row {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(4, 1fr);
+            /* Force 4 columns on desktop */
             gap: 20px;
             margin-bottom: 40px;
+            width: 100%;
         }
 
         .stat-card {
@@ -174,6 +177,7 @@
             display: flex;
             align-items: center;
             gap: 15px;
+            width: 100%;
         }
 
         .stat-icon {
@@ -186,11 +190,30 @@
             font-size: 1.5rem;
         }
 
+        /* Responsive Breakpoints */
+        @media (max-width: 1200px) {
+            .stats-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stats-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
         /* Other */
         .main-content {
             padding: 40px;
             background: #fdfaf7;
             overflow-y: auto;
+            flex: 1;
+            width: 100%;
+        }
+
+        section {
+            width: 100%;
         }
 
         .badge {
@@ -208,6 +231,176 @@
         .badge-inactive {
             background: rgba(220, 53, 69, 0.1);
             color: #dc3545;
+        }
+
+        /* Sticky Header & Scrollable Layout Refactor */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden !important;
+            /* Force no global scroll */
+            padding: 0;
+            height: 100vh;
+        }
+
+        .header-section {
+            padding: 15px 40px 10px 40px;
+            /* Reduced vertical padding */
+            background: #fdfaf7;
+            flex-shrink: 0;
+            z-index: 10;
+        }
+        
+        /* Hide main header when users section is active */
+        body:has(#usersSection.active-flex) .header-section {
+            display: none;
+        }
+
+        .scrollable-content {
+            flex: 1;
+            overflow: hidden;
+            /* Container doesn't scroll, children do if needed */
+            padding: 0 40px 40px 40px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Users Section Specific Layout for Internal Scroll */
+        #usersSection {
+            display: none;
+            /* Toggled by JS */
+            flex-direction: column;
+            height: 100%;
+        }
+
+        #usersSection.active-flex {
+            display: flex !important;
+        }
+        
+        /* Compact header for users section */
+        .user-header-compact {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .user-header-compact h1 {
+            margin: 0;
+            font-size: 1.8rem;
+        }
+        
+        .user-header-compact p {
+            margin: 0;
+            font-size: 0.85rem;
+            color: var(--color-text-secondary);
+        }
+
+        /* Fixed Add User Button (Side Edge) */
+        .add-user-btn {
+            position: fixed;
+            bottom: 30px;
+            left: 100px;
+            /* Closer to sidebar edge (80px + 20px) */
+            z-index: 10000;
+            background: var(--color-success);
+            color: #ffffff !important;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            overflow: hidden;
+            white-space: nowrap;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+        }
+
+        /* Move button right when sidebar expands */
+        body:has(.sidebar:hover) .add-user-btn {
+            left: 270px;
+        }
+
+        .add-user-btn:hover {
+            width: 180px;
+            border-radius: 30px;
+        }
+
+        .add-user-btn i {
+            font-size: 1.5rem;
+            color: #ffffff !important;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .add-user-btn:hover i {
+            left: 15px;
+            transform: translateY(-50%);
+        }
+
+        .add-user-btn span {
+            opacity: 0;
+            transition: opacity 0.2s 0.1s;
+            font-weight: 600;
+            font-size: 1rem;
+            color: #ffffff;
+            margin-left: 45px;
+        }
+
+        .add-user-btn:hover span {
+            opacity: 1;
+        }
+
+        /* Table Styling */
+        .data-table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+        }
+
+        .data-table thead th {
+            position: sticky;
+            top: 0;
+            background: #f8f8f8;
+            z-index: 5;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            color: #333;
+            font-weight: 600;
+            text-align: left;
+        }
+
+        /* Zebra Striping */
+        .data-table tbody tr:nth-child(even) {
+            background-color: #ffffff;
+        }
+
+        .data-table tbody tr:nth-child(odd) {
+            background-color: #f2f2f2;
+        }
+
+        .data-table tbody tr:hover {
+            background-color: #e8e8e8;
+        }
+
+        .close-modal-x {
+            position: absolute;
+            top: 20px;
+            right: 25px;
+            font-size: 1.5rem;
+            color: #999;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .close-modal-x:hover {
+            color: #333;
         }
     </style>
 </head>
@@ -265,264 +458,277 @@
         </aside>
 
         <main class="main-content">
-            <header style="margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <h1 id="pageTitle">Overview</h1>
-                    <p style="color: var(--color-text-secondary);">System Command Center</p>
-                </div>
-                <div style="display: flex; gap: 15px;">
-                    <button class="btn-primary" onclick="loadQueue()"><i class="fas fa-sync-alt"></i> Refresh</button>
-                </div>
-            </header>
+            <div class="header-section">
+                <header
+                    style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h1 id="pageTitle">Overview</h1>
+                        <p style="color: var(--color-text-secondary);">System Command Center</p>
+                    </div>
+                    <div style="display: flex; gap: 15px;">
+                        <!-- Refresh button removed -->
+                    </div>
+                </header>
+            </div>
 
-            <!-- OVERVIEW SECTION -->
-            <section id="overviewSection">
-                <div class="stats-row" id="adminStats">
-                    <div class="stat-card glass-card">
-                        <div class="stat-icon" style="background: rgba(52, 152, 219, 0.1); color: #3498db;"><i
-                                class="fas fa-users"></i></div>
-                        <div>
-                            <h3 id="statUsers">-</h3>
-                            <p>Total Seekers</p>
+            <div class="scrollable-content">
+                <!-- OVERVIEW SECTION -->
+                <section id="overviewSection">
+                    <div class="stats-row" id="adminStats">
+                        <div class="stat-card glass-card">
+                            <div class="stat-icon" style="background: rgba(52, 152, 219, 0.1); color: #3498db;"><i
+                                    class="fas fa-users"></i></div>
+                            <div>
+                                <h3 id="statUsers">-</h3>
+                                <p>Total Seekers</p>
+                            </div>
+                        </div>
+                        <div class="stat-card glass-card">
+                            <div class="stat-icon" style="background: rgba(155, 89, 182, 0.1); color: #9b59b6;"><i
+                                    class="fas fa-user-tie"></i></div>
+                            <div>
+                                <h3 id="statMentors">-</h3>
+                                <p>Mentors</p>
+                            </div>
+                        </div>
+                        <div class="stat-card glass-card">
+                            <div class="stat-icon" style="background: rgba(230, 126, 34, 0.1); color: #e67e22;"><i
+                                    class="fas fa-book-open"></i></div>
+                            <div>
+                                <h3 id="statCourses">-</h3>
+                                <p>Courses</p>
+                            </div>
+                        </div>
+                        <div class="stat-card glass-card">
+                            <div class="stat-icon" style="background: rgba(46, 204, 113, 0.1); color: #2ecc71;"><i
+                                    class="fas fa-dollar-sign"></i></div>
+                            <div>
+                                <h3 id="statRevenue">$0</h3>
+                                <p>Revenue</p>
+                            </div>
                         </div>
                     </div>
-                    <div class="stat-card glass-card">
-                        <div class="stat-icon" style="background: rgba(155, 89, 182, 0.1); color: #9b59b6;"><i
-                                class="fas fa-user-tie"></i></div>
-                        <div>
-                            <h3 id="statMentors">-</h3>
-                            <p>Mentors</p>
-                        </div>
-                    </div>
-                    <div class="stat-card glass-card">
-                        <div class="stat-icon" style="background: rgba(230, 126, 34, 0.1); color: #e67e22;"><i
-                                class="fas fa-book-open"></i></div>
-                        <div>
-                            <h3 id="statCourses">-</h3>
-                            <p>Courses</p>
-                        </div>
-                    </div>
-                    <div class="stat-card glass-card">
-                        <div class="stat-icon" style="background: rgba(46, 204, 113, 0.1); color: #2ecc71;"><i
-                                class="fas fa-dollar-sign"></i></div>
-                        <div>
-                            <h3 id="statRevenue">$0</h3>
-                            <p>Revenue</p>
-                        </div>
-                    </div>
-                </div>
 
-                <h3><i class="fas fa-tasks" style="color: var(--color-saffron);"></i> Pending Approvals</h3>
-                <div id="pendingQueueOverview" style="margin-top: 20px;">
-                    <p>Loading queue...</p>
-                </div>
-            </section>
+                    <h3><i class="fas fa-tasks" style="color: var(--color-saffron);"></i> Pending Approvals</h3>
+                    <div id="pendingQueueOverview" style="margin-top: 20px;">
+                        <p>Loading queue...</p>
+                    </div>
+                </section>
 
-            <!-- ANALYTICS SECTION -->
-            <section id="analyticsSection" style="display: none;">
-                <!-- Content handled by JS loadAnalytics -->
-                <h3 style="margin-bottom: 20px;">Platform Evolution</h3>
-                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 30px;">
+                <!-- ANALYTICS SECTION -->
+                <section id="analyticsSection" style="display: none;">
+                    <!-- Content handled by JS loadAnalytics -->
+                    <h3 style="margin-bottom: 20px;">Platform Evolution</h3>
+                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 30px;">
+                        <div class="glass-card" style="padding: 30px;">
+                            <h4 style="margin-bottom: 20px;">Revenue & Growth</h4>
+                            <canvas id="growthChart"></canvas>
+                        </div>
+                        <!-- Stats cards... -->
+                        <div style="display: flex; flex-direction: column; gap: 20px;">
+                            <div class="glass-card" style="padding: 25px; text-align: center;">
+                                <h4>Marketplace Conversion</h4>
+                                <div style="font-size: 2.5rem; color: var(--color-saffron); margin: 10px 0;"
+                                    id="conversionRate">0%</div>
+                                <p style="font-size: 0.8rem; color: #666;"><span id="totalImpressions">0</span>
+                                    Impressions
+                                    &rarr; <span id="totalEnrollments">0</span> Enrollments</p>
+                            </div>
+                            <div class="glass-card" style="padding: 25px; text-align: center;">
+                                <h4>Student Activity (Last 7 Days)</h4>
+                                <div style="font-size: 2.5rem; color: var(--color-success); margin: 10px 0;"
+                                    id="activeRatio">0/0</div>
+                                <p style="font-size: 0.8rem; color: #666;">Active seekers vs. total registrations</p>
+                            </div>
+                        </div>
+                    </div>
                     <div class="glass-card" style="padding: 30px;">
-                        <h4 style="margin-bottom: 20px;">Revenue & Growth</h4>
-                        <canvas id="growthChart"></canvas>
-                    </div>
-                    <!-- Stats cards... -->
-                    <div style="display: flex; flex-direction: column; gap: 20px;">
-                        <div class="glass-card" style="padding: 25px; text-align: center;">
-                            <h4>Marketplace Conversion</h4>
-                            <div style="font-size: 2.5rem; color: var(--color-saffron); margin: 10px 0;"
-                                id="conversionRate">0%</div>
-                            <p style="font-size: 0.8rem; color: #666;"><span id="totalImpressions">0</span> Impressions
-                                &rarr; <span id="totalEnrollments">0</span> Enrollments</p>
+                        <h4>Pathway Completion Rate</h4>
+                        <div style="font-size: 3.5rem; color: var(--color-golden); margin: 20px 0;" id="avgProgress">0%
                         </div>
-                        <div class="glass-card" style="padding: 25px; text-align: center;">
-                            <h4>Student Activity (Last 7 Days)</h4>
-                            <div style="font-size: 2.5rem; color: var(--color-success); margin: 10px 0;"
-                                id="activeRatio">0/0</div>
-                            <p style="font-size: 0.8rem; color: #666;">Active seekers vs. total registrations</p>
+                        <p style="color: var(--color-text-secondary);">Average progress across all sacred learning
+                            paths.
+                        </p>
+                    </div>
+                </section>
+
+                <!-- USERS SECTION -->
+                <section id="usersSection" style="display: none;">
+                    <!-- Compact Header with Tabs on the Side -->
+                    <div class="user-header-compact">
+                        <div>
+                            <h1>User Management</h1>
+                            <p>System Command Center</p>
+                        </div>
+                        <div class="tabs">
+                            <button class="tab-btn active" onclick="switchUserTab('Student')">Students</button>
+                            <button class="tab-btn" onclick="switchUserTab('Staff')">Staff</button>
                         </div>
                     </div>
-                </div>
-                <div class="glass-card" style="padding: 30px;">
-                    <h4>Pathway Completion Rate</h4>
-                    <div style="font-size: 3.5rem; color: var(--color-golden); margin: 20px 0;" id="avgProgress">0%
+
+                    <!-- Search & Filter Controls -->
+                    <div class="glass-card"
+                        style="padding: 15px; margin-bottom: 20px; display: flex; gap: 15px; align-items: center;">
+                        <div style="flex: 1; position: relative;">
+                            <i class="fas fa-search"
+                                style="position: absolute; left: 10px; top: 10px; color: #999;"></i>
+                            <input type="text" id="userSearchInput" class="form-control"
+                                placeholder="Search by Name, Email, or ID..."
+                                style="padding-left: 35px; width: 100%; box-sizing: border-box;"
+                                onkeyup="debounceLoadUsers()">
+                        </div>
+                        <div style="width: 200px;">
+                            <select id="userStatusFilter" class="form-control"
+                                onchange="loadUserManagement(currentUserRoleView)">
+                                <option value="">All Status</option>
+                                <option value="active">Active Only</option>
+                                <option value="inactive">Inactive Only</option>
+                            </select>
+                        </div>
                     </div>
-                    <p style="color: var(--color-text-secondary);">Average progress across all sacred learning paths.
-                    </p>
-                </div>
-            </section>
 
-            <!-- USERS SECTION -->
-            <section id="usersSection" style="display: none;">
-                <div class="tabs" style="margin-bottom: 20px; border-bottom: 1px solid #ddd;">
-                    <button class="tab-btn active" onclick="switchUserTab('Student')">Students</button>
-                    <button class="tab-btn" onclick="switchUserTab('Staff')">Staff</button>
-                    <button class="btn-primary" style="float: right; padding: 8px 15px;" onclick="openAddUserModal()">+
-                        Add New User</button>
-                </div>
-
-                <!-- Search & Filter Controls -->
-                <div class="glass-card"
-                    style="padding: 15px; margin-bottom: 20px; display: flex; gap: 15px; align-items: center;">
-                    <div style="flex: 1; position: relative;">
-                        <i class="fas fa-search" style="position: absolute; left: 10px; top: 10px; color: #999;"></i>
-                        <input type="text" id="userSearchInput" class="form-control"
-                            placeholder="Search by Name, Email, or ID..."
-                            style="padding-left: 35px; width: 100%; box-sizing: border-box;"
-                            onkeyup="debounceLoadUsers()">
+                    <div id="userListContainer" style="flex: 1; overflow-y: auto;">
+                        <!-- User Table loads here -->
                     </div>
-                    <div style="width: 200px;">
-                        <select id="userStatusFilter" class="form-control"
-                            onchange="loadUserManagement(currentUserRoleView)">
-                            <option value="">All Status</option>
-                            <option value="active">Active Only</option>
-                            <option value="inactive">Inactive Only</option>
-                        </select>
+                </section>
+
+                <!-- COURSES SECTION -->
+                <section id="coursesSection" style="display: none;">
+                    <div class="tabs" style="margin-bottom: 20px; border-bottom: 1px solid #ddd;">
+                        <button class="tab-btn active" onclick="showCourseSubSection('queue')">Approval Queue</button>
+                        <button class="tab-btn" onclick="showCourseSubSection('certificates')">Certificates</button>
+                        <button class="tab-btn" onclick="showCourseSubSection('override')">Manual Enrollment</button>
                     </div>
-                </div>
 
-                <div id="userListContainer">
-                    <!-- User Table loads here -->
-                </div>
-            </section>
+                    <div id="courseQueueSub" class="sub-section">
+                        <div id="pendingQueue"></div>
+                    </div>
 
-            <!-- COURSES SECTION -->
-            <section id="coursesSection" style="display: none;">
-                <div class="tabs" style="margin-bottom: 20px; border-bottom: 1px solid #ddd;">
-                    <button class="tab-btn active" onclick="showCourseSubSection('queue')">Approval Queue</button>
-                    <button class="tab-btn" onclick="showCourseSubSection('certificates')">Certificates</button>
-                    <button class="tab-btn" onclick="showCourseSubSection('override')">Manual Enrollment</button>
-                </div>
+                    <div id="courseCertSub" class="sub-section" style="display: none;">
+                        <div id="certificatesList"></div>
+                    </div>
 
-                <div id="courseQueueSub" class="sub-section">
-                    <div id="pendingQueue"></div>
-                </div>
+                    <div id="courseOverrideSub" class="sub-section" style="display: none;">
+                        <div class="glass-card" style="padding: 30px; max-width: 600px;">
+                            <h3>Manual Override</h3>
+                            <form id="overrideForm">
+                                <div class="form-group">
+                                    <label>Seeker Email</label>
+                                    <input type="email" name="studentEmail" class="form-control"
+                                        placeholder="seeker@example.com" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Select Pathway</label>
+                                    <select name="courseID" id="overrideCourseSelect" class="form-control"
+                                        required></select>
+                                </div>
+                                <button type="submit" class="btn-primary">Grant Access</button>
+                            </form>
+                        </div>
+                    </div>
+                </section>
 
-                <div id="courseCertSub" class="sub-section" style="display: none;">
-                    <div id="certificatesList"></div>
-                </div>
+                <!-- CONTENT SECTION -->
+                <section id="contentSection" style="display: none;">
+                    <div class="tabs" style="margin-bottom: 20px; border-bottom: 1px solid #ddd;">
+                        <button class="tab-btn active" onclick="showContentSubSection('banners')">Banners</button>
+                        <button class="tab-btn" onclick="showContentSubSection('blogs')">Blogs</button>
+                        <button class="tab-btn" onclick="showContentSubSection('events')">Events</button>
+                    </div>
 
-                <div id="courseOverrideSub" class="sub-section" style="display: none;">
+                    <div id="contentBannersSub" class="sub-section">
+                        <div class="glass-card" style="padding: 20px; margin-bottom: 20px;">
+                            <form id="bannerForm">
+                                <div style="display: flex; gap: 10px;">
+                                    <input type="text" name="title" class="form-control" placeholder="Title" required>
+                                    <input type="text" name="link" class="form-control" placeholder="Link">
+                                    <input type="file" name="file" class="form-control" required>
+                                    <button type="submit" class="btn-primary">Add Banner</button>
+                                </div>
+                            </form>
+                        </div>
+                        <div id="bannerList"></div>
+                    </div>
+
+                    <div id="contentBlogsSub" class="sub-section" style="display: none;">
+                        <div class="glass-card" style="padding: 30px; max-width: 800px;">
+                            <form id="blogForm">
+                                <h3>Publish Blog</h3>
+                                <div class="form-group">
+                                    <label>Title</label>
+                                    <input type="text" name="title" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Content</label>
+                                    <textarea name="content" class="form-control" rows="5" required></textarea>
+                                </div>
+                                <button type="submit" class="btn-primary">Publish</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div id="contentEventsSub" class="sub-section" style="display: none;">
+                        <div class="glass-card" style="padding: 30px; max-width: 800px;">
+                            <form id="eventForm">
+                                <h3>Create Event</h3>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                    <div class="form-group"><label>Title</label><input type="text" name="title"
+                                            class="form-control" required></div>
+                                    <div class="form-group"><label>Date</label><input type="date" name="date"
+                                            class="form-control" required></div>
+                                </div>
+                                <button type="submit" class="btn-primary">Create Event</button>
+                            </form>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- FINANCE SECTION -->
+                <section id="financeSection" style="display: none;">
+                    <h3 style="margin-bottom: 20px;">Financial Ledger</h3>
+                    <div class="glass-card" style="padding: 0; overflow: hidden;">
+                        <div style="max-height: 600px; overflow-y: auto;">
+                            <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                                <thead style="background: rgba(0,0,0,0.02); position: sticky; top: 0;">
+                                    <tr>
+                                        <th style="padding: 15px;">Transaction</th>
+                                        <th style="padding: 15px;">Seeker</th>
+                                        <th style="padding: 15px;">Path</th>
+                                        <th style="padding: 15px;">Amount</th>
+                                        <th style="padding: 15px;">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ledgerList"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SETTINGS SECTION -->
+                <section id="settingsSection" style="display: none;">
+                    <h3>System Broadcast</h3>
                     <div class="glass-card" style="padding: 30px; max-width: 600px;">
-                        <h3>Manual Override</h3>
-                        <form id="overrideForm">
+                        <form id="broadcastForm">
                             <div class="form-group">
-                                <label>Seeker Email</label>
-                                <input type="email" name="studentEmail" class="form-control"
-                                    placeholder="seeker@example.com" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Select Pathway</label>
-                                <select name="courseID" id="overrideCourseSelect" class="form-control"
-                                    required></select>
-                            </div>
-                            <button type="submit" class="btn-primary">Grant Access</button>
-                        </form>
-                    </div>
-                </div>
-            </section>
-
-            <!-- CONTENT SECTION -->
-            <section id="contentSection" style="display: none;">
-                <div class="tabs" style="margin-bottom: 20px; border-bottom: 1px solid #ddd;">
-                    <button class="tab-btn active" onclick="showContentSubSection('banners')">Banners</button>
-                    <button class="tab-btn" onclick="showContentSubSection('blogs')">Blogs</button>
-                    <button class="tab-btn" onclick="showContentSubSection('events')">Events</button>
-                </div>
-
-                <div id="contentBannersSub" class="sub-section">
-                    <div class="glass-card" style="padding: 20px; margin-bottom: 20px;">
-                        <form id="bannerForm">
-                            <div style="display: flex; gap: 10px;">
-                                <input type="text" name="title" class="form-control" placeholder="Title" required>
-                                <input type="text" name="link" class="form-control" placeholder="Link">
-                                <input type="file" name="file" class="form-control" required>
-                                <button type="submit" class="btn-primary">Add Banner</button>
-                            </div>
-                        </form>
-                    </div>
-                    <div id="bannerList"></div>
-                </div>
-
-                <div id="contentBlogsSub" class="sub-section" style="display: none;">
-                    <div class="glass-card" style="padding: 30px; max-width: 800px;">
-                        <form id="blogForm">
-                            <h3>Publish Blog</h3>
-                            <div class="form-group">
-                                <label>Title</label>
-                                <input type="text" name="title" class="form-control" required>
+                                <label>Broadcast Title</label>
+                                <input type="text" name="title" class="form-control" placeholder="Announcement Title"
+                                    required>
                             </div>
                             <div class="form-group">
-                                <label>Content</label>
-                                <textarea name="content" class="form-control" rows="5" required></textarea>
+                                <label>Message Content</label>
+                                <textarea name="message" class="form-control" rows="5" placeholder="Message..."
+                                    required></textarea>
                             </div>
-                            <button type="submit" class="btn-primary">Publish</button>
+                            <div class="form-group"
+                                style="display: flex; gap: 10px; align-items: center; margin-bottom: 25px;">
+                                <input type="checkbox" name="sendEmail" id="sendEmail" style="width: auto;">
+                                <label for="sendEmail" style="margin: 0; font-size: 0.85rem;">Send Email
+                                    Newsletter</label>
+                            </div>
+                            <button type="submit" class="btn-primary">Send Broadcast</button>
                         </form>
                     </div>
-                </div>
-
-                <div id="contentEventsSub" class="sub-section" style="display: none;">
-                    <div class="glass-card" style="padding: 30px; max-width: 800px;">
-                        <form id="eventForm">
-                            <h3>Create Event</h3>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                                <div class="form-group"><label>Title</label><input type="text" name="title"
-                                        class="form-control" required></div>
-                                <div class="form-group"><label>Date</label><input type="date" name="date"
-                                        class="form-control" required></div>
-                            </div>
-                            <button type="submit" class="btn-primary">Create Event</button>
-                        </form>
-                    </div>
-                </div>
-            </section>
-
-            <!-- FINANCE SECTION -->
-            <section id="financeSection" style="display: none;">
-                <h3 style="margin-bottom: 20px;">Financial Ledger</h3>
-                <div class="glass-card" style="padding: 0; overflow: hidden;">
-                    <div style="max-height: 600px; overflow-y: auto;">
-                        <table style="width: 100%; border-collapse: collapse; text-align: left;">
-                            <thead style="background: rgba(0,0,0,0.02); position: sticky; top: 0;">
-                                <tr>
-                                    <th style="padding: 15px;">Transaction</th>
-                                    <th style="padding: 15px;">Seeker</th>
-                                    <th style="padding: 15px;">Path</th>
-                                    <th style="padding: 15px;">Amount</th>
-                                    <th style="padding: 15px;">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody id="ledgerList"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
-            <!-- SETTINGS SECTION -->
-            <section id="settingsSection" style="display: none;">
-                <h3>System Broadcast</h3>
-                <div class="glass-card" style="padding: 30px; max-width: 600px;">
-                    <form id="broadcastForm">
-                        <div class="form-group">
-                            <label>Broadcast Title</label>
-                            <input type="text" name="title" class="form-control" placeholder="Announcement Title"
-                                required>
-                        </div>
-                        <div class="form-group">
-                            <label>Message Content</label>
-                            <textarea name="message" class="form-control" rows="5" placeholder="Message..."
-                                required></textarea>
-                        </div>
-                        <div class="form-group"
-                            style="display: flex; gap: 10px; align-items: center; margin-bottom: 25px;">
-                            <input type="checkbox" name="sendEmail" id="sendEmail" style="width: auto;">
-                            <label for="sendEmail" style="margin: 0; font-size: 0.85rem;">Send Email Newsletter</label>
-                        </div>
-                        <button type="submit" class="btn-primary">Send Broadcast</button>
-                    </form>
-                </div>
-            </section>
+                </section>
         </main>
     </div>
 
@@ -594,11 +800,15 @@
     </div>
 
     <!-- COMPREHENSIVE EDIT MODAL -->
+    <!-- COMPREHENSIVE EDIT MODAL -->
     <div id="editUserModal" class="modal"
-        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; overflow-y: auto;">
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; align-items: center; justify-content: center; overflow-y: auto;">
+        <!-- Added max-height and overflow-y to the inner card to handle small screens/large content -->
         <div class="glass-card"
-            style="background: white; padding: 30px; border-radius: 15px; width: 600px; margin: 50px 0; position: relative;">
-            <h3 style="margin-bottom: 10px;">Edit User Details</h3>
+            style="background: white; padding: 40px; border-radius: 15px; width: 650px; margin: 20px; position: relative; max-height: 90vh; overflow-y: auto;">
+            <span class="close-modal-x"
+                onclick="document.getElementById('editUserModal').style.display='none'">&times;</span>
+            <h3 style="margin-bottom: 5px;">Edit User Details</h3>
             <p id="auditInfo" style="font-size: 0.8rem; color: #999; margin-bottom: 20px; font-style: italic;">Last
                 Edited By: System</p>
 
@@ -716,11 +926,40 @@
         </div>
     </div>
 
+    <!-- Fixed Add User Button (Bottom Left) -->
+    <button class="add-user-btn" onclick="openAddUserModal()" title="Add New User">
+        <i class="fas fa-plus"></i>
+        <span>Add New User</span>
+    </button>
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="../js/auth.js"></script>
     <script src="../js/utils.js"></script>
     <script src="../js/admin.js"></script>
     <script src="../js/chatbot.js"></script>
+    <!-- Disable Confirmation Modal -->
+    <div id="disableConfirmModal" class="modal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 3000; align-items: center; justify-content: center;">
+        <div class="glass-card"
+            style="background: white; padding: 30px; border-radius: 15px; width: 450px; text-align: center;">
+            <i class="fas fa-user-slash"
+                style="font-size: 2.5rem; color: var(--color-warning); margin-bottom: 15px;"></i>
+            <h3 style="color: #333; margin-bottom: 10px;">Confirm Deactivation</h3>
+
+            <p style="color: #666; margin-bottom: 20px; font-size: 0.95rem; line-height: 1.5;">
+                By disabling ID: <span id="disableTargetID" style="font-weight: bold; color: #333;">...</span> <br>
+                The user will remain in the database but will <b>not be able to access the platform</b>. <br>
+                You can reactivate this account anytime.
+            </p>
+
+            <div style="display: flex; gap: 15px; margin-top: 25px;">
+                <button id="confirmDisableBtn" class="btn-primary"
+                    style="background: var(--color-warning); flex: 1;">Confirm Disable</button>
+                <button onclick="document.getElementById('disableConfirmModal').style.display='none'"
+                    class="btn-primary" style="background: #ccc; flex: 1;">Cancel</button>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>

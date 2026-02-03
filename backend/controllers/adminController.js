@@ -357,6 +357,9 @@ exports.updateUser = async (req, res) => {
         // Audit Trail
         user.lastEditedBy = adminRole;
         user.lastEditedAt = new Date();
+
+        if (!user.auditHistory) user.auditHistory = []; // Initialize if missing
+
         user.auditHistory.push({
             action: 'Edit',
             performedBy: adminRole,
@@ -407,6 +410,9 @@ exports.toggleUserStatus = async (req, res) => {
         // Audit
         user.lastEditedBy = 'Admin';
         user.lastEditedAt = new Date();
+
+        if (!user.auditHistory) user.auditHistory = []; // Initialize if missing
+
         user.auditHistory.push({
             action: newStatus ? 'Activate' : 'Deactivate',
             performedBy: 'Admin',

@@ -32,7 +32,15 @@ function switchSection(section) {
     // Show target section
     const target = document.getElementById(section + 'Section');
     if (target) {
-        target.style.display = 'block';
+        if (section === 'users') {
+            target.classList.add('active-flex'); // Use flex for users section
+            // We don't set style.display = 'block' here to avoid conflict, 
+            // or we rely on the !important in CSS for active-flex
+            target.style.display = 'flex';
+        } else {
+            target.style.display = 'block';
+            target.classList.remove('active-flex');
+        }
         target.classList.add('fade-in');
     }
 
@@ -163,9 +171,11 @@ async function loadUserManagement(role) {
         }
 
         container.innerHTML = `
-            <table style="width: 100%; border-collapse: collapse; text-align: left; background: white; border-radius: 10px; overflow: hidden;">
-                <thead style="background: #f8f8f8; border-bottom: 2px solid #eee;">
+            <table class="data-table" style="width: 100%; border-collapse: separate; border-spacing: 0;">
+                <thead>
                     <tr>
+                        <th style="padding: 15px; width: 50px;">S.No</th>
+                        <th style="padding: 15px; width: 60px;">Profile</th>
                         <th style="padding: 15px;">Name</th>
                         <th style="padding: 15px;">ID</th>
                         <th style="padding: 15px;">Email</th>
@@ -174,8 +184,17 @@ async function loadUserManagement(role) {
                     </tr>
                 </thead>
                 <tbody>
-                    ${users.map(u => `
-                        <tr style="border-bottom: 1px solid #eee;">
+                    ${users.map((u, index) => `
+                        <tr>
+                            <td style="padding: 15px; color: #666;">${index + 1}</td>
+                            <td style="padding: 15px;">
+                                <div style="width: 40px; height: 40px; border-radius: 50%; overflow: hidden; background: #eee; display: flex; align-items: center; justify-content: center;">
+                                    ${u.profilePic ?
+                `<img src="${u.profilePic}" style="width: 100%; height: 100%; object-fit: cover;">` :
+                `<i class="fas fa-user" style="color: #ccc;"></i>`
+            }
+                                </div>
+                            </td>
                             <td style="padding: 15px;">
                                 <div style="font-weight: 600;">${u.name}</div>
                                 <small style="color: #999;">${u.role}</small>
@@ -191,7 +210,7 @@ async function loadUserManagement(role) {
                                 <button class="btn-primary" style="padding: 5px 10px; font-size: 0.7rem; background: #337ab7; margin-right: 5px;" onclick='openEditUserModal(${JSON.stringify(u).replace(/'/g, "&#39;")})'>
                                     <i class="fas fa-edit"></i> Edit
                                 </button>
-                                <button class="btn-primary" style="padding: 5px 10px; font-size: 0.7rem; background: ${u.active ? '#f0ad4e' : '#5cb85c'}; margin-right: 5px;" onclick="toggleUserStatus('${u._id}')">
+                                <button class="btn-primary" style="padding: 5px 10px; font-size: 0.7rem; background: ${u.active ? '#f0ad4e' : '#5cb85c'}; margin-right: 5px;" onclick="requestToggleStatus('${u._id}', '${u.studentID || ''}', '${u.role}', ${u.active})">
                                     ${u.active ? 'Disable' : 'Enable'}
                                 </button>
                                 <button class="btn-primary" style="padding: 5px 10px; font-size: 0.7rem; background: #d9534f;" onclick="requestDeleteUser('${u._id}', '${u.studentID || ''}')">
@@ -219,7 +238,15 @@ function debounceLoadUsers() {
     }, 500);
 }
 
+// Step Control for Add User
+function nextStep(step) {
+    document.querySelectorAll('.form-step').forEach(el => el.style.display = 'none');
+    document.getElementById(`step${step}`).style.display = 'block';
+}
+
 function openAddUserModal() {
+    document.getElementById('addUserForm').reset();
+    nextStep(1); // Reset to step 1
     document.getElementById('addUserModal').style.display = 'flex';
 }
 
@@ -228,7 +255,84 @@ function openEditUserModal(user) {
     document.getElementById('editUserName').value = user.name;
     document.getElementById('editUserEmail').value = user.email;
     document.getElementById('editUserPhone').value = user.phone || '';
+    document.getElementById('editUserRole').value = user.role;
+
+    // Extended Details (Safe access)
+    if (user.fatherName) document.getElementById('editFatherName').value = user.fatherName;
+    if (user.motherName) document.getElementById('editMotherName').value = user.motherName;
+    if (user.address) {
+        document.getElementById('editTown').value = user.address.town || '';
+        document.getElementById('editState').value = user.address.state || '';
+    }
+
+    // Audit Info
+    const auditText = user.lastEditedBy
+        ? `Last Edited By: ${user.lastEditedBy} on ${new Date(user.lastEditedAt).toLocaleString()}`
+        : 'No edit history available';
+    document.getElementById('auditInfo').textContent = auditText;
+
     document.getElementById('editUserModal').style.display = 'flex';
+}
+
+// Global variables for delete logic
+let targetDeleteID = null;
+
+function requestDeleteUser(id, studentID) {
+    targetDeleteID = id;
+    const displayID = studentID || 'NO-ID-ASSIGNED';
+    document.getElementById('deleteTargetID').textContent = displayID;
+    document.getElementById('deleteIDInput').value = '';
+    document.getElementById('deleteReason').value = '';
+    document.getElementById('deleteConfirmModal').style.display = 'flex';
+
+    // Store expected value for validation
+    document.getElementById('deleteConfirmModal').dataset.expectedId = displayID;
+}
+
+async function confirmDeleteAction() {
+    const inputID = document.getElementById('deleteIDInput').value.trim();
+    const expectedID = document.getElementById('deleteConfirmModal').dataset.expectedId;
+    const reason = document.getElementById('deleteReason').value;
+
+    if (inputID !== expectedID) {
+        UI.error('ID does not match! Deletion aborted.');
+        return;
+    }
+
+    if (reason.length < 10) {
+        UI.error('Please provide a valid reason (min 10 chars).');
+        return;
+    }
+
+    try {
+        UI.showLoader();
+        const res = await fetch(`${Auth.apiBase}/admin/users/${targetDeleteID}`, {
+            method: 'DELETE',
+            headers: Auth.getHeaders(),
+            body: JSON.stringify({ reason, confirmID: inputID })
+        });
+
+        if (res.ok) {
+            UI.success('User permanently deleted.');
+            closeDeleteModal();
+            loadUserManagement(currentUserRoleView);
+        } else {
+            UI.error('Deletion failed.');
+        }
+    } catch (err) { UI.error('Network error.'); }
+    finally { UI.hideLoader(); }
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteConfirmModal').style.display = 'none';
+    targetDeleteID = null;
+}
+
+function suggestionDeactivate() {
+    if (targetDeleteID) {
+        toggleUserStatus(targetDeleteID);
+        closeDeleteModal();
+    }
 }
 
 function toggleStudentFields(role) {
@@ -295,19 +399,47 @@ async function submitEditUser() {
     }
 }
 
-async function toggleUserStatus(id) {
+async function toggleUserStatus(id, reason = '') {
     try {
         UI.showLoader();
         const res = await fetch(`${Auth.apiBase}/admin/users/${id}/status`, {
             method: 'PATCH',
-            headers: Auth.getHeaders()
+            headers: Auth.getHeaders(),
+            body: JSON.stringify({ reason }) // Send reason (required by backend)
         });
         if (res.ok) {
             UI.success('Status updated.');
             loadUserManagement(currentUserRoleView);
+            // Hide modal if it's open
+            document.getElementById('disableConfirmModal').style.display = 'none';
+        } else {
+            const result = await res.json();
+            UI.error(result.message || 'Action failed');
         }
     } catch (err) { UI.error('Action failed.'); }
     finally { UI.hideLoader(); }
+}
+
+let targetDisableID = null;
+
+function requestToggleStatus(id, studentID, role, isActive) {
+    // If active, we are DISABLING -> Show Prompt
+    if (isActive) {
+        targetDisableID = id;
+        document.getElementById('disableTargetID').textContent = studentID || 'NO-ID';
+
+        // Setup the confirm button for this specific action
+        const confirmBtn = document.getElementById('confirmDisableBtn');
+        confirmBtn.onclick = () => {
+            // Hardcoded confirmation reason as requested ("simple confirmation")
+            toggleUserStatus(targetDisableID, 'Manual deactivation by Admin (Confirmed via Popup)');
+        };
+
+        document.getElementById('disableConfirmModal').style.display = 'flex';
+    } else {
+        // If inactive, we are ENABLING -> Direct Action (or prompt if desired, but user asked for Disable prompt)
+        toggleUserStatus(id, 'Re-activation by Admin');
+    }
 }
 
 async function deleteUser(id) {
