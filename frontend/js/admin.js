@@ -76,8 +76,11 @@ function switchSection(section) {
     if (section === 'finance') loadLedger();
     if (section === 'users') loadUserManagement(currentUserRoleView);
     if (section === 'courses') {
-        showCourseSubSection('queue');
-        loadOverrideCourses();
+        // Changed from 'queue' to 'manage' since tabs are removed
+        loadCourses();
+        // Logic for sub-section toggling is no longer needed as there's only one view
+        const manageSub = document.getElementById('courseManageSub');
+        if (manageSub) manageSub.style.display = 'flex';
     }
     if (section === 'content') {
         showContentSubSection('banners');

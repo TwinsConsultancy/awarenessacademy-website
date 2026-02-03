@@ -13,78 +13,94 @@
     <style>
         :root {
             --sidebar-width: 80px;
-            --sidebar-expanded: 250px;
+            /* Collapsed by default */
+            --sidebar-expanded: 260px;
+            /* Expanded Width */
         }
 
         body {
             display: flex;
-            /* Changed from block to flex to allow main-content to take remaining space */
             background-color: #fdfaf7;
-            /* Using existing background color */
             font-family: 'Poppins', sans-serif;
-            /* Using existing font */
             overflow-x: hidden;
-            /* Prevent body scroll */
             margin: 0;
-            /* Remove default body margin */
         }
 
         .dashboard-container {
             display: flex;
-            /* Changed from grid to flex to accommodate sticky sidebar */
             min-height: 100vh;
             width: 100%;
-            /* Ensure it takes full width */
         }
 
         /* Static Sidebar */
         .sidebar {
             width: var(--sidebar-width);
             background: white;
-            /* Using existing background color */
             border-right: 1px solid rgba(0, 0, 0, 0.05);
-            /* Using existing border */
             display: flex;
             flex-direction: column;
             padding: 20px 10px;
             transition: all 0.3s ease;
             z-index: 1000;
             position: sticky;
-            /* Make sidebar sticky */
             top: 0;
             height: 100vh;
-            /* Full height */
-            overflow-y: auto;
-            /* Scrollable if needed */
+            overflow-y: hidden;
+            /* Hide overflow to prevent text showing during transition */
         }
 
+        /* Hover Expansion */
         .sidebar:hover {
             width: var(--sidebar-expanded);
             align-items: flex-start;
+            /* Align contents to left when expanded */
             padding-left: 20px;
         }
 
-        .brand {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 40px;
-            height: 40px;
-            overflow: hidden;
-            white-space: nowrap;
-        }
-
+        /* Brand Text - Hidden by default */
         .brand-text {
             font-family: var(--font-heading);
             color: var(--color-golden);
             font-size: 1.2rem;
             margin-left: 10px;
             opacity: 0;
-            transition: opacity 0.2s;
+            display: none;
+            /* Removed from flow so it doesn't break layout */
+            transition: opacity 0.3s;
         }
 
         .sidebar:hover .brand-text {
+            display: inline-block;
             opacity: 1;
+        }
+
+        /* Link Text - Hidden by default */
+        .link-text {
+            margin-left: 15px;
+            opacity: 0;
+            display: none;
+        }
+
+        .sidebar:hover .link-text {
+            display: inline;
+            opacity: 1;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            /* Centered icon when collapsed */
+            margin-bottom: 40px;
+            height: 40px;
+            width: 100%;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        .sidebar:hover .brand {
+            justify-content: flex-start;
+            /* Left align when expanded */
         }
 
         .nav-menu {
@@ -109,7 +125,12 @@
             white-space: nowrap;
         }
 
-        .sidebar:hover .nav-link {
+        /* Adjusted slightly: only center if we wanted to (but we are expanded now) */
+        /* Since sidebar is wide (260px), we want flex-start usually? */
+        /* Original hover had flex-start. Main had center. */
+        /* I will default to flex-start since we made sidebar 260px fixed! */
+        /* Fixing the alignment to be Left Aligned by default */
+        .sidebar .nav-link {
             justify-content: flex-start;
             padding: 12px 15px;
         }
@@ -118,17 +139,6 @@
             font-size: 1.2rem;
             width: 25px;
             text-align: center;
-        }
-
-        .link-text {
-            margin-left: 15px;
-            opacity: 0;
-            display: none;
-        }
-
-        .sidebar:hover .link-text {
-            display: inline;
-            opacity: 1;
         }
 
         .nav-link:hover,
@@ -169,7 +179,6 @@
         .stats-row {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            /* Force 4 columns on desktop */
             gap: 20px;
             margin-bottom: 40px;
             width: 100%;
@@ -194,7 +203,6 @@
             font-size: 1.5rem;
         }
 
-        /* Responsive Breakpoints */
         @media (max-width: 1200px) {
             .stats-row {
                 grid-template-columns: repeat(2, 1fr);
@@ -213,7 +221,8 @@
             border-bottom: 1px solid #e0e0e0;
             padding: 12px 40px;
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-end;
+            /* Pushes content to the right corner */
             align-items: center;
             position: sticky;
             top: 0;
@@ -222,13 +231,21 @@
         }
 
         .top-header-brand {
-            display: flex;
+            display: none;
+            /* Hidden by default on desktop where Sidebar exists */
             align-items: center;
             gap: 10px;
             font-family: var(--font-heading);
             font-size: 1.2rem;
             color: var(--color-golden);
             font-weight: 700;
+        }
+
+        @media (max-width: 768px) {
+            .top-header-brand {
+                display: flex;
+                /* Show on mobile where sidebar might be hidden/collapsed */
+            }
         }
 
         .top-header-right {
@@ -724,22 +741,16 @@
                 <!-- COURSES SECTION -->
                 <!-- COURSES SECTION -->
                 <section id="coursesSection" style="display: none;">
-                    <!-- Header with Tabs (Right Side) -->
+                    <!-- Header with Tabs (Tabs Removed) -->
                     <div class="user-header-compact"
                         style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-shrink: 0;">
                         <div>
                             <h1>Course Management</h1>
                             <p>Curriculum & Content</p>
                         </div>
-                        <div class="tabs">
-                            <button class="tab-btn active" onclick="showCourseSubSection('manage')">Manage</button>
-                            <button class="tab-btn" onclick="showCourseSubSection('queue')">Queue</button>
-                            <button class="tab-btn" onclick="showCourseSubSection('certificates')">Certificates</button>
-                            <button class="tab-btn" onclick="showCourseSubSection('override')">Enroll</button>
-                        </div>
                     </div>
 
-                    <!-- Manage Sub-Section (Flex Container) -->
+                    <!-- Manage Section (Main Content) -->
                     <div id="courseManageSub" class="sub-section"
                         style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
 
@@ -774,34 +785,6 @@
                         <button id="addCourseFab" class="floating-add-btn" onclick="openCourseModal()">
                             <i class="fas fa-plus"></i> <span>Add New Course</span>
                         </button>
-                    </div>
-
-                    <div id="courseQueueSub" class="sub-section" style="display: none;">
-                        <div id="pendingQueue"></div>
-                    </div>
-
-                    <!-- Fixed ID: courseCertificatesSub -->
-                    <div id="courseCertificatesSub" class="sub-section" style="display: none;">
-                        <div id="certificatesList"></div>
-                    </div>
-
-                    <div id="courseOverrideSub" class="sub-section" style="display: none;">
-                        <div class="glass-card" style="padding: 30px; max-width: 600px;">
-                            <h3>Manual Override</h3>
-                            <form id="overrideForm">
-                                <div class="form-group">
-                                    <label>Seeker Email</label>
-                                    <input type="email" name="studentEmail" class="form-control"
-                                        placeholder="seeker@example.com" required>
-                                </div>
-                                <div class="form-group">
-                                    <label>Select Pathway</label>
-                                    <select name="courseID" id="overrideCourseSelect" class="form-control"
-                                        required></select>
-                                </div>
-                                <button type="submit" class="btn-primary">Grant Access</button>
-                            </form>
-                        </div>
                     </div>
                 </section>
 
