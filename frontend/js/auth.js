@@ -144,7 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (userRole === 'Staff') {
             checkEndpoint = `${Auth.apiBase}/staff/profile`;
         } else if (userRole === 'Student') {
-            checkEndpoint = `${Auth.apiBase}/progress/my`;
+            checkEndpoint = `${Auth.apiBase}/attendance/my`;
         } else if (userRole === 'Admin') {
             checkEndpoint = `${Auth.apiBase}/admin/stats`;
         }

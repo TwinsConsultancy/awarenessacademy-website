@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
 /* --- NAVIGATION --- */
 function switchSection(section) {
     // Hide all sections
-    ['overview', 'analytics', 'users', 'courses', 'content', 'finance', 'settings'].forEach(s => {
+    ['overview', 'analytics', 'users', 'courses', 'content', 'finance', 'tickets', 'settings'].forEach(s => {
         const el = document.getElementById(s + 'Section');
         if (el) el.style.display = 'none';
 
@@ -84,6 +84,10 @@ function switchSection(section) {
     }
     if (section === 'content') {
         showContentSubSection('banners');
+    }
+    if (section === 'tickets') {
+        loadTickets();
+        loadUnreadTicketCount();
     }
 }
 
@@ -1591,3 +1595,385 @@ function switchEditTab(tabName, buttonElement, tabIndex) {
 
 // Make switchEditTab globally available
 window.switchEditTab = switchEditTab;
+
+/* --- TICKETS MANAGEMENT --- */
+let ticketSearchTimeout;
+let currentTicketId = null;
+
+function debounceLoadTickets() {
+    clearTimeout(ticketSearchTimeout);
+    ticketSearchTimeout = setTimeout(loadTickets, 500);
+}
+
+async function loadTickets() {
+    const container = document.getElementById('ticketsListContainer');
+    const search = document.getElementById('ticketSearchInput')?.value || '';
+    const status = document.getElementById('ticketStatusFilter')?.value || '';
+    const priority = document.getElementById('ticketPriorityFilter')?.value || '';
+
+    container.innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">Loading tickets...</p>';
+
+    try {
+        const queryParams = new URLSearchParams();
+        if (search) queryParams.append('search', search);
+        if (status) queryParams.append('status', status);
+        if (priority) queryParams.append('priority', priority);
+
+        const url = `${Auth.apiBase}/tickets/admin/all?${queryParams}`;
+        const res = await fetch(url, { headers: Auth.getHeaders() });
+
+        if (!res.ok) {
+            throw new Error('Failed to fetch tickets');
+        }
+
+        const tickets = await res.json();
+
+        if (tickets.length === 0) {
+            container.innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">No tickets found.</p>';
+            return;
+        }
+
+        const statusColors = {
+            'Open': { bg: '#fff3cd', text: '#856404', icon: 'circle-notch' },
+            'In Progress': { bg: '#d1ecf1', text: '#0c5460', icon: 'spinner' },
+            'Resolved': { bg: '#d4edda', text: '#155724', icon: 'check-circle' },
+            'Closed': { bg: '#e2e3e5', text: '#383d41', icon: 'times-circle' }
+        };
+
+        const priorityColors = {
+            'Low': '#28a745',
+            'Medium': '#ffc107',
+            'High': '#fd7e14',
+            'Urgent': '#dc3545'
+        };
+
+        container.innerHTML = `
+            <table class="data-table" style="width: 100%; border-collapse: collapse;">
+                <thead style="background: #fafafa; position: sticky; top: 0; z-index: 10;">
+                    <tr>
+                        <th style="padding: 15px; text-align: left;">Ticket ID</th>
+                        <th style="padding: 15px; text-align: left;">User</th>
+                        <th style="padding: 15px; text-align: left;">Subject</th>
+                        <th style="padding: 15px; text-align: center;">Priority</th>
+                        <th style="padding: 15px; text-align: center;">Status</th>
+                        <th style="padding: 15px; text-align: center;">Last Updated</th>
+                        <th style="padding: 15px; text-align: center;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tickets.map(ticket => {
+                        const statusColor = statusColors[ticket.status] || statusColors['Open'];
+                        const priorityColor = priorityColors[ticket.priority] || priorityColors['Medium'];
+                        const isUnread = !ticket.isReadByAdmin;
+                        const creator = ticket.createdBy || { name: 'Unknown', role: 'N/A', studentID: null };
+                        
+                        return `
+                            <tr style="border-bottom: 1px solid #f0f0f0; ${isUnread ? 'background: #f8f9ff;' : ''}">
+                                <td style="padding: 15px;">
+                                    <div style="font-weight: 600; color: var(--color-primary); font-family: monospace;">
+                                        ${ticket.ticketID}
+                                        ${isUnread ? '<span style="color: var(--color-error); margin-left: 5px;">●</span>' : ''}
+                                    </div>
+                                </td>
+                                <td style="padding: 15px;">
+                                    <div style="font-weight: 600;">${creator.name}</div>
+                                    <small style="color: #666;">${creator.role} • ${creator.studentID || 'N/A'}</small>
+                                </td>
+                                <td style="padding: 15px;">
+                                    <div style="font-weight: 500;">${ticket.subject || 'No Subject'}</div>
+                                    <small style="color: #666;">${ticket.description ? (ticket.description.substring(0, 60) + (ticket.description.length > 60 ? '...' : '')) : 'No description'}</small>
+                                </td>
+                                <td style="padding: 15px; text-align: center;">
+                                    <span style="display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; background: ${priorityColor}15; color: ${priorityColor}; border: 1px solid ${priorityColor};">
+                                        ${ticket.priority}
+                                    </span>
+                                </td>
+                                <td style="padding: 15px; text-align: center;">
+                                    <span style="display: inline-flex; align-items: center; gap: 5px; padding: 4px 12px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; background: ${statusColor.bg}; color: ${statusColor.text};">
+                                        <i class="fas fa-${statusColor.icon}"></i>
+                                        ${ticket.status}
+                                    </span>
+                                </td>
+                                <td style="padding: 15px; text-align: center;">
+                                    <small style="color: #666;">${new Date(ticket.lastUpdated).toLocaleDateString()}</small>
+                                    <br>
+                                    <small style="color: #999;">${new Date(ticket.lastUpdated).toLocaleTimeString()}</small>
+                                </td>
+                                <td style="padding: 15px; text-align: center;">
+                                    <button class="btn-primary" onclick="viewTicketDetail('${ticket._id}')" style="padding: 6px 12px; font-size: 0.8rem;">
+                                        <i class="fas fa-eye"></i> View
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('')}
+                </tbody>
+            </table>
+        `;
+    } catch (error) {
+        console.error('Load tickets error:', error);
+        container.innerHTML = '<p style="text-align: center; color: var(--color-error); padding: 40px;">Failed to load tickets. Please try again.</p>';
+    }
+}
+
+async function viewTicketDetail(ticketId) {
+    currentTicketId = ticketId;
+    
+    try {
+        UI.showLoader();
+        const res = await fetch(`${Auth.apiBase}/tickets/${ticketId}`, { headers: Auth.getHeaders() });
+
+        if (!res.ok) {
+            throw new Error('Failed to fetch ticket details');
+        }
+
+        const ticket = await res.json();
+
+        // Mark as read
+        await fetch(`${Auth.apiBase}/tickets/${ticketId}/mark-read`, {
+            method: 'PATCH',
+            headers: Auth.getHeaders()
+        });
+
+        const statusColors = {
+            'Open': { bg: '#fff3cd', text: '#856404' },
+            'In Progress': { bg: '#d1ecf1', text: '#0c5460' },
+            'Resolved': { bg: '#d4edda', text: '#155724' },
+            'Closed': { bg: '#e2e3e5', text: '#383d41' }
+        };
+
+        const priorityColors = {
+            'Low': '#28a745',
+            'Medium': '#ffc107',
+            'High': '#fd7e14',
+            'Urgent': '#dc3545'
+        };
+
+        const statusColor = statusColors[ticket.status] || statusColors['Open'];
+        const priorityColor = priorityColors[ticket.priority] || priorityColors['Medium'];
+        const creator = ticket.createdBy || { name: 'Unknown', role: 'N/A', email: 'N/A' };
+
+        document.getElementById('ticketDetailContent').innerHTML = `
+            <!-- Header Info Card -->
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 25px; border-radius: 12px; margin-bottom: 20px; color: white; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                    <div>
+                        <label style="font-size: 0.8rem; opacity: 0.9; display: block; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px;">Ticket ID</label>
+                        <div style="font-weight: 700; font-family: monospace; font-size: 1.1rem;">${ticket.ticketID}</div>
+                    </div>
+                    <div>
+                        <label style="font-size: 0.8rem; opacity: 0.9; display: block; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px;">Created By</label>
+                        <div style="font-weight: 600;">${creator.name}</div>
+                        <small style="opacity: 0.9;">${creator.role} • ${creator.email}</small>
+                    </div>
+                    <div>
+                        <label style="font-size: 0.8rem; opacity: 0.9; display: block; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px;">Created On</label>
+                        <div style="font-weight: 600;">${new Date(ticket.createdAt).toLocaleString()}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subject and Status Controls -->
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #e9ecef;">
+                <div style="margin-bottom: 20px;">
+                    <label style="font-size: 0.85rem; color: #666; display: block; margin-bottom: 8px; font-weight: 600;">Subject</label>
+                    <div style="font-weight: 600; font-size: 1.1rem; color: #333;">${ticket.subject}</div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div>
+                        <label style="font-size: 0.85rem; color: #666; display: block; margin-bottom: 8px; font-weight: 600;">
+                            <i class="fas fa-flag"></i> Status
+                        </label>
+                        <select id="ticketStatusSelect" class="form-control" onchange="updateTicketStatus('${ticket._id}')" style="padding: 10px 12px; border-radius: 8px; border: 2px solid #e0e0e0; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+                            <option value="Open" ${ticket.status === 'Open' ? 'selected' : ''}>🔵 Open</option>
+                            <option value="In Progress" ${ticket.status === 'In Progress' ? 'selected' : ''}>🟡 In Progress</option>
+                            <option value="Resolved" ${ticket.status === 'Resolved' ? 'selected' : ''}>🟢 Resolved</option>
+                            <option value="Closed" ${ticket.status === 'Closed' ? 'selected' : ''}>⚫ Closed</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size: 0.85rem; color: #666; display: block; margin-bottom: 8px; font-weight: 600;">
+                            <i class="fas fa-exclamation-triangle"></i> Priority
+                        </label>
+                        <select id="ticketPrioritySelect" class="form-control" onchange="updateTicketPriority('${ticket._id}')" style="padding: 10px 12px; border-radius: 8px; border: 2px solid #e0e0e0; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+                            <option value="Low" ${ticket.priority === 'Low' ? 'selected' : ''}>🟢 Low</option>
+                            <option value="Medium" ${ticket.priority === 'Medium' ? 'selected' : ''}>🟡 Medium</option>
+                            <option value="High" ${ticket.priority === 'High' ? 'selected' : ''}>🟠 High</option>
+                            <option value="Urgent" ${ticket.priority === 'Urgent' ? 'selected' : ''}>🔴 Urgent</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Description Card -->
+            <div style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; border-left: 4px solid #667eea; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                <h4 style="margin: 0 0 12px 0; color: #333; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-align-left" style="color: #667eea;"></i>
+                    Description
+                </h4>
+                <p style="margin: 0; line-height: 1.7; color: #555; white-space: pre-wrap;">${ticket.description}</p>
+            </div>
+
+            <!-- Conversation Section -->
+            <div style="margin-bottom: 20px;">
+                <h4 style="margin: 0 0 15px 0; color: #333; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-comments" style="color: #667eea;"></i>
+                    Conversation History (${ticket.replies.length})
+                </h4>
+                <div style="max-height: 400px; overflow-y: auto; background: #f8f9fa; padding: 15px; border-radius: 12px; border: 1px solid #e9ecef;">
+                    ${ticket.replies.length === 0 ? '<div style="text-align: center; color: #999; padding: 40px;"><i class="fas fa-inbox" style="font-size: 3rem; opacity: 0.3; margin-bottom: 10px; display: block;"></i><p style="margin: 0;">No replies yet. Be the first to respond!</p></div>' : ''}
+                    ${ticket.replies.map(reply => {
+                        const replier = reply.repliedBy || { name: 'Unknown', role: 'N/A' };
+                        return `
+                        <div style="background: ${reply.isAdminReply ? 'linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%)' : 'white'}; padding: 18px; border-radius: 10px; margin-bottom: 12px; border-left: 4px solid ${reply.isAdminReply ? '#667eea' : '#cbd5e0'}; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                <div style="font-weight: 600; color: ${reply.isAdminReply ? '#667eea' : '#333'}; display: flex; align-items: center; gap: 8px;">
+                                    <div style="width: 32px; height: 32px; border-radius: 50%; background: ${reply.isAdminReply ? '#667eea' : '#cbd5e0'}; display: flex; align-items: center; justify-content: center; color: white;">
+                                        <i class="fas fa-${reply.isAdminReply ? 'user-shield' : 'user'}" style="font-size: 0.9rem;"></i>
+                                    </div>
+                                    <div>
+                                        <div>${replier.name}</div>
+                                        <small style="opacity: 0.7; font-weight: 400;">${reply.isAdminReply ? 'Administrator' : replier.role}</small>
+                                    </div>
+                                </div>
+                                <small style="color: #666; font-size: 0.85rem;">
+                                    <i class="fas fa-clock"></i> ${new Date(reply.repliedAt).toLocaleString()}
+                                </small>
+                            </div>
+                            <p style="margin: 0; line-height: 1.6; white-space: pre-wrap; color: #444;">${reply.message}</p>
+                        </div>
+                    `}).join('')}
+                </div>
+            </div>
+
+            <!-- Reply Form -->
+            <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 25px; border-radius: 12px; border: 2px dashed #cbd5e0;">
+                <h4 style="margin: 0 0 15px 0; color: #333; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-reply" style="color: #667eea;"></i>
+                    Add Your Reply
+                </h4>
+                <textarea id="adminReplyMessage" class="form-control" rows="4" placeholder="Type your reply here... (Shift+Enter for new line)" style="margin-bottom: 15px; border-radius: 8px; border: 2px solid #cbd5e0; padding: 12px; font-size: 0.95rem; resize: vertical;"></textarea>
+                <button onclick="sendAdminReply('${ticket._id}')" class="btn-primary" style="width: 100%; padding: 12px; border-radius: 8px; font-weight: 600; font-size: 1rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
+                    <i class="fas fa-paper-plane"></i> Send Reply
+                </button>
+            </div>
+        `;
+
+        document.getElementById('ticketDetailModal').style.display = 'flex';
+        loadUnreadTicketCount(); // Refresh unread count
+    } catch (error) {
+        console.error('View ticket error:', error);
+        UI.error('Failed to load ticket details');
+    } finally {
+        UI.hideLoader();
+    }
+}
+
+async function sendAdminReply(ticketId) {
+    const message = document.getElementById('adminReplyMessage').value.trim();
+
+    if (!message) {
+        UI.error('Please enter a reply message');
+        return;
+    }
+
+    try {
+        UI.showLoader();
+        const res = await fetch(`${Auth.apiBase}/tickets/${ticketId}/reply`, {
+            method: 'POST',
+            headers: Auth.getHeaders(),
+            body: JSON.stringify({ message })
+        });
+
+        if (!res.ok) {
+            throw new Error('Failed to send reply');
+        }
+
+        UI.success('Reply sent successfully');
+        viewTicketDetail(ticketId); // Refresh ticket details
+    } catch (error) {
+        console.error('Send reply error:', error);
+        UI.error('Failed to send reply');
+    } finally {
+        UI.hideLoader();
+    }
+}
+
+async function updateTicketStatus(ticketId) {
+    const status = document.getElementById('ticketStatusSelect').value;
+
+    try {
+        const res = await fetch(`${Auth.apiBase}/tickets/${ticketId}/status`, {
+            method: 'PATCH',
+            headers: Auth.getHeaders(),
+            body: JSON.stringify({ status })
+        });
+
+        if (!res.ok) {
+            throw new Error('Failed to update status');
+        }
+
+        UI.success('Status updated successfully');
+        loadTickets(); // Refresh ticket list
+    } catch (error) {
+        console.error('Update status error:', error);
+        UI.error('Failed to update status');
+    }
+}
+
+async function updateTicketPriority(ticketId) {
+    const priority = document.getElementById('ticketPrioritySelect').value;
+
+    try {
+        const res = await fetch(`${Auth.apiBase}/tickets/${ticketId}/priority`, {
+            method: 'PATCH',
+            headers: Auth.getHeaders(),
+            body: JSON.stringify({ priority })
+        });
+
+        if (!res.ok) {
+            throw new Error('Failed to update priority');
+        }
+
+        UI.success('Priority updated successfully');
+        loadTickets(); // Refresh ticket list
+    } catch (error) {
+        console.error('Update priority error:', error);
+        UI.error('Failed to update priority');
+    }
+}
+
+function closeTicketDetailModal() {
+    document.getElementById('ticketDetailModal').style.display = 'none';
+    currentTicketId = null;
+}
+
+async function loadUnreadTicketCount() {
+    try {
+        const res = await fetch(`${Auth.apiBase}/tickets/admin/unread-count`, { headers: Auth.getHeaders() });
+        
+        if (res.ok) {
+            const data = await res.json();
+            const badge = document.getElementById('ticketBadge');
+            
+            if (data.count > 0) {
+                badge.textContent = data.count;
+                badge.style.display = 'inline-block';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+    } catch (error) {
+        console.error('Load unread count error:', error);
+    }
+}
+
+// Load unread count on page load
+document.addEventListener('DOMContentLoaded', () => {
+    if (Auth.checkAuth(['Admin'])) {
+        loadUnreadTicketCount();
+        // Refresh unread count every 30 seconds
+        setInterval(loadUnreadTicketCount, 30000);
+    }
+});

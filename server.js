@@ -67,6 +67,9 @@ mongoose.connection.on('reconnected', () => {
 
 connectDB();
 
+// Preload all models to ensure they're registered before routes use them
+require('./backend/models/index');
+
 // Routes
 app.use('/api/auth', require('./backend/routes/auth'));
 app.use('/api/staff', require('./backend/routes/staff'));
@@ -85,6 +88,7 @@ app.use('/api/extra', require('./backend/routes/extra'));
 app.use('/api/analytics', require('./backend/routes/analytics'));
 app.use('/api/settings', require('./backend/routes/settings'));
 app.use('/api/uploads', require('./backend/routes/upload'));
+app.use('/api/tickets', require('./backend/routes/tickets'));
 
 // New modular content system routes
 app.use('/api', require('./backend/routes/modules'));

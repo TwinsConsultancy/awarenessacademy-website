@@ -10,9 +10,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const { user } = authData;
 
     // 2. Populate UI
-    document.getElementById('userName').textContent = user.name;
-    document.getElementById('welcomeName').textContent = user.name.split(' ')[0];
-    document.getElementById('userUID').textContent = user.studentID;
+    const welcomeNameEl = document.getElementById('welcomeName');
+    if (welcomeNameEl) welcomeNameEl.textContent = user.name.split(' ')[0];
 
     // Set student name and avatar in top header
     if (user) {
@@ -98,7 +97,8 @@ function switchSection(section) {
         if (link.getAttribute('onclick')?.includes(section)) link.classList.add('active');
     });
 
-    ['journey', 'timetable', 'payments', 'support', 'certificates', 'marketplace'].forEach(s => {
+    // Hide all sections including analyticsSection
+    ['journey', 'timetable', 'payments', 'tickets', 'support', 'certificates', 'marketplace', 'profile', 'analytics'].forEach(s => {
         const el = document.getElementById(s + 'Section');
         if (el) el.style.display = 'none';
     });
@@ -109,8 +109,10 @@ function switchSection(section) {
         target.classList.add('fade-in'); // Add a little transition class if exists
     }
 
+    // Load data for specific sections
     if (section === 'timetable') loadTimetable();
     if (section === 'payments') loadPayments();
+    if (section === 'tickets') loadMyTickets();
     if (section === 'support') loadTickets();
     if (section === 'certificates') loadCertificates();
     if (section === 'marketplace') loadMarketplace();
@@ -1069,6 +1071,275 @@ async function handleProfileUpload(input) {
     }
 }
 
+// ====== TICKET FUNCTIONS ======
+async function loadMyTickets() {
+    const container = document.getElementById('myTicketsContainer');
+    if (!container) return;
+    
+    container.innerHTML = '<div style="text-align: center; padding: 20px; color: #999;"><i class="fas fa-spinner fa-spin"></i> Loading tickets...</div>';
+
+    try {
+        const res = await fetch(`${Auth.apiBase}/tickets/my`, { headers: Auth.getHeaders() });
+        const tickets = await res.json();
+
+        if (tickets.length === 0) {
+            container.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #999;">
+                    <i class="fas fa-inbox" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.5;"></i>
+                    <p style="font-size: 1.1rem;">No tickets yet</p>
+                    <p style="font-size: 0.9rem;">Click "Create New Ticket" to get support</p>
+                </div>
+            `;
+            return;
+        }
+
+        const ticketCards = tickets.map(ticket => {
+            const statusClass = ticket.status === 'Open' ? 'status-open' : 
+                              ticket.status === 'In Progress' ? 'status-progress' : 'status-closed';
+            const priorityClass = ticket.priority === 'Urgent' ? 'priority-urgent' :
+                                ticket.priority === 'High' ? 'priority-high' :
+                                ticket.priority === 'Medium' ? 'priority-medium' : 'priority-low';
+            
+            const created = new Date(ticket.createdAt).toLocaleDateString('en-US', { 
+                month: 'short', day: 'numeric', year: 'numeric' 
+            });
+
+            return `
+                <div class="ticket-card" onclick="viewStudentTicket('${ticket._id}')" style="cursor: pointer; transition: all 0.3s;">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+                        <div style="flex: 1;">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+                                <span style="font-weight: 600; color: #333; font-size: 0.95rem;">Ticket #${ticket.ticketID || 'N/A'}</span>
+                                <span class="${priorityClass}" style="padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">${ticket.priority || 'Medium'}</span>
+                            </div>
+                            <h4 style="margin: 0; color: var(--color-primary); font-size: 1.1rem;">${ticket.subject}</h4>
+                        </div>
+                        <span class="${statusClass}" style="padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; white-space: nowrap;">${ticket.status}</span>
+                    </div>
+                    <p style="color: #666; margin: 0 0 12px 0; font-size: 0.9rem; line-height: 1.5; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${ticket.description}</p>
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #f0f0f0;">
+                        <span style="font-size: 0.85rem; color: #999;">
+                            <i class="far fa-calendar"></i> ${created}
+                        </span>
+                        ${ticket.replies && ticket.replies.length > 0 ? `<span style="font-size: 0.85rem; color: #667eea;"><i class="far fa-comment"></i> Last reply: ${new Date(ticket.lastUpdated).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>` : ''}
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        container.innerHTML = ticketCards;
+    } catch (err) {
+        container.innerHTML = `
+            <div style="text-align: center; padding: 40px; color: #e74c3c;">
+                <i class="fas fa-exclamation-circle" style="font-size: 3rem; margin-bottom: 15px;"></i>
+                <p>Failed to load tickets</p>
+            </div>
+        `;
+    }
+}
+
+function openCreateTicketModal() {
+    document.getElementById('createTicketModal').style.display = 'flex';
+    document.getElementById('ticketSubject').value = '';
+    document.getElementById('ticketDescription').value = '';
+}
+
+function closeCreateTicketModal() {
+    document.getElementById('createTicketModal').style.display = 'none';
+}
+
+async function handleCreateTicket(e) {
+    e.preventDefault();
+    
+    const subject = document.getElementById('ticketSubject').value;
+    const description = document.getElementById('ticketDescription').value;
+
+    if (!subject || !description) {
+        if (typeof UI !== 'undefined' && UI.showToast) {
+            UI.showToast('Please fill all fields', 'error');
+        } else {
+            alert('Please fill all fields');
+        }
+        return;
+    }
+
+    try {
+        const res = await fetch(`${Auth.apiBase}/tickets`, {
+            method: 'POST',
+            headers: Auth.getHeaders(),
+            body: JSON.stringify({ subject, description })
+        });
+
+        if (!res.ok) throw new Error('Failed to create ticket');
+
+        if (typeof UI !== 'undefined' && UI.showToast) {
+            UI.showToast('Ticket created successfully!', 'success');
+        } else {
+            alert('Ticket created successfully!');
+        }
+        
+        closeCreateTicketModal();
+        
+        // Ensure we're on tickets section and reload immediately
+        if (typeof switchSection === 'function') {
+            switchSection('tickets');
+        }
+        await loadMyTickets(); // Await to ensure instant update
+    } catch (err) {
+        if (typeof UI !== 'undefined' && UI.showToast) {
+            UI.showToast('Failed to create ticket', 'error');
+        } else {
+            alert('Failed to create ticket');
+        }
+    }
+}
+
+async function viewStudentTicket(ticketId) {
+    const modal = document.getElementById('viewTicketModal');
+    const content = document.getElementById('viewTicketContent');
+    
+    content.innerHTML = '<div style="text-align: center; padding: 40px;"><i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--color-primary);"></i></div>';
+    modal.style.display = 'flex';
+
+    try {
+        const res = await fetch(`${Auth.apiBase}/tickets/${ticketId}`, { headers: Auth.getHeaders() });
+        const ticket = await res.json();
+
+        const statusClass = ticket.status === 'Open' ? 'status-open' : 
+                          ticket.status === 'In Progress' ? 'status-progress' : 'status-closed';
+        const priorityClass = ticket.priority === 'Urgent' ? 'priority-urgent' :
+                            ticket.priority === 'High' ? 'priority-high' :
+                            ticket.priority === 'Medium' ? 'priority-medium' : 'priority-low';
+
+        const replies = ticket.replies || [];
+        const conversationHTML = replies.map(reply => {
+            const replier = reply.repliedBy || { name: 'Unknown', role: 'N/A' };
+            const isStudent = replier.role === 'Student';
+            const isAdmin = replier.role === 'Admin';
+            
+            return `
+                <div style="display: flex; gap: 15px; margin-bottom: 20px; ${isStudent ? 'flex-direction: row-reverse;' : ''}">
+                    <div style="width: 40px; height: 40px; border-radius: 50%; background: ${isStudent ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : isAdmin ? 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' : 'linear-gradient(135deg, #ffa726 0%, #fb8c00 100%)'}; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">
+                        ${replier.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div style="flex: 1; max-width: 70%;">
+                        <div style="background: ${isStudent ? '#f8f9ff' : isAdmin ? '#fff5f5' : '#fff8e1'}; padding: 15px; border-radius: 12px; border-left: 4px solid ${isStudent ? '#667eea' : isAdmin ? '#f5576c' : '#ffa726'};">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <strong style="color: #333;">${replier.name} <span style="font-size: 0.75rem; opacity: 0.7; font-weight: normal;">(${replier.role})</span></strong>
+                                <span style="font-size: 0.8rem; color: #999;">${new Date(reply.repliedAt).toLocaleString()}</span>
+                            </div>
+                            <p style="margin: 0; color: #666; line-height: 1.6;">${reply.message}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        content.innerHTML = `
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 25px; border-radius: 12px; margin-bottom: 25px; color: white;">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                            <span style="background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 15px; font-size: 0.85rem; font-weight: 600;">${ticket.ticketID || 'N/A'}</span>
+                            <span class="${priorityClass}" style="padding: 5px 12px; border-radius: 15px; font-size: 0.85rem; font-weight: 600; background: rgba(255,255,255,0.9); color: #333;">${ticket.priority || 'Medium'}</span>
+                        </div>
+                        <h3 style="margin: 0; font-size: 1.5rem;">${ticket.subject}</h3>
+                    </div>
+                    <span class="${statusClass}" style="padding: 8px 16px; border-radius: 20px; font-size: 0.9rem; font-weight: 600; background: rgba(255,255,255,0.9);">${ticket.status}</span>
+                </div>
+                <p style="margin: 0; opacity: 0.9; line-height: 1.6;">${ticket.description}</p>
+                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2); font-size: 0.9rem; opacity: 0.8;">
+                    <i class="far fa-calendar"></i> Created: ${new Date(ticket.createdAt).toLocaleString()}
+                </div>
+            </div>
+
+            <div style="margin-bottom: 25px;">
+                <h4 style="color: #333; margin-bottom: 20px; font-size: 1.2rem; display: flex; align-items: center; gap: 10px;">
+                    <i class="far fa-comments"></i>
+                    Conversation
+                </h4>
+                <div style="max-height: 400px; overflow-y: auto; padding-right: 10px;">
+                    ${conversationHTML || '<p style="text-align: center; color: #999; padding: 20px;">No replies yet</p>'}
+                </div>
+            </div>
+
+            ${ticket.status !== 'Closed' ? `
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 12px; border: 2px solid #e0e0e0;">
+                    <h4 style="margin: 0 0 15px 0; color: #333; font-size: 1.1rem;">Add Reply</h4>
+                    <textarea id="replyMessage" rows="4" placeholder="Type your message..." style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-family: inherit; resize: vertical;"></textarea>
+                    <button onclick="sendStudentReply('${ticketId}')" class="btn-primary" style="margin-top: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 12px 25px; border-radius: 8px; font-weight: 600;">
+                        <i class="fas fa-paper-plane"></i> Send Reply
+                    </button>
+                </div>
+            ` : '<div style="text-align: center; padding: 20px; background: #f8f9fa; border-radius: 8px; color: #999;">This ticket is closed. No further replies allowed.</div>'}
+        `;
+    } catch (err) {
+        content.innerHTML = `
+            <div style="text-align: center; padding: 40px; color: #e74c3c;">
+                <i class="fas fa-exclamation-circle" style="font-size: 2rem; margin-bottom: 15px;"></i>
+                <p>Failed to load ticket details</p>
+            </div>
+        `;
+    }
+}
+
+function closeViewTicketModal() {
+    document.getElementById('viewTicketModal').style.display = 'none';
+}
+
+async function sendStudentReply(ticketId) {
+    const messageTextarea = document.getElementById('replyMessage');
+    const message = messageTextarea.value.trim();
+    
+    if (!message) {
+        if (typeof UI !== 'undefined' && UI.showToast) {
+            UI.showToast('Please enter a message', 'error');
+        } else {
+            alert('Please enter a message');
+        }
+        return;
+    }
+
+    try {
+        const res = await fetch(`${Auth.apiBase}/tickets/${ticketId}/reply`, {
+            method: 'POST',
+            headers: Auth.getHeaders(),
+            body: JSON.stringify({ message })
+        });
+
+        if (!res.ok) throw new Error('Failed to send reply');
+
+        // Clear textarea immediately
+        messageTextarea.value = '';
+        
+        if (typeof UI !== 'undefined' && UI.showToast) {
+            UI.showToast('Reply sent successfully!', 'success');
+        } else {
+            alert('Reply sent successfully!');
+        }
+        
+        // Reload ticket to show new reply immediately
+        await viewStudentTicket(ticketId);
+        
+        // Also reload the tickets list to update last reply time
+        await loadMyTickets();
+    } catch (err) {
+        if (typeof UI !== 'undefined' && UI.showToast) {
+            UI.showToast('Failed to send reply', 'error');
+        } else {
+            alert('Failed to send reply');
+        }
+    }
+}
+
+// Setup create ticket form handler
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('createTicketForm');
+    if (form) {
+        form.addEventListener('submit', handleCreateTicket);
+    }
+});
+
 // Ensure exports are available
 window.switchSection = switchSection;
 window.handleProfileUpload = handleProfileUpload;
@@ -1084,3 +1355,9 @@ window.closeProfileModal = closeProfileModal;
 window.closeAffirmation = closeAffirmation;
 window.calculateAge = calculateAge;
 window.toggleSpouseFields = toggleSpouseFields;
+window.loadMyTickets = loadMyTickets;
+window.openCreateTicketModal = openCreateTicketModal;
+window.closeCreateTicketModal = closeCreateTicketModal;
+window.viewStudentTicket = viewStudentTicket;
+window.closeViewTicketModal = closeViewTicketModal;
+window.sendStudentReply = sendStudentReply;

@@ -5,7 +5,7 @@
 // Navigation function to switch between sections
 function switchSection(sectionName) {
     // Hide all sections
-    const sections = ['overviewSection', 'coursesSection', 'materialsSection', 'studentsSection', 'notificationsSection', 'liveSection', 'profileSection'];
+    const sections = ['overviewSection', 'coursesSection', 'materialsSection', 'studentsSection', 'notificationsSection', 'liveSection', 'ticketsSection', 'profileSection'];
     sections.forEach(id => {
         const section = document.getElementById(id);
         if (section) section.style.display = 'none';
@@ -34,6 +34,8 @@ function switchSection(sectionName) {
         loadNotifications();
     } else if (sectionName === 'live') {
         loadSchedules();
+    } else if (sectionName === 'tickets') {
+        loadMyTickets();
     } else if (sectionName === 'profile') {
         loadProfile();
     }
@@ -1445,4 +1447,238 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('materialTypeFilter')?.addEventListener('change', searchMaterials);
     document.getElementById('studentSearchInput')?.addEventListener('input', searchStudents);
     document.getElementById('studentCourseFilter')?.addEventListener('change', searchStudents);
+    
+    // Setup create ticket form
+    document.getElementById('createTicketForm')?.addEventListener('submit', handleCreateTicket);
 });
+
+// ==================== TICKET MANAGEMENT ====================
+
+async function loadMyTickets() {
+    const container = document.getElementById('myTicketsContainer');
+    container.innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">Loading tickets...</p>';
+
+    try {
+        const res = await fetch(`${Auth.apiBase}/tickets/my`, { headers: Auth.getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch tickets');
+
+        const tickets = await res.json();
+
+        if (tickets.length === 0) {
+            container.innerHTML = '<div style="text-align: center; color: #999; padding: 60px;"><i class="fas fa-inbox" style="font-size: 4rem; opacity: 0.2; margin-bottom: 15px; display: block;"></i><p>No tickets yet. Create your first support ticket!</p></div>';
+            return;
+        }
+
+        const statusColors = {
+            'Open': '#ffc107',
+            'In Progress': '#17a2b8',
+            'Resolved': '#28a745',
+            'Closed': '#6c757d'
+        };
+
+        container.innerHTML = `
+            <div style="display: grid; gap: 15px;">
+                ${tickets.map(ticket => `
+                    <div style="background: white; border: 1px solid #e0e0e0; border-left: 4px solid ${statusColors[ticket.status]}; padding: 20px; border-radius: 8px; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.05);" onclick="viewStaffTicket('${ticket._id}')" onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)'" onmouseout="this.style.boxShadow='0 2px 5px rgba(0,0,0,0.05)'">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                            <div>
+                                <div style="font-weight: 700; color: #667eea; font-family: monospace; margin-bottom: 5px;">${ticket.ticketID}</div>
+                                <div style="font-weight: 600; font-size: 1.1rem; color: #333; margin-bottom: 8px;">${ticket.subject}</div>
+                                <div style="color: #666; line-height: 1.5;">${ticket.description ? ticket.description.substring(0, 120) : 'No description'}${ticket.description && ticket.description.length > 120 ? '...' : ''}</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <span style="display: inline-block; padding: 5px 12px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; background: ${statusColors[ticket.status]}; color: white; margin-bottom: 5px;">
+                                    ${ticket.status}
+                                </span>
+                                <div style="font-size: 0.85rem; color: #999;"><i class="fas fa-clock"></i> ${new Date(ticket.createdAt).toLocaleDateString()}</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 15px; font-size: 0.85rem; color: #666; margin-top: 12px; padding-top: 12px; border-top: 1px solid #f0f0f0;">
+                            <div><i class="fas fa-exclamation-circle"></i> Priority: <strong>${ticket.priority}</strong></div>
+                            <div><i class="fas fa-comments"></i> Replies: <strong>${ticket.replies ? ticket.replies.length : 0}</strong></div>
+                            ${!ticket.isReadByUser ? '<div style="color: #667eea; font-weight: 600;"><i class="fas fa-bell"></i> New Reply</div>' : ''}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    } catch (error) {
+        console.error('Load tickets error:', error);
+        container.innerHTML = '<p style="text-align: center; color: #e74c3c; padding: 40px;">Failed to load tickets. Please try again.</p>';
+    }
+}
+
+function openCreateTicketModal() {
+    document.getElementById('createTicketModal').style.display = 'flex';
+    document.getElementById('ticketSubject').value = '';
+    document.getElementById('ticketDescription').value = '';
+}
+
+function closeCreateTicketModal() {
+    document.getElementById('createTicketModal').style.display = 'none';
+}
+
+window.openCreateTicketModal = openCreateTicketModal;
+window.closeCreateTicketModal = closeCreateTicketModal;
+
+async function handleCreateTicket(e) {
+    e.preventDefault();
+
+    const subject = document.getElementById('ticketSubject').value;
+    const description = document.getElementById('ticketDescription').value;
+
+    if (!subject || !description) {
+        UI.error('Please fill in all required fields');
+        return;
+    }
+
+    try {
+        UI.showLoader();
+        const res = await fetch(`${Auth.apiBase}/tickets`, {
+            method: 'POST',
+            headers: Auth.getHeaders(),
+            body: JSON.stringify({ subject, description })
+        });
+
+        if (!res.ok) throw new Error('Failed to create ticket');
+
+        const data = await res.json();
+        UI.success(`Ticket created successfully! Your ticket ID is: ${data.ticket.ticketID}`);
+        closeCreateTicketModal();
+        loadMyTickets();
+    } catch (error) {
+        console.error('Create ticket error:', error);
+        UI.error('Failed to create ticket. Please try again.');
+    } finally {
+        UI.hideLoader();
+    }
+}
+
+async function viewStaffTicket(ticketId) {
+    try {
+        UI.showLoader();
+        const res = await fetch(`${Auth.apiBase}/tickets/${ticketId}`, { headers: Auth.getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch ticket');
+
+        const ticket = await res.json();
+
+        const statusColors = {
+            'Open': '#ffc107',
+            'In Progress': '#17a2b8',
+            'Resolved': '#28a745',
+            'Closed': '#6c757d'
+        };
+
+        document.getElementById('viewTicketContent').innerHTML = `
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 25px; border-radius: 12px; margin-bottom: 20px; color: white;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                    <div>
+                        <label style="font-size: 0.8rem; opacity: 0.9; display: block; margin-bottom: 5px;">Ticket ID</label>
+                        <div style="font-weight: 700; font-family: monospace; font-size: 1.1rem;">${ticket.ticketID}</div>
+                    </div>
+                    <div>
+                        <label style="font-size: 0.8rem; opacity: 0.9; display: block; margin-bottom: 5px;">Status</label>
+                        <div style="font-weight: 600;">${ticket.status}</div>
+                    </div>
+                    <div>
+                        <label style="font-size: 0.8rem; opacity: 0.9; display: block; margin-bottom: 5px;">Priority</label>
+                        <div style="font-weight: 600;">${ticket.priority}</div>
+                    </div>
+                    <div>
+                        <label style="font-size: 0.8rem; opacity: 0.9; display: block; margin-bottom: 5px;">Created</label>
+                        <div style="font-weight: 600;">${new Date(ticket.createdAt).toLocaleString()}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; border-left: 4px solid #667eea;">
+                <h4 style="margin: 0 0 10px 0; color: #333;"><i class="fas fa-tag"></i> Subject</h4>
+                <div style="font-weight: 600; font-size: 1.1rem; color: #555;">${ticket.subject}</div>
+            </div>
+
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #e9ecef;">
+                <h4 style="margin: 0 0 12px 0; color: #333;"><i class="fas fa-align-left"></i> Description</h4>
+                <p style="margin: 0; line-height: 1.7; color: #555; white-space: pre-wrap;">${ticket.description}</p>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <h4 style="margin: 0 0 15px 0; color: #333;"><i class="fas fa-comments"></i> Conversation (${ticket.replies ? ticket.replies.length : 0})</h4>
+                <div style="max-height: 400px; overflow-y: auto; background: #f8f9fa; padding: 15px; border-radius: 12px; border: 1px solid #e9ecef;">
+                    ${!ticket.replies || ticket.replies.length === 0 ? '<div style="text-align: center; color: #999; padding: 40px;"><i class="fas fa-inbox" style="font-size: 3rem; opacity: 0.3; margin-bottom: 10px; display: block;"></i><p>No replies yet. Waiting for admin response...</p></div>' : ''}
+                    ${ticket.replies ? ticket.replies.map(reply => {
+                        const replier = reply.repliedBy || { name: 'Unknown', role: 'N/A' };
+                        return `
+                        <div style="background: ${reply.isAdminReply ? 'linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%)' : 'white'}; padding: 18px; border-radius: 10px; margin-bottom: 12px; border-left: 4px solid ${reply.isAdminReply ? '#667eea' : '#cbd5e0'}; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                <div style="font-weight: 600; color: ${reply.isAdminReply ? '#667eea' : '#333'}; display: flex; align-items: center; gap: 8px;">
+                                    <div style="width: 32px; height: 32px; border-radius: 50%; background: ${reply.isAdminReply ? '#667eea' : '#cbd5e0'}; display: flex; align-items: center; justify-content: center; color: white;">
+                                        <i class="fas fa-${reply.isAdminReply ? 'user-shield' : 'user'}" style="font-size: 0.9rem;"></i>
+                                    </div>
+                                    <div>
+                                        <div>${replier.name}</div>
+                                        <small style="opacity: 0.7; font-weight: 400;">${reply.isAdminReply ? 'Administrator' : replier.role}</small>
+                                    </div>
+                                </div>
+                                <small style="color: #666; font-size: 0.85rem;"><i class="fas fa-clock"></i> ${new Date(reply.repliedAt).toLocaleString()}</small>
+                            </div>
+                            <p style="margin: 0; line-height: 1.6; white-space: pre-wrap; color: #444;">${reply.message}</p>
+                        </div>
+                    `}).join('') : ''}
+                </div>
+            </div>
+
+            <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 25px; border-radius: 12px; border: 2px dashed #cbd5e0;">
+                <h4 style="margin: 0 0 15px 0; color: #333;"><i class="fas fa-reply"></i> Add Your Reply</h4>
+                <textarea id="staffReplyMessage" class="form-control" rows="4" placeholder="Type your reply here..." style="margin-bottom: 15px; border-radius: 8px; border: 2px solid #cbd5e0; padding: 12px; resize: vertical;"></textarea>
+                <button onclick="sendStaffReply('${ticket._id}')" class="btn-primary" style="width: 100%; padding: 12px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; cursor: pointer;">
+                    <i class="fas fa-paper-plane"></i> Send Reply
+                </button>
+            </div>
+        `;
+
+        document.getElementById('viewTicketModal').style.display = 'flex';
+    } catch (error) {
+        console.error('View ticket error:', error);
+        UI.error('Failed to load ticket details');
+    } finally {
+        UI.hideLoader();
+    }
+}
+
+function closeViewTicketModal() {
+    document.getElementById('viewTicketModal').style.display = 'none';
+}
+
+window.viewStaffTicket = viewStaffTicket;
+window.closeViewTicketModal = closeViewTicketModal;
+
+async function sendStaffReply(ticketId) {
+    const message = document.getElementById('staffReplyMessage').value.trim();
+
+    if (!message) {
+        UI.error('Please enter a reply message');
+        return;
+    }
+
+    try {
+        UI.showLoader();
+        const res = await fetch(`${Auth.apiBase}/tickets/${ticketId}/reply`, {
+            method: 'POST',
+            headers: Auth.getHeaders(),
+            body: JSON.stringify({ message })
+        });
+
+        if (!res.ok) throw new Error('Failed to send reply');
+
+        UI.success('Reply sent successfully!');
+        closeViewTicketModal();
+        loadMyTickets();
+    } catch (error) {
+        console.error('Send reply error:', error);
+        UI.error('Failed to send reply. Please try again.');
+    } finally {
+        UI.hideLoader();
+    }
+}
+
+window.sendStaffReply = sendStaffReply;

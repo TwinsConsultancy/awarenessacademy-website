@@ -280,5 +280,62 @@ module.exports = {
         discountPercent: { type: Number, required: true }, // e.g., 10 for 10%
         expiryDate: { type: Date },
         active: { type: Boolean, default: true }
-    }))
+    })),
+    // Ticket System - defined AFTER User model to ensure populate works
+    Ticket: (() => {
+        // Delete any existing compiled Ticket model to prevent schema conflicts
+        if (mongoose.models.Ticket) {
+            delete mongoose.models.Ticket;
+        }
+        if (mongoose.connection.models.Ticket) {
+            delete mongoose.connection.models.Ticket;
+        }
+
+        const ticketReplySchema = new Schema({
+            message: { type: String, required: true },
+            repliedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+            repliedAt: { type: Date, default: Date.now },
+            isAdminReply: { type: Boolean, default: false }
+        });
+
+        const ticketSchema = new Schema({
+            ticketID: { type: String, unique: true }, // Auto-generated, not required
+            subject: {
+                type: String,
+                required: true,
+                enum: [
+                    'Technical Issue', 'Course Access Problem', 'Payment Issue',
+                    'Account Related', 'Content Quality', 'Certificate Issue',
+                    'General Inquiry', 'Feature Request', 'Bug Report', 'Other'
+                ]
+            },
+            description: { type: String, required: true },
+            createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+            status: { type: String, enum: ['Open', 'In Progress', 'Resolved', 'Closed'], default: 'Open' },
+            priority: { type: String, enum: ['Low', 'Medium', 'High', 'Urgent'], default: 'Medium' },
+            replies: [ticketReplySchema],
+            lastUpdated: { type: Date, default: Date.now },
+            isReadByAdmin: { type: Boolean, default: false },
+            isReadByUser: { type: Boolean, default: true }
+        }, { timestamps: true });
+
+        // Generate unique ticket ID before saving
+        ticketSchema.pre('save', async function() {
+            if (!this.ticketID) {
+                const year = new Date().getFullYear();
+                const month = String(new Date().getMonth() + 1).padStart(2, '0');
+                const lastTicket = await this.constructor.findOne({
+                    ticketID: new RegExp(`^TKT-${year}${month}`)
+                }).sort({ ticketID: -1 });
+                let nextNumber = 1;
+                if (lastTicket) {
+                    const lastNumber = parseInt(lastTicket.ticketID.split('-')[2]);
+                    nextNumber = lastNumber + 1;
+                }
+                this.ticketID = `TKT-${year}${month}-${String(nextNumber).padStart(4, '0')}`;
+            }
+        });
+
+        return mongoose.model('Ticket', ticketSchema);
+    })()
 };

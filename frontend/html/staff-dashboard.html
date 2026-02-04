@@ -460,6 +460,7 @@
                     </a>
                 </li>
                 <li><a href="#" class="nav-link" onclick="switchSection('live')" title="Live Classroom"><i class="fas fa-video"></i> <span class="sidebar-text">Live Classroom</span></a></li>
+                <li><a href="#" class="nav-link" onclick="switchSection('tickets')" title="Support Tickets"><i class="fas fa-ticket-alt"></i> <span class="sidebar-text">Support Tickets</span></a></li>
                 <li><a href="#" class="nav-link" onclick="switchSection('profile')" title="My Profile"><i class="fas fa-user-circle"></i> <span class="sidebar-text">My Profile</span></a></li>
                 <li><a href="#" id="logoutBtn" class="nav-link" style="color: var(--color-error); margin-top: 50px;" title="Logout"><i
                             class="fas fa-sign-out-alt"></i> <span class="sidebar-text">Logout</span></a></li>
@@ -591,6 +592,24 @@
                     </div>
                     <div id="scheduleList">
                         <!-- Schedules load here -->
+                    </div>
+                </section>
+
+                <!-- Support Tickets Section -->
+                <section id="ticketsSection" style="display: none; height: calc(100vh - 100px); overflow: hidden;">
+                    <!-- Create New Ticket Button -->
+                    <div style="margin-bottom: 15px; text-align: right;">
+                        <button onclick="openCreateTicketModal()" class="btn-primary" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 10px 20px; border-radius: 8px; font-weight: 600;">
+                            <i class="fas fa-plus"></i> Create New Ticket
+                        </button>
+                    </div>
+
+                    <!-- My Tickets List -->
+                    <div class="glass-card" style="border-left: 4px solid #667eea; height: calc(100% - 60px); display: flex; flex-direction: column; padding: 20px; overflow: hidden;">
+                        <h3 style="margin: 0 0 15px 0; color: #333; flex-shrink: 0;"><i class="fas fa-list"></i> My Tickets</h3>
+                        <div id="myTicketsContainer" style="overflow-y: auto; flex: 1; padding-right: 10px;">
+                            <p style="text-align: center; color: #999; padding: 40px;">Loading tickets...</p>
+                        </div>
                     </div>
                 </section>
 
@@ -1010,6 +1029,70 @@
                 <i class="fas fa-envelope" style="font-size: 48px; opacity: 0.3; display: block; margin-bottom: 16px;"></i>
                 Messaging functionality coming soon
             </p>
+        </div>
+    </div>
+
+    <!-- Create Ticket Modal -->
+    <div id="createTicketModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; padding: 20px;">
+        <div style="background: white; border-radius: 15px; max-width: 600px; width: 100%; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 25px; border-radius: 15px 15px 0 0; color: white;">
+                <h3 style="margin: 0; display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-ticket-alt"></i>
+                    Create New Support Ticket
+                </h3>
+            </div>
+            <div style="padding: 30px;">
+                <form id="createTicketForm">
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label style="font-weight: 600; color: #555; margin-bottom: 8px; display: block;">Subject <span style="color: red;">*</span></label>
+                        <select id="ticketSubject" class="form-control" required style="padding: 12px; border-radius: 8px; border: 2px solid #e0e0e0;">
+                            <option value="">Select a subject...</option>
+                            <option value="Technical Issue">🔧 Technical Issue</option>
+                            <option value="Course Access Problem">📚 Course Access Problem</option>
+                            <option value="Payment Issue">💳 Payment Issue</option>
+                            <option value="Account Related">👤 Account Related</option>
+                            <option value="Content Quality">⭐ Content Quality</option>
+                            <option value="Certificate Issue">🎓 Certificate Issue</option>
+                            <option value="General Inquiry">💬 General Inquiry</option>
+                            <option value="Feature Request">💡 Feature Request</option>
+                            <option value="Bug Report">🐛 Bug Report</option>
+                            <option value="Other">❓ Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label style="font-weight: 600; color: #555; margin-bottom: 8px; display: block;">Description <span style="color: red;">*</span></label>
+                        <textarea id="ticketDescription" class="form-control" rows="6" required placeholder="Please describe your issue in detail..." style="padding: 12px; border-radius: 8px; border: 2px solid #e0e0e0; resize: vertical;"></textarea>
+                    </div>
+                    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                        <button type="button" onclick="closeCreateTicketModal()" class="btn-primary" style="background: #999; padding: 12px 25px; border-radius: 8px;">
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn-primary" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 12px 25px; border-radius: 8px; font-weight: 600;">
+                            <i class="fas fa-paper-plane"></i> Submit Ticket
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Ticket Modal -->
+    <div id="viewTicketModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; overflow-y: auto; padding: 20px;">
+        <div style="background: white; border-radius: 15px; max-width: 900px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+            <div style="position: sticky; top: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 25px; border-radius: 15px 15px 0 0; color: white; z-index: 10;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3 style="margin: 0; display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-ticket-alt"></i>
+                        Ticket Details
+                    </h3>
+                    <button onclick="closeViewTicketModal()" class="btn-primary" style="background: #e74c3c; padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer;">
+                        <i class="fas fa-times"></i> Close
+                    </button>
+                </div>
+            </div>
+            <div id="viewTicketContent" style="padding: 30px;">
+                <!-- Ticket details will be loaded here -->
+            </div>
         </div>
     </div>
 
