@@ -270,7 +270,7 @@ async function loadUserManagement(role) {
                                 <button class="btn-primary" style="padding: 5px 10px; font-size: 0.7rem; background: #337ab7; margin-right: 5px;" onclick='openEditUserModal(${JSON.stringify(u).replace(/'/g, "&#39;")})'>
                                     <i class="fas fa-edit"></i> Edit
                                 </button>
-                                <button class="btn-primary" style="padding: 5px 10px; font-size: 0.7rem; background: ${u.active ? '#f0ad4e' : '#5cb85c'}; margin-right: 5px;" onclick="requestToggleStatus('${u._id}', '${u.studentID || ''}', '${u.role}', ${u.active})">
+                                <button class="btn-primary" style="padding: 5px 10px; font-size: 0.7rem; background: ${u.active ? '#f0ad4e' : '#5cb85c'}; margin-right: 5px;" onclick="requestToggleStatus('${u._id}', '${u.studentID || ''}', '${u.role}', ${u.active}, '${u.name}')">
                                     ${u.active ? 'Disable' : 'Enable'}
                                 </button>
                                 <button class="btn-primary" style="padding: 5px 10px; font-size: 0.7rem; background: #d9534f;" onclick="requestDeleteUser('${u._id}', '${u.studentID || ''}')">
@@ -459,16 +459,46 @@ async function submitEditUser() {
     }
 }
 
-async function toggleUserStatus(id, reason = '') {
+async function toggleUserStatus(id, reason = '', userName = 'User', userRole = 'User', wasActiveStatus = false) {
     try {
         UI.showLoader();
         const res = await fetch(`${Auth.apiBase}/admin/users/${id}/status`, {
             method: 'PATCH',
-            headers: Auth.getHeaders(),
-            body: JSON.stringify({ reason }) // Send reason (required by backend)
+            headers: {
+                ...Auth.getHeaders(),
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ reason })
         });
         if (res.ok) {
-            UI.success('Status updated.');
+            const result = await res.json();
+            UI.success(result.message || 'Status updated');
+            
+            // Show different popups for deactivation vs activation
+            if (result.wasActive === true && result.newActive === false) {
+                // User was just DEACTIVATED
+                setTimeout(() => {
+                    UI.createPopup({
+                        title: 'User Deactivated Successfully',
+                        message: `${userName} (${userRole}) has been deactivated.\n\nIf this user is currently logged in, they will be forced to logout within 10 seconds and will not be able to login until you re-activate their account.\n\nTheir session will be terminated immediately.`,
+                        type: 'warning',
+                        icon: 'exclamation-triangle',
+                        confirmText: 'Understood'
+                    });
+                }, 500);
+            } else if (result.wasActive === false && result.newActive === true) {
+                // User was just ACTIVATED
+                setTimeout(() => {
+                    UI.createPopup({
+                        title: 'User Activated Successfully',
+                        message: `${userName} (${userRole}) has been activated.\n\nThe user can now log in and access the system.`,
+                        type: 'success',
+                        icon: 'check-circle',
+                        confirmText: 'Great!'
+                    });
+                }, 500);
+            }
+            
             loadUserManagement(currentUserRoleView);
             // Hide modal if it's open
             document.getElementById('disableConfirmModal').style.display = 'none';
@@ -476,13 +506,16 @@ async function toggleUserStatus(id, reason = '') {
             const result = await res.json();
             UI.error(result.message || 'Action failed');
         }
-    } catch (err) { UI.error('Action failed.'); }
+    } catch (err) { 
+        console.error('Toggle status error:', err);
+        UI.error('Action failed.'); 
+    }
     finally { UI.hideLoader(); }
 }
 
 let targetDisableID = null;
 
-function requestToggleStatus(id, studentID, role, isActive) {
+function requestToggleStatus(id, studentID, role, isActive, userName) {
     // If active, we are DISABLING -> Show Prompt
     if (isActive) {
         targetDisableID = id;
@@ -492,13 +525,13 @@ function requestToggleStatus(id, studentID, role, isActive) {
         const confirmBtn = document.getElementById('confirmDisableBtn');
         confirmBtn.onclick = () => {
             // Hardcoded confirmation reason as requested ("simple confirmation")
-            toggleUserStatus(targetDisableID, 'Manual deactivation by Admin (Confirmed via Popup)');
+            toggleUserStatus(targetDisableID, 'Manual deactivation by Admin (Confirmed via Popup)', userName, role, isActive);
         };
 
         document.getElementById('disableConfirmModal').style.display = 'flex';
     } else {
         // If inactive, we are ENABLING -> Direct Action (or prompt if desired, but user asked for Disable prompt)
-        toggleUserStatus(id, 'Re-activation by Admin');
+        toggleUserStatus(id, 'Re-activation by Admin', userName, role, isActive);
     }
 }
 
@@ -1566,3 +1599,33 @@ async function updatePlatformInfo() {
         UI.error('Error updating info');
     }
 }
+
+// Switch Edit User Modal Tabs
+function switchEditTab(tabName, buttonElement, tabIndex) {
+    // Hide all tab contents
+    const tabs = ['identityTab', 'profileTab', 'securityTab'];
+    tabs.forEach(tab => {
+        const el = document.getElementById(tab);
+        if (el) el.style.display = 'none';
+    });
+
+    // Show selected tab
+    const targetTab = document.getElementById(tabName + 'Tab');
+    if (targetTab) targetTab.style.display = 'block';
+
+    // Update active button state
+    const buttons = document.querySelectorAll('.edit-tab-btn');
+    buttons.forEach(btn => btn.classList.remove('active'));
+    
+    if (buttonElement) {
+        buttonElement.classList.add('active');
+    } else if (typeof tabIndex === 'number') {
+        // If called programmatically with index
+        if (buttons[tabIndex]) {
+            buttons[tabIndex].classList.add('active');
+        }
+    }
+}
+
+// Make switchEditTab globally available
+window.switchEditTab = switchEditTab;

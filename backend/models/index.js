@@ -14,6 +14,7 @@ const userSchema = new Schema({
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     phone: { type: String },
+    additionalPhone: { type: String }, // Additional contact number
     profilePic: { type: String },
     active: { type: Boolean, default: true },
 
@@ -22,6 +23,7 @@ const userSchema = new Schema({
     verificationToken: { type: String },
     resetPasswordToken: { type: String },
     resetPasswordExpires: { type: Date },
+    lastLogin: { type: Date }, // Track last login
 
     // Extended Profile
     initial: { type: String },
@@ -47,6 +49,14 @@ const userSchema = new Schema({
         type: { type: String, enum: ['Salaried', 'Business', 'Daily Wages', 'Unemployed', 'Student'] },
         name: { type: String }, // Company/Business name
         description: { type: String }
+    },
+
+    bankDetails: {
+        accountHolderName: { type: String },
+        accountNumber: { type: String },
+        bankName: { type: String },
+        ifscCode: { type: String },
+        branchName: { type: String }
     },
 
     enrolledCourses: [{ type: Schema.Types.ObjectId, ref: 'Course' }],

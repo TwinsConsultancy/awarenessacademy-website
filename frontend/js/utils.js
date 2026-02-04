@@ -60,7 +60,109 @@ const UI = {
 
     success(msg) { this.showToast(msg, 'success'); },
     error(msg) { this.showToast(msg, 'error'); },
-    info(msg) { this.showToast(msg, 'info'); }
+    info(msg) { this.showToast(msg, 'info'); },
+
+    // Create styled popup modal
+    createPopup(config) {
+        const { title, message, type = 'info', icon = 'info-circle', confirmText = 'OK', onConfirm, cancelText, onCancel, persistent = false } = config;
+
+        // Create overlay
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            animation: fadeIn 0.3s ease;
+        `;
+
+        // Icon colors
+        const iconColors = {
+            success: '#28a745',
+            error: '#dc3545',
+            warning: '#ffc107',
+            info: '#17a2b8'
+        };
+
+        // Create popup
+        const popup = document.createElement('div');
+        popup.style.cssText = `
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 90%;
+            overflow: hidden;
+            animation: slideIn 0.3s ease;
+        `;
+
+        popup.innerHTML = `
+            <div style="padding: 30px; text-align: center;">
+                <div style="margin-bottom: 20px;">
+                    <i class="fas fa-${icon}" style="font-size: 4rem; color: ${iconColors[type] || iconColors.info};"></i>
+                </div>
+                <h2 style="margin: 0 0 15px 0; color: #333; font-size: 1.5rem;">${title}</h2>
+                <p style="margin: 0; color: #666; line-height: 1.6; white-space: pre-line;">${message}</p>
+            </div>
+            <div style="padding: 20px 30px; background: #f8f9fa; display: flex; gap: 10px; justify-content: ${cancelText ? 'space-between' : 'center'};">
+                ${cancelText ? `<button id="popup-cancel" style="flex: 1; padding: 12px 24px; border: 1px solid #ddd; background: white; border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: 500; transition: all 0.3s;">${cancelText}</button>` : ''}
+                <button id="popup-confirm" style="flex: 1; padding: 12px 24px; border: none; background: linear-gradient(135deg, var(--color-saffron), var(--color-golden)); color: white; border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: 600; transition: all 0.3s;">${confirmText}</button>
+            </div>
+        `;
+
+        overlay.appendChild(popup);
+        document.body.appendChild(overlay);
+
+        // Add animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+            @keyframes slideIn {
+                from { transform: translateY(-50px); opacity: 0; }
+                to { transform: translateY(0); opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Close function
+        const closePopup = () => {
+            overlay.style.animation = 'fadeIn 0.3s ease reverse';
+            setTimeout(() => overlay.remove(), 300);
+        };
+
+        // Event listeners
+        const confirmBtn = popup.querySelector('#popup-confirm');
+        confirmBtn.addEventListener('click', () => {
+            if (onConfirm) onConfirm();
+            closePopup();
+        });
+
+        if (cancelText) {
+            const cancelBtn = popup.querySelector('#popup-cancel');
+            cancelBtn.addEventListener('click', () => {
+                if (onCancel) onCancel();
+                closePopup();
+            });
+        }
+
+        // Close on overlay click if not persistent
+        if (!persistent) {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) closePopup();
+            });
+        }
+
+        return { close: closePopup };
+    }
 };
 
 // Initialize on load

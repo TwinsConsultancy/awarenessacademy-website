@@ -31,4 +31,16 @@ router.post('/content', upload.single('file'), staffController.uploadContent);
 // @desc    Get seeking students enrolled in mentor's courses
 router.get('/students', staffController.getEnrolledStudents);
 
+// @route   GET /api/staff/profile
+// @desc    Get staff profile
+router.get('/profile', staffController.getProfile);
+
+// @route   PUT /api/staff/profile
+// @desc    Update staff profile
+router.put('/profile', staffController.updateProfile);
+
+// @route   POST /api/staff/change-password
+// @desc    Change password
+router.post('/change-password', staffController.changePassword);
+
 module.exports = router;

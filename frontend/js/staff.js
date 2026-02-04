@@ -5,7 +5,7 @@
 // Navigation function to switch between sections
 function switchSection(sectionName) {
     // Hide all sections
-    const sections = ['overviewSection', 'coursesSection', 'materialsSection', 'studentsSection', 'notificationsSection', 'liveSection'];
+    const sections = ['overviewSection', 'coursesSection', 'materialsSection', 'studentsSection', 'notificationsSection', 'liveSection', 'profileSection'];
     sections.forEach(id => {
         const section = document.getElementById(id);
         if (section) section.style.display = 'none';
@@ -34,6 +34,8 @@ function switchSection(sectionName) {
         loadNotifications();
     } else if (sectionName === 'live') {
         loadSchedules();
+    } else if (sectionName === 'profile') {
+        loadProfile();
     }
 }
 
@@ -372,7 +374,7 @@ async function loadEnrolledStudents() {
                         </div>
                     </div>
                 </td>
-                <td style="padding: 15px; color: #666; font-family: monospace;">${e.studentID?._id?.substring(0, 8) || 'N/A'}</td>
+                <td style="padding: 15px; color: #666; font-family: monospace; font-weight: 600;">${e.studentID?.studentID || 'N/A'}</td>
                 <td style="padding: 15px;">${e.courseID?.title}</td>
                 <td style="padding: 15px;">${new Date(e.enrolledAt).toLocaleDateString()}</td>
                 <td style="padding: 15px;">
@@ -1175,6 +1177,261 @@ window.toggleMessagesPanel = toggleMessagesPanel;
 window.markAsSeen = markAsSeen;
 window.markAsUnread = markAsUnread;
 window.deleteNotification = deleteNotification;
+
+// Load Profile
+async function loadProfile() {
+    try {
+        const res = await fetch(`${Auth.apiBase}/staff/profile`, { headers: Auth.getHeaders() });
+        const user = await res.json();
+
+        // Populate form fields
+        document.getElementById('profileName').value = user.name || '';
+        document.getElementById('profileStaffID').value = user.studentID || 'N/A';
+        document.getElementById('profileEmail').value = user.email || '';
+        document.getElementById('profileFatherName').value = user.fatherName || '';
+        document.getElementById('profileMotherName').value = user.motherName || '';
+        document.getElementById('profileDOB').value = user.dob ? new Date(user.dob).toISOString().split('T')[0] : '';
+        
+        // Calculate and display age
+        if (user.dob) {
+            const age = calculateAge(new Date(user.dob));
+            document.getElementById('profileAge').textContent = `Age: ${age} years`;
+        }
+
+        // Address fields
+        document.getElementById('profileDoorNumber').value = user.address?.doorNumber || '';
+        document.getElementById('profileStreet').value = user.address?.streetName || '';
+        document.getElementById('profileTown').value = user.address?.town || '';
+        document.getElementById('profileDistrict').value = user.address?.district || '';
+        document.getElementById('profilePincode').value = user.address?.pincode || '';
+
+        // Contact fields
+        document.getElementById('profilePhone').value = user.phone || '';
+        document.getElementById('profileAdditionalPhone').value = user.additionalPhone || '';
+
+        // Bank details
+        document.getElementById('profileAccountHolder').value = user.bankDetails?.accountHolderName || '';
+        document.getElementById('profileAccountNumber').value = user.bankDetails?.accountNumber || '';
+        document.getElementById('profileBankName').value = user.bankDetails?.bankName || '';
+        document.getElementById('profileIFSC').value = user.bankDetails?.ifscCode || '';
+        document.getElementById('profileBranch').value = user.bankDetails?.branchName || '';
+
+        // Last login
+        if (user.lastLogin) {
+            const loginDate = new Date(user.lastLogin);
+            document.getElementById('lastLoginDisplay').textContent = loginDate.toLocaleString('en-IN', {
+                dateStyle: 'medium',
+                timeStyle: 'short'
+            });
+        } else {
+            document.getElementById('lastLoginDisplay').textContent = 'No login history available';
+        }
+    } catch (err) {
+        console.error('Error loading profile:', err);
+        alert('Failed to load profile. Please try again.');
+    }
+}
+
+// Calculate Age from DOB
+function calculateAge(dob) {
+    const today = new Date();
+    const birthDate = new Date(dob);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+    }
+    return age;
+}
+
+// Update age when DOB changes
+document.getElementById('profileDOB')?.addEventListener('change', function() {
+    if (this.value) {
+        const age = calculateAge(new Date(this.value));
+        document.getElementById('profileAge').textContent = `Age: ${age} years`;
+    } else {
+        document.getElementById('profileAge').textContent = '';
+    }
+});
+
+// Personal Details Form Submission
+document.getElementById('personalDetailsForm')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const personalData = {
+        name: document.getElementById('profileName').value,
+        fatherName: document.getElementById('profileFatherName').value,
+        motherName: document.getElementById('profileMotherName').value,
+        dob: document.getElementById('profileDOB').value
+    };
+
+    try {
+        const res = await fetch(`${Auth.apiBase}/staff/profile`, {
+            method: 'PUT',
+            headers: { ...Auth.getHeaders(), 'Content-Type': 'application/json' },
+            body: JSON.stringify(personalData)
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            alert('✓ Personal details updated successfully');
+            if (personalData.name) {
+                document.getElementById('mentorName').textContent = personalData.name;
+            }
+        } else {
+            alert(data.message || 'Failed to update personal details');
+        }
+    } catch (err) {
+        console.error('Error updating personal details:', err);
+        alert('Failed to update personal details. Please try again.');
+    }
+});
+
+// Address Details Form Submission
+document.getElementById('addressDetailsForm')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const addressData = {
+        doorNumber: document.getElementById('profileDoorNumber').value,
+        streetName: document.getElementById('profileStreet').value,
+        town: document.getElementById('profileTown').value,
+        district: document.getElementById('profileDistrict').value,
+        pincode: document.getElementById('profilePincode').value
+    };
+
+    try {
+        const res = await fetch(`${Auth.apiBase}/staff/profile`, {
+            method: 'PUT',
+            headers: { ...Auth.getHeaders(), 'Content-Type': 'application/json' },
+            body: JSON.stringify(addressData)
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            alert('✓ Address details updated successfully');
+        } else {
+            alert(data.message || 'Failed to update address details');
+        }
+    } catch (err) {
+        console.error('Error updating address details:', err);
+        alert('Failed to update address details. Please try again.');
+    }
+});
+
+// Contact Details Form Submission
+document.getElementById('contactDetailsForm')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const contactData = {
+        phone: document.getElementById('profilePhone').value,
+        additionalPhone: document.getElementById('profileAdditionalPhone').value
+    };
+
+    // Validate phone number
+    if (contactData.phone && !/^\d{10}$/.test(contactData.phone)) {
+        alert('Please enter a valid 10-digit phone number');
+        return;
+    }
+
+    if (contactData.additionalPhone && !/^\d{10}$/.test(contactData.additionalPhone)) {
+        alert('Please enter a valid 10-digit additional phone number');
+        return;
+    }
+
+    try {
+        const res = await fetch(`${Auth.apiBase}/staff/profile`, {
+            method: 'PUT',
+            headers: { ...Auth.getHeaders(), 'Content-Type': 'application/json' },
+            body: JSON.stringify(contactData)
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            alert('✓ Contact details updated successfully');
+        } else {
+            alert(data.message || 'Failed to update contact details');
+        }
+    } catch (err) {
+        console.error('Error updating contact details:', err);
+        alert('Failed to update contact details. Please try again.');
+    }
+});
+
+// Bank Details Form Submission
+document.getElementById('bankDetailsForm')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const bankData = {
+        accountHolderName: document.getElementById('profileAccountHolder').value,
+        accountNumber: document.getElementById('profileAccountNumber').value,
+        bankName: document.getElementById('profileBankName').value,
+        ifscCode: document.getElementById('profileIFSC').value?.toUpperCase(),
+        branchName: document.getElementById('profileBranch').value
+    };
+
+    try {
+        const res = await fetch(`${Auth.apiBase}/staff/profile`, {
+            method: 'PUT',
+            headers: { ...Auth.getHeaders(), 'Content-Type': 'application/json' },
+            body: JSON.stringify(bankData)
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            alert('✓ Bank details updated successfully');
+        } else {
+            alert(data.message || 'Failed to update bank details');
+        }
+    } catch (err) {
+        console.error('Error updating bank details:', err);
+        alert('Failed to update bank details. Please try again.');
+    }
+});
+
+// Change Password Form Submission
+document.getElementById('changePasswordForm')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const currentPassword = document.getElementById('currentPassword').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+
+    // Validation
+    if (newPassword.length < 8) {
+        alert('New password must be at least 8 characters long');
+        return;
+    }
+
+    if (newPassword !== confirmPassword) {
+        alert('New passwords do not match');
+        return;
+    }
+
+    try {
+        const res = await fetch(`${Auth.apiBase}/staff/change-password`, {
+            method: 'POST',
+            headers: { ...Auth.getHeaders(), 'Content-Type': 'application/json' },
+            body: JSON.stringify({ currentPassword, newPassword })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            alert('✓ Password changed successfully');
+            // Clear form
+            document.getElementById('changePasswordForm').reset();
+        } else {
+            alert(data.message || 'Failed to change password');
+        }
+    } catch (err) {
+        console.error('Error changing password:', err);
+        alert('Failed to change password. Please try again.');
+    }
+});
 
 // Initialize on load
 document.addEventListener('DOMContentLoaded', () => {

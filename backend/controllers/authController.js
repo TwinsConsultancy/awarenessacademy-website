@@ -97,6 +97,11 @@ exports.login = catchAsync(async (req, res, next) => {
         return next(new AppError('Incorrect email or password', 401));
     }
 
+    // Check if account is active
+    if (user.active === false) {
+        return next(new AppError('Your account is inactive. Please contact the administrator.', 403));
+    }
+
     // Check Maintenance Mode
     const Settings = require('../models/Settings');
     const settings = await Settings.findOne();
@@ -112,6 +117,10 @@ exports.login = catchAsync(async (req, res, next) => {
         return next(new AppError('Please verify your email address to login.', 403));
     }
 
+    // Update last login
+    user.lastLogin = new Date();
+    await user.save();
+
     const token = jwt.sign(
         { id: user._id, role: user.role, name: user.name },
         process.env.JWT_SECRET || 'innerspark_secret_key',
@@ -126,7 +135,8 @@ exports.login = catchAsync(async (req, res, next) => {
             name: user.name,
             role: user.role,
             studentID: user.studentID,
-            profilePic: user.profilePic
+            profilePic: user.profilePic,
+            lastLogin: user.lastLogin
         }
     });
 });
