@@ -4,100 +4,235 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description"
-        content="InnerSpark - A premium spiritual sanctuary for mindfulness, meditation, and ancient wisdom. Discover courses, attend live sessions, and track your growth.">
-    <meta name="keywords" content="spirituality, meditation, mindfulness, courses, mentor, sanctuary">
-    <title>InnerSpark - Digital Sanctuary for Spiritual Growth</title>
+    <title>InnerSpark - Digital Community for Spiritual Growth</title>
     <link rel="stylesheet" href="../css/variables.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link
         href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;600&display=swap"
         rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --color-saffron-dark: #cc5200;
+            /* Deep Orange for contrast */
+            --parallax-depth: 100px;
         }
 
         body {
             font-family: 'Poppins', sans-serif;
+            background-color: var(--color-warm-white);
+            color: var(--color-text-primary);
             overflow-x: hidden;
+            margin: 0;
+            padding: 0;
         }
 
+        /* --- Parallax Hero --- */
         .hero {
             height: 100vh;
-            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://images.unsplash.com/photo-1506126613408-eca07ce68773?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80');
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
             display: flex;
             align-items: center;
             justify-content: center;
             text-align: center;
-            color: white;
-            padding: 0 20px;
             position: relative;
+            z-index: 10;
+            overflow: hidden;
+            background: linear-gradient(135deg, #FF9933 0%, #FFC300 100%);
+            /* Saffron Gradient */
+            color: white;
         }
 
-        .hero::before {
-            content: '';
+        .hero-bg-text {
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: radial-gradient(circle at center, transparent 0%, rgba(0, 0, 0, 0.3) 100%);
+            font-size: 15rem;
+            font-family: var(--font-heading);
+            color: rgba(255, 255, 255, 0.1);
+            white-space: nowrap;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 0;
         }
 
         .hero-content {
             position: relative;
-            z-index: 1;
-            animation: fadeInUp 1s ease;
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(50px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .hero-content h1 {
-            font-size: 4.5rem;
-            margin-bottom: 25px;
-            text-shadow: 3px 3px 15px rgba(0, 0, 0, 0.7);
-            font-family: var(--font-heading);
-            letter-spacing: 2px;
-            animation: glow 3s ease-in-out infinite;
-        }
-
-        @keyframes glow {
-
-            0%,
-            100% {
-                text-shadow: 3px 3px 15px rgba(0, 0, 0, 0.7), 0 0 20px rgba(255, 195, 0, 0.3);
-            }
-
-            50% {
-                text-shadow: 3px 3px 15px rgba(0, 0, 0, 0.7), 0 0 40px rgba(255, 195, 0, 0.5);
-            }
-        }
-
-        .hero-content p {
-            font-size: 1.5rem;
+            z-index: 2;
             max-width: 800px;
-            margin: 0 auto 40px;
-            font-weight: 300;
-            line-height: 1.8;
-            opacity: 0.95;
+            padding: 0 20px;
         }
 
+        .hero h1 {
+            font-size: 5rem;
+            margin-bottom: 20px;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .hero p {
+            font-size: 1.5rem;
+            opacity: 0.9;
+            margin-bottom: 40px;
+        }
+
+        /* --- Horizontal Scroll Section --- */
+        .h-scroll-container {
+            height: 300vh;
+            /* Reduced from 400vh for faster scroll */
+            position: relative;
+            z-index: 5;
+            background: #fff;
+        }
+
+        .h-scroll-sticky {
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            background: #1a1a1a;
+            /* Dark background for contrast */
+        }
+
+        .h-scroll-track {
+            display: flex;
+            gap: 100px;
+            padding-left: 10vw;
+            /* Start offset */
+            will-change: transform;
+        }
+
+        .h-card {
+            min-width: 60vw;
+            /* Large Cards */
+            height: 70vh;
+            background: var(--color-warm-white);
+            border-radius: 30px;
+            padding: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .h-card:hover {
+            transform: scale(1.02);
+        }
+
+        .h-card h2 {
+            font-size: 3rem;
+            color: var(--color-saffron-dark);
+            margin-bottom: 30px;
+        }
+
+        .h-card p {
+            font-size: 1.2rem;
+            line-height: 1.8;
+            color: var(--color-text-secondary);
+            max-width: 600px;
+        }
+
+        .h-card-number {
+            position: absolute;
+            top: 30px;
+            right: 40px;
+            font-size: 8rem;
+            font-family: var(--font-heading);
+            color: rgba(255, 153, 51, 0.1);
+            font-weight: bold;
+        }
+
+        /* --- Footer & Misc --- */
+        .footer {
+            background: #111;
+            color: white;
+            padding: 100px 50px;
+            text-align: center;
+            position: relative;
+            z-index: 10;
+        }
+
+        .btn-parallax {
+            background: white;
+            color: var(--color-saffron);
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: bold;
+            display: inline-block;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-parallax:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+            background: var(--color-warm-white);
+        }
+
+
+        /* Philosophy Section */
+        .philosophy-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 80px 20px;
+        }
+
+        .philosophy-card {
+            text-align: center;
+            padding: 30px;
+            border-radius: 15px;
+            background: white;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease;
+        }
+
+        .philosophy-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .philosophy-icon {
+            font-size: 3rem;
+            color: var(--color-saffron);
+            margin-bottom: 20px;
+        }
+
+        /* Mentors Section */
+        .mentor-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 80px 20px;
+        }
+
+        .mentor-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        }
+
+        .mentor-img {
+            height: 300px;
+            width: 100%;
+            object-fit: cover;
+            background: #eee;
+        }
+
+        .mentor-info {
+            padding: 25px;
+            text-align: center;
+        }
+
+        /* Navigation */
         .nav {
             position: fixed;
             top: 0;
@@ -107,444 +242,209 @@
             justify-content: space-between;
             align-items: center;
             z-index: 1000;
-            background: rgba(0, 0, 0, 0.2);
-            backdrop-filter: blur(10px);
             transition: all 0.3s ease;
         }
 
         .nav.scrolled {
-            background: rgba(0, 0, 0, 0.95);
+            background: rgba(255, 255, 255, 0.95);
             padding: 15px 50px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav.scrolled .logo,
+        .nav.scrolled a {
+            color: var(--color-text-primary);
+        }
+
+        .nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            margin-left: 30px;
         }
 
         .logo {
-            font-family: var(--font-heading);
             font-size: 2rem;
-            color: var(--color-golden);
-            text-decoration: none;
-            font-weight: bold;
-            transition: all 0.3s ease;
-        }
-
-        .logo:hover {
-            transform: scale(1.05);
-            text-shadow: 0 0 20px rgba(255, 195, 0, 0.5);
-        }
-
-        .nav-links {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .nav-links a {
-            color: white;
-            text-decoration: none;
-            padding: 10px 20px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            border-radius: 5px;
-        }
-
-        .nav-links a:hover {
-            color: var(--color-saffron);
-            background: rgba(255, 153, 51, 0.1);
-        }
-
-        .daily-spark {
-            margin-top: 50px;
-            padding: 30px 40px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            display: inline-block;
-            max-width: 700px;
-            transition: all 0.5s ease;
-        }
-
-        .quote-text {
-            font-style: italic;
-            margin-bottom: 15px;
-            font-size: 1.1rem;
-            line-height: 1.6;
-            transition: opacity 0.5s ease;
-        }
-
-        .stats-section {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 30px;
-            max-width: 1200px;
-            margin: -80px auto 0;
-            padding: 0 20px;
-            position: relative;
-            z-index: 10;
-        }
-
-        .stat-card {
-            background: white;
-            padding: 40px 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
-        }
-
-        .stat-number {
-            font-size: 3rem;
-            font-weight: bold;
-            color: var(--color-saffron);
             font-family: var(--font-heading);
-        }
-
-        .stat-label {
-            color: var(--color-text-secondary);
-            font-size: 0.9rem;
-            margin-top: 10px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        @media (max-width: 992px) {
-            .stats-section {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        @media (max-width: 768px) {
-            .hero-content h1 {
-                font-size: 2.5rem;
-            }
-
-            .hero-content p {
-                font-size: 1.1rem;
-            }
-
-            .nav {
-                padding: 20px;
-            }
-
-            .nav-links {
-                display: none;
-            }
-
-            .stats-section {
-                grid-template-columns: 1fr;
-                margin-top: 20px;
-            }
+            font-weight: bold;
+            color: white;
         }
     </style>
 </head>
 
 <body>
+
     <nav class="nav" id="mainNav">
-        <a href="index.html" class="logo">✨ InnerSpark</a>
+        <a href="#" class="logo">InnerSpark</a>
         <div class="nav-links">
-            <a href="#featuredSection"><i class="fas fa-fire"></i> Featured</a>
-            <a href="marketplace.html"><i class="fas fa-compass"></i> Explore Paths</a>
-            <a href="#eventsSection"><i class="fas fa-calendar-star"></i> Live Sessions</a>
-            <a href="#blogSection"><i class="fas fa-book-open"></i> Wisdom Blog</a>
-            <a href="login.html" class="btn-primary" style="margin-left: 10px;"><i class="fas fa-sign-in-alt"></i> Begin
-                Journey</a>
+            <a href="courses.html">Courses</a>
+            <a href="#featured">Journey</a>
+            <a href="login.html" class="btn-primary"
+                style="background: white; color: var(--color-saffron); padding: 10px 25px; border-radius: 20px;">
+                Login</a>
         </div>
     </nav>
 
+    <!-- Parallax Hero -->
     <section class="hero">
+        <div class="hero-bg-text" id="heroBgText">AWAKEN</div>
         <div class="hero-content">
-            <h1>🔥 Ignite Your Inner Light</h1>
-            <p>Ancient wisdom meets modern life in your personal digital sanctuary. Transform your spiritual journey
-                through guided meditation, philosophy, and mindfulness practices.</p>
-            <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin-top: 30px;">
-                <a href="marketplace.html" class="btn-primary"
-                    style="font-size: 1.2rem; padding: 18px 45px; display: inline-flex; align-items: center; gap: 10px;">
-                    <i class="fas fa-compass"></i> Explore Courses
-                </a>
-                <a href="register.html" class="btn-primary"
-                    style="font-size: 1.2rem; padding: 18px 45px; background: white; color: var(--color-primary); display: inline-flex; align-items: center; gap: 10px;">
-                    <i class="fas fa-user-plus"></i> Join Free
-                </a>
-            </div>
+            <h1>Ignite Your Inner Light</h1>
+            <p>A journey of a thousand miles begins with a single breath. Join our community of seekers.</p>
+            <a href="courses.html" class="btn-parallax">Explore The Path</a>
+        </div>
+    </section>
 
-            <div class="daily-spark" id="dailySpark">
-                <p class="quote-text">"The soul always knows what to do to heal itself. The challenge is to silence the
-                    mind."</p>
-                <small style="opacity: 0.8;"><i class="fas fa-quote-left"></i> Daily Spark</small>
+    <!-- Our Philosophy -->
+    <section style="background: #fafafa; padding: 50px 0;">
+        <div style="text-align: center; margin-bottom: 40px;">
+            <h2 style="font-size: 3rem; font-family: var(--font-heading); color: var(--color-saffron-dark);">Our
+                Philosophy</h2>
+            <p style="color: grey; max-width: 600px; margin: 0 auto;">Ancestral wisdom for the modern soul.</p>
+        </div>
+        <div class="philosophy-grid">
+            <div class="philosophy-card">
+                <div class="philosophy-icon"><i class="fas fa-seedling"></i></div>
+                <h3>Growth</h3>
+                <p style="color: #666; margin-top: 10px;">We believe that spiritual growth is a continuous journey of
+                    self-discovery and expansion.</p>
+            </div>
+            <div class="philosophy-card">
+                <div class="philosophy-icon"><i class="fas fa-link"></i></div>
+                <h3>Connection</h3>
+                <p style="color: #666; margin-top: 10px;">Connect with a global community of like-minded seekers walking
+                    the same path.</p>
+            </div>
+            <div class="philosophy-card">
+                <div class="philosophy-icon"><i class="fas fa-balance-scale"></i></div>
+                <h3>Balance</h3>
+                <p style="color: #666; margin-top: 10px;">Finding harmony between the material and spiritual worlds is
+                    key to a fulfilled life.</p>
             </div>
         </div>
     </section>
 
-    <!-- Stats Section -->
-    <div class="stats-section">
-        <div class="stat-card">
-            <div class="stat-number"><i class="fas fa-users"></i></div>
-            <div style="font-size: 2.5rem; font-weight: bold; color: var(--color-saffron); margin: 10px 0;">500+</div>
-            <div class="stat-label">Seekers</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number"><i class="fas fa-book"></i></div>
-            <div style="font-size: 2.5rem; font-weight: bold; color: var(--color-saffron); margin: 10px 0;">25+</div>
-            <div class="stat-label">Courses</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number"><i class="fas fa-user-tie"></i></div>
-            <div style="font-size: 2.5rem; font-weight: bold; color: var(--color-saffron); margin: 10px 0;">15+</div>
-            <div class="stat-label">Expert Mentors</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number"><i class="fas fa-certificate"></i></div>
-            <div style="font-size: 2.5rem; font-weight: bold; color: var(--color-saffron); margin: 10px 0;">1000+</div>
-            <div class="stat-label">Certificates Issued</div>
+    <!-- Horizontal Scroll Section -->
+    <div class="h-scroll-container" id="hScrollContainer">
+        <div class="h-scroll-sticky">
+            <div class="h-scroll-track" id="hScrollTrack">
+
+                <!-- Intro Card -->
+                <div class="h-card">
+                    <div class="h-card-number">01</div>
+                    <img src="https://images.unsplash.com/photo-1545389336-cf090694435e?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
+                        alt="Meditation"
+                        style="width: 100%; height: 250px; object-fit: cover; border-radius: 15px; margin-bottom: 20px;">
+                    <h2>Find Stillness</h2>
+                    <p>In the chaos of modern life, silence is the ultimate luxury. Our guided meditation courses help
+                        you reconnect with your inner sanctuary.</p>
+                </div>
+
+                <!-- Featured Course 1 -->
+                <div class="h-card">
+                    <div class="h-card-number">02</div>
+                    <img src="https://images.unsplash.com/photo-1518199266791-5375a83190b7?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
+                        alt="Yoga"
+                        style="width: 100%; height: 250px; object-fit: cover; border-radius: 15px; margin-bottom: 20px;">
+                    <h2>Ancient Wisdom</h2>
+                    <p>Discover the timeless teachings of the ages. From the Bhagavad Gita to modern mindfulness, we
+                        bridge the gap between old and new.</p>
+                </div>
+
+                <!-- Featured Course 2 -->
+                <div class="h-card">
+                    <div class="h-card-number">03</div>
+                    <img src="https://images.unsplash.com/photo-1599447421405-0e5a879d45bb?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
+                        alt="Nature"
+                        style="width: 100%; height: 250px; object-fit: cover; border-radius: 15px; margin-bottom: 20px;">
+                    <h2>Connect with Nature</h2>
+                    <p>Spirituality is not just about looking inward, but also connecting outward. Learn to see the
+                        divine in every leaf and stone.</p>
+                </div>
+
+                <!-- Call to Action Card -->
+                <div class="h-card" style="background: var(--color-saffron); color: white;">
+                    <div class="h-card-number" style="color: rgba(255,255,255,0.2);">04</div>
+                    <h2 style="color: white;">Begin Your Journey</h2>
+                    <p style="color: rgba(255,255,255,0.9);">The path is open. The teacher is within. All that is
+                        missing is your first step.</p>
+                    <a href="courses.html" class="btn-parallax"
+                        style="background: white; color: var(--color-saffron); margin-top: 30px; text-align: center;">View
+                        All Courses</a>
+                </div>
+
+            </div>
         </div>
     </div>
 
-    <!-- Featured Courses Section -->
-    <section class="section" id="featuredSection" style="padding: 120px 50px; background: #fafafa;">
+    <!-- Mentors Section -->
+    <section style="background: white; padding: 100px 0;">
         <div style="text-align: center; margin-bottom: 60px;">
-            <p style="color: var(--color-saffron); font-weight: 700; text-transform: uppercase; letter-spacing: 2px;"><i
-                    class="fas fa-fire"></i> Most Popular</p>
-            <h2 style="font-size: 3rem; font-family: var(--font-heading); margin-top: 10px;">Featured Spiritual Paths
-            </h2>
-            <p style="color: var(--color-text-secondary); max-width: 600px; margin: 20px auto; line-height: 1.8;">
-                Discover our most transformative courses, carefully curated to guide your spiritual awakening.</p>
+            <h2 style="font-size: 3rem; font-family: var(--font-heading); color: var(--color-saffron-dark);">Guiding
+                Lights</h2>
+            <p style="color: grey; max-width: 600px; margin: 0 auto;">Learn from masters who have walked the path before
+                you.</p>
         </div>
-        <div id="featuredCourses"
-            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 40px; max-width: 1200px; margin: 0 auto;">
-            <div class="glass-card" style="padding: 40px; text-align: center;">
-                <i class="fas fa-spinner fa-spin" style="font-size: 3rem; color: var(--color-saffron);"></i>
-                <p style="margin-top: 20px; color: var(--color-text-secondary);">Loading sacred paths...</p>
-            </div>
-        </div>
-        <div style="text-align: center; margin-top: 50px;">
-            <a href="marketplace.html" class="btn-primary" style="padding: 15px 40px; font-size: 1.1rem;">
-                <i class="fas fa-th-large"></i> View All Courses
-            </a>
-        </div>
-    </section>
-
-    <!-- Blog Section -->
-    <section class="section" id="blogSection" style="padding: 120px 50px; background: white;">
-        <div style="text-align: center; margin-bottom: 60px;">
-            <p style="color: var(--color-saffron); font-weight: 700; text-transform: uppercase; letter-spacing: 2px;"><i
-                    class="fas fa-scroll"></i> Sacred Writings</p>
-            <h2 style="font-size: 3rem; font-family: var(--font-heading); margin-top: 10px;">Inner Circle Chronicles
-            </h2>
-            <p style="color: var(--color-text-secondary); max-width: 600px; margin: 20px auto; line-height: 1.8;">
-                Insights, reflections, and wisdom from our community of seekers and mentors.</p>
-        </div>
-        <div id="blogGrid"
-            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 40px; max-width: 1200px; margin: 0 auto;">
-            <div class="glass-card" style="padding: 40px; text-align: center;">
-                <i class="fas fa-spinner fa-spin" style="font-size: 3rem; color: var(--color-saffron);"></i>
-                <p style="margin-top: 20px; color: var(--color-text-secondary);">Channeling wisdom...</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- Events Section -->
-    <section class="section" id="eventsSection" style="padding: 120px 50px; background: #fafafa;">
-        <div style="text-align: center; margin-bottom: 60px;">
-            <p style="color: var(--color-saffron); font-weight: 700; text-transform: uppercase; letter-spacing: 2px;"><i
-                    class="fas fa-calendar-alt"></i> Upcoming</p>
-            <h2 style="font-size: 3rem; font-family: var(--font-heading); margin-top: 10px;">Sacred Gatherings</h2>
-            <p style="color: var(--color-text-secondary); max-width: 600px; margin: 20px auto; line-height: 1.8;">Join
-                our live sessions, webinars, and special events to deepen your practice.</p>
-        </div>
-        <div id="eventsGrid"
-            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 40px; max-width: 1200px; margin: 0 auto;">
-            <div class="glass-card" style="padding: 40px; text-align: center;">
-                <i class="fas fa-spinner fa-spin" style="font-size: 3rem; color: var(--color-saffron);"></i>
-                <p style="margin-top: 20px; color: var(--color-text-secondary);">Aligning cosmic calendar...</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- Testimonials Section -->
-    <section class="section"
-        style="padding: 120px 50px; background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-saffron) 100%); color: white;">
-        <div style="text-align: center; margin-bottom: 60px;">
-            <h2 style="font-size: 3rem; font-family: var(--font-heading);">Voices of Transformation</h2>
-            <p style="opacity: 0.9; max-width: 600px; margin: 20px auto; line-height: 1.8;">Hear from our community
-                members who have found their inner light.</p>
-        </div>
-        <div
-            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px; max-width: 1200px; margin: 0 auto;">
-            <div
-                style="background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); padding: 35px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.2);">
-                <div style="font-size: 3rem; opacity: 0.3; margin-bottom: 15px;">"</div>
-                <p style="font-style: italic; line-height: 1.8; margin-bottom: 25px;">This platform transformed my daily
-                    meditation practice. The guidance from Swami Dayananda is profound and accessible.</p>
-                <div style="display: flex; align-items: center; gap: 15px;">
-                    <div
-                        style="width: 50px; height: 50px; border-radius: 50%; background: var(--color-golden); display: flex; align-items: center; justify-content: center; font-weight: bold;">
-                        A</div>
-                    <div>
-                        <strong>Arjun Kumar</strong>
-                        <div style="font-size: 0.85rem; opacity: 0.8;">Software Engineer, Mumbai</div>
-                    </div>
+        <div class="mentor-grid">
+            <div class="mentor-card">
+                <img src="https://images.unsplash.com/photo-1544717305-2782549b5136?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80"
+                    alt="Mentor 1" class="mentor-img">
+                <div class="mentor-info">
+                    <h3 style="margin-bottom: 5px;">Swami Dayananda</h3>
+                    <p style="color: var(--color-saffron); font-weight: 600; font-size: 0.9rem;">Meditation Master</p>
+                    <p style="color: #777; font-size: 0.9rem; margin-top: 15px;">30 years of experience in Himalayan
+                        meditation traditions.</p>
                 </div>
             </div>
-            <div
-                style="background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); padding: 35px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.2);">
-                <div style="font-size: 3rem; opacity: 0.3; margin-bottom: 15px;">"</div>
-                <p style="font-style: italic; line-height: 1.8; margin-bottom: 25px;">The Bhagavad Gita course opened my
-                    eyes to ancient wisdom. I feel more centered and purposeful in my life now.</p>
-                <div style="display: flex; align-items: center; gap: 15px;">
-                    <div
-                        style="width: 50px; height: 50px; border-radius: 50%; background: var(--color-golden); display: flex; align-items: center; justify-content: center; font-weight: bold;">
-                        P</div>
-                    <div>
-                        <strong>Priya Sharma</strong>
-                        <div style="font-size: 0.85rem; opacity: 0.8;">Teacher, Delhi</div>
-                    </div>
+            <div class="mentor-card">
+                <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80"
+                    alt="Mentor 2" class="mentor-img">
+                <div class="mentor-info">
+                    <h3 style="margin-bottom: 5px;">Dr. Priya Sharma</h3>
+                    <p style="color: var(--color-saffron); font-weight: 600; font-size: 0.9rem;">Scholar of Vedanta</p>
+                    <p style="color: #777; font-size: 0.9rem; margin-top: 15px;">Bridging ancient scripture with modern
+                        psychological understanding.</p>
                 </div>
             </div>
-            <div
-                style="background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); padding: 35px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.2);">
-                <div style="font-size: 3rem; opacity: 0.3; margin-bottom: 15px;">"</div>
-                <p style="font-style: italic; line-height: 1.8; margin-bottom: 25px;">The live sessions and community
-                    support make this more than just an online course - it's a true spiritual sanctuary.</p>
-                <div style="display: flex; align-items: center; gap: 15px;">
-                    <div
-                        style="width: 50px; height: 50px; border-radius: 50%; background: var(--color-golden); display: flex; align-items: center; justify-content: center; font-weight: bold;">
-                        R</div>
-                    <div>
-                        <strong>Raj Patel</strong>
-                        <div style="font-size: 0.85rem; opacity: 0.8;">Entrepreneur, Bangalore</div>
-                    </div>
+            <div class="mentor-card">
+                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80"
+                    alt="Mentor 3" class="mentor-img">
+                <div class="mentor-info">
+                    <h3 style="margin-bottom: 5px;">Yogi Ramesh</h3>
+                    <p style="color: var(--color-saffron); font-weight: 600; font-size: 0.9rem;">Hatha Yoga Expert</p>
+                    <p style="color: #777; font-size: 0.9rem; margin-top: 15px;">Focusing on the union of body, breath,
+                        and mind.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Newsletter Section -->
-    <section style="padding: 100px 20px; background: var(--color-primary); color: white; text-align: center;">
-        <h2 style="font-family: var(--font-heading); margin-bottom: 20px; font-size: 2.5rem;">🌟 Join the Inner Circle
-        </h2>
-        <p
-            style="margin-bottom: 40px; opacity: 0.9; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.8;">
-            Receive weekly wisdom, exclusive event invites, and special offers delivered to your inbox.</p>
-        <form id="newsletterForm"
-            style="max-width: 600px; margin: 0 auto; display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
-            <input type="email" name="email" class="form-control" placeholder="your@email.com" required
-                style="flex: 1; min-width: 300px; padding: 18px 25px; border-radius: 10px; border: none; font-size: 1rem;">
-            <button type="submit" class="btn-primary"
-                style="padding: 18px 40px; background: var(--color-saffron); font-size: 1rem; border-radius: 10px; display: inline-flex; align-items: center; gap: 10px;">
-                <i class="fas fa-paper-plane"></i> Subscribe
-            </button>
+    <section style="padding: 100px; text-align: center; background: #fff;">
+        <h2
+            style="font-size: 3rem; margin-bottom: 30px; font-family: var(--font-heading); color: var(--color-saffron);">
+            Join the Inner Circle</h2>
+        <p style="max-width: 600px; margin: 0 auto 40px; color: #666;">Subscribe to our newsletter for weekly wisdom and
+            exclusive event invites.</p>
+
+        <form id="newsletterForm" style="max-width: 500px; margin: 0 auto; display: flex; gap: 10px;">
+            <input type="email" name="email" placeholder="Your email address"
+                style="flex: 1; padding: 15px; border: 1px solid #ddd; border-radius: 30px; outline: none;">
+            <button type="submit"
+                style="background: var(--color-saffron); color: white; border: none; padding: 15px 30px; border-radius: 30px; font-weight: bold; cursor: pointer;">Subscribe</button>
         </form>
     </section>
 
-    <!-- Footer -->
-    <footer style="padding: 80px 50px 40px; background: #1a1a1a; color: white;">
-        <div
-            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 50px; max-width: 1200px; margin: 0 auto; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 50px;">
-            <div>
-                <a href="#" class="logo" style="margin-bottom: 20px; display: block;">✨ InnerSpark</a>
-                <p style="opacity: 0.6; line-height: 1.8;">A sacred space for those seeking to rediscover their internal
-                    light through ancient wisdom and modern mindfulness.</p>
-                <div style="display: flex; gap: 15px; margin-top: 25px; font-size: 1.5rem;">
-                    <a href="https://instagram.com" target="_blank" style="color: white; transition: all 0.3s ease;"><i
-                            class="fab fa-instagram"></i></a>
-                    <a href="https://twitter.com" target="_blank" style="color: white; transition: all 0.3s ease;"><i
-                            class="fab fa-twitter"></i></a>
-                    <a href="https://youtube.com" target="_blank" style="color: white; transition: all 0.3s ease;"><i
-                            class="fab fa-youtube"></i></a>
-                    <a href="https://facebook.com" target="_blank" style="color: white; transition: all 0.3s ease;"><i
-                            class="fab fa-facebook"></i></a>
-                </div>
-            </div>
-            <div>
-                <h4 style="margin-bottom: 25px; color: var(--color-golden);">Quick Links</h4>
-                <ul style="list-style: none; opacity: 0.8; display: grid; gap: 15px;">
-                    <li><a href="marketplace.html"
-                            style="color: white; text-decoration: none; transition: all 0.3s ease;"><i
-                                class="fas fa-chevron-right" style="font-size: 0.7rem; margin-right: 8px;"></i> Explore
-                            Courses</a></li>
-                    <li><a href="#blogSection"
-                            style="color: white; text-decoration: none; transition: all 0.3s ease;"><i
-                                class="fas fa-chevron-right" style="font-size: 0.7rem; margin-right: 8px;"></i> Wisdom
-                            Blog</a></li>
-                    <li><a href="#eventsSection"
-                            style="color: white; text-decoration: none; transition: all 0.3s ease;"><i
-                                class="fas fa-chevron-right" style="font-size: 0.7rem; margin-right: 8px;"></i> Sacred
-                            Gatherings</a></li>
-                    <li><a href="login.html" style="color: white; text-decoration: none; transition: all 0.3s ease;"><i
-                                class="fas fa-chevron-right" style="font-size: 0.7rem; margin-right: 8px;"></i> Login /
-                            Register</a></li>
-                </ul>
-            </div>
-            <div>
-                <h4 style="margin-bottom: 25px; color: var(--color-golden);">Contact</h4>
-                <ul style="list-style: none; opacity: 0.8; display: grid; gap: 15px;">
-                    <li><i class="fas fa-envelope"></i> support@innerspark.com</li>
-                    <li><i class="fas fa-phone"></i> +1 (800) INNER-SP</li>
-                    <li><i class="fas fa-map-marker-alt"></i> Spiritual Valley, 12345</li>
-                </ul>
-            </div>
+    <footer class="footer">
+        <p>&copy; 2026 InnerSpark Community. All rights reserved.</p>
+        <div style="margin-top: 20px; font-size: 1.5rem; opacity: 0.7;">
+            <i class="fab fa-instagram" style="margin: 0 10px;"></i>
+            <i class="fab fa-twitter" style="margin: 0 10px;"></i>
+            <i class="fab fa-youtube" style="margin: 0 10px;"></i>
         </div>
-        <p style="text-align: center; margin-top: 40px; opacity: 0.4; font-size: 0.9rem;">&copy; 2026 InnerSpark
-            Sanctuary. All rights reserved. | Made with 💛 for seekers worldwide</p>
     </footer>
 
     <script src="../js/config.js"></script>
-    <script src="../js/landing.js?v=2"></script>
-    <script>
-        // Rotating Quotes
-        const quotes = [
-            "The soul always knows what to do to heal itself. The challenge is to silence the mind.",
-            "Peace is the result of retraining your mind to process life as it is, rather than as you think it should be.",
-            "Within you, there is a stillness and a sanctuary to which you can retreat at any time and be yourself.",
-            "Your vision will become clear only when you can look into your own heart. Who looks outside, dreams; who looks inside, awakes.",
-            "The quieter you become, the more you can hear.",
-            "Meditation is not a means to an end. It is both the means and the end."
-        ];
-
-        let quoteIndex = 0;
-        const sparkEl = document.querySelector('.quote-text');
-
-        setInterval(() => {
-            quoteIndex = (quoteIndex + 1) % quotes.length;
-            sparkEl.style.opacity = '0';
-            setTimeout(() => {
-                sparkEl.textContent = `"${quotes[quoteIndex]}"`;
-                sparkEl.style.opacity = '1';
-            }, 500);
-        }, 8000);
-
-        // Scroll Effect for Nav
-        window.addEventListener('scroll', () => {
-            const nav = document.getElementById('mainNav');
-            if (window.scrollY > 100) {
-                nav.classList.add('scrolled');
-            } else {
-                nav.classList.remove('scrolled');
-            }
-        });
-
-        // Smooth Scroll
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                const href = this.getAttribute('href');
-                if (href !== '#') {
-                    e.preventDefault();
-                    const target = document.querySelector(href);
-                    if (target) {
-                        target.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'start'
-                        });
-                    }
-                }
-            });
-        });
-    </script>
+    <script src="../js/landing.js"></script>
 </body>
 
 </html>
