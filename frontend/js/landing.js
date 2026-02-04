@@ -47,7 +47,7 @@ async function loadFeaturedCourses() {
 
         featuredCourses.innerHTML = courses.map(course => `
             <div class="glass-card" style="text-align: left; transition: all 0.3s ease; cursor: pointer; overflow: hidden;" onclick="window.location.href='marketplace.html'" onmouseover="this.style.transform='translateY(-10px)'; this.style.boxShadow='0 15px 40px rgba(0,0,0,0.15)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 10px 30px rgba(0,0,0,0.1)'">
-                <div style="height: 200px; background: url('${course.thumbnail}'); background-size: cover; background-position: center; border-radius: 10px 10px 0 0; display: flex; align-items: center; justify-content: center; color: white; font-size: 4rem;">
+                <div style="height: 200px; background: ${course.thumbnail ? `url('${course.thumbnail}')` : 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-saffron) 100%)'}; background-size: cover; background-position: center; border-radius: 10px 10px 0 0; display: flex; align-items: center; justify-content: center; color: white; font-size: 4rem;">
                     ${!course.thumbnail ? '<i class="fas fa-om"></i>' : ''}
                 </div>
                 <div style="padding: 30px;">

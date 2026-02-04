@@ -48,8 +48,16 @@ exports.register = catchAsync(async (req, res, next) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const studentID = await generateID(role);
 
-    let profilePicPath = '';
-    if (req.file) profilePicPath = req.file.path;
+    let profilePicBase64 = '';
+    if (req.file) {
+        // Convert uploaded file to base64
+        const fs = require('fs');
+        const imageBuffer = fs.readFileSync(req.file.path);
+        profilePicBase64 = `data:${req.file.mimetype};base64,${imageBuffer.toString('base64')}`;
+        
+        // Delete the temporary file
+        fs.unlinkSync(req.file.path);
+    }
 
     const newUser = new User({
         name,
@@ -61,7 +69,7 @@ exports.register = catchAsync(async (req, res, next) => {
         address,
         gender,
         dob,
-        profilePic: profilePicPath,
+        profilePic: profilePicBase64,
         verificationToken: crypto.randomBytes(32).toString('hex')
     });
 
@@ -160,11 +168,17 @@ exports.updateProfile = catchAsync(async (req, res, next) => {
 
     if (req.file) {
         if (req.file.size < 5120 || req.file.size > 51200) {
-            // const fs = require('fs');
-            // fs.unlinkSync(req.file.path); // Cannot local unlink Cloudinary URL
+            const fs = require('fs');
+            fs.unlinkSync(req.file.path);
             return next(new AppError('File too large or too small. Size must be between 5KB and 50KB.', 400));
         }
-        updates.profilePic = req.file.path;
+        // Convert uploaded file to base64
+        const fs = require('fs');
+        const imageBuffer = fs.readFileSync(req.file.path);
+        updates.profilePic = `data:${req.file.mimetype};base64,${imageBuffer.toString('base64')}`;
+        
+        // Delete the temporary file
+        fs.unlinkSync(req.file.path);
     }
 
     const user = await User.findByIdAndUpdate(req.user.id, updates, { new: true, runValidators: true }).select('-password');

@@ -21,8 +21,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const avatarEl = document.getElementById('userAvatar');
-    if (user.profilePic) {
-        avatarEl.innerHTML = `<img src="${user.profilePic}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;" onerror="this.parentElement.textContent = '${(user.name || 'U').charAt(0)}'">`;
+    // Only show profile pic if it's valid base64 or HTTP URL
+    if (user.profilePic && (user.profilePic.startsWith('data:') || user.profilePic.startsWith('http'))) {
+        avatarEl.innerHTML = `<img src="${user.profilePic}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;" onerror="this.textContent = '${(user.name || 'U').charAt(0)}'">`;
     } else {
         avatarEl.textContent = user.name.charAt(0);
     }
@@ -210,7 +211,8 @@ async function generateIDCard(paramUser) {
         UI.showLoader();
         // Fetch fresh profile data
         const res = await fetch(`${Auth.apiBase}/auth/profile`, { headers: Auth.getHeaders() });
-        const user = await res.json();
+        const response = await res.json();
+        const user = response.data?.user || response.user || response;
 
         const { jsPDF } = window.jspdf;
         // CR80 Size (Credit Card): 85.6mm x 53.98mm -> Round to 86x54
@@ -262,7 +264,7 @@ async function generateIDCard(paramUser) {
         doc.setLineWidth(0.5);
 
         // Photo Placeholder/Image
-        if (user.profilePic) {
+        if (user.profilePic && (user.profilePic.startsWith('data:') || user.profilePic.startsWith('http'))) {
             try {
                 const img = new Image();
                 img.crossOrigin = 'Anonymous';
@@ -783,16 +785,27 @@ async function loadProfile() {
     try {
         UI.showLoader();
         const res = await fetch(`${Auth.apiBase}/auth/profile`, { headers: Auth.getHeaders() });
-        const user = await res.json();
+        
+        if (!res.ok) {
+            throw new Error('Failed to load profile');
+        }
+        
+        const response = await res.json();
+        const user = response.data?.user || response.user || response;
+
+        console.log('Profile loaded:', user); // Debug log
 
         // Populate fields
-        if (user.name) document.getElementById('p_name').value = user.name.toUpperCase();
+        if (user.name) {
+            document.getElementById('p_name').value = user.name.toUpperCase();
+        }
         if (user.initial) document.getElementById('p_initial').value = user.initial;
         if (user.fatherName) document.getElementById('p_fatherName').value = user.fatherName;
         if (user.motherName) document.getElementById('p_motherName').value = user.motherName;
 
         if (user.dob) {
-            document.getElementById('p_dob').value = user.dob.split('T')[0];
+            const dobValue = user.dob.split('T')[0];
+            document.getElementById('p_dob').value = dobValue;
             calculateAge();
         }
 
@@ -812,6 +825,7 @@ async function loadProfile() {
             if (addr.town) document.getElementById('p_town').value = addr.town;
             if (addr.district) document.getElementById('p_district').value = addr.district;
             if (addr.pincode) document.getElementById('p_pincode').value = addr.pincode;
+            if (addr.state) document.getElementById('p_state').value = addr.state;
         }
 
         if (user.workDetails) {
@@ -820,6 +834,18 @@ async function loadProfile() {
         }
 
         if (user.whatsappNumber) document.getElementById('p_whatsapp').value = user.whatsappNumber;
+
+        // Display profile photo
+        const photoPreview = document.getElementById('profilePhotoPreview');
+        if (photoPreview) {
+            // Only display if it's a valid base64 data URI or HTTP URL
+            if (user.profilePic && (user.profilePic.startsWith('data:') || user.profilePic.startsWith('http'))) {
+                photoPreview.innerHTML = `<img src="${user.profilePic}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.parentElement.innerHTML='<i class=\"fas fa-user\" style=\"font-size: 3rem; color: #999;\"></i>';">`;
+            } else {
+                // Fallback to default icon if invalid or file path
+                photoPreview.innerHTML = '<i class="fas fa-user" style="font-size: 3rem; color: #999;"></i>';
+            }
+        }
 
         checkProfileCompletion(); // Perform check after populating
     } catch (err) {
@@ -1022,26 +1048,34 @@ async function loadCharts() {
 
 // --- Profile Upload ---
 async function handleProfileUpload(input) {
+    console.log('handleProfileUpload called', input);
+    
     if (input.files && input.files[0]) {
         const file = input.files[0];
+        console.log('File selected:', file.name, file.size, file.type);
 
         // Validation
         const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
         if (!validTypes.includes(file.type)) {
             UI.error('Invalid format. Use JPG/PNG.');
+            console.error('Invalid file type:', file.type);
             return;
         }
 
         if (file.size < 5120 || file.size > 51200) {
-            UI.error('Size must be between 5KB and 50KB.');
+            UI.error(`Size must be between 5KB and 50KB. Current: ${(file.size/1024).toFixed(2)}KB`);
+            console.error('Invalid file size:', file.size);
             return;
         }
 
         const formData = new FormData();
         formData.append('profilePic', file);
+        formData.append('type', 'profile'); // Tell server this is a profile photo
 
         try {
             UI.showLoader();
+            console.log('Uploading to:', `${Auth.apiBase}/auth/profile`);
+            
             const res = await fetch(`${Auth.apiBase}/auth/profile`, {
                 method: 'PUT',
                 headers: {
@@ -1051,23 +1085,43 @@ async function handleProfileUpload(input) {
             });
 
             const data = await res.json();
+            console.log('Upload response:', data);
+            
             if (res.ok) {
                 UI.success('Photo updated successfully!');
-                if (data.user && data.user.profilePic) {
+                const profilePicUrl = data.data?.user?.profilePic || data.user?.profilePic;
+                console.log('Profile pic URL:', profilePicUrl);
+                
+                // Only update if it's valid base64 or HTTP URL
+                if (profilePicUrl && (profilePicUrl.startsWith('data:') || profilePicUrl.startsWith('http'))) {
+                    // Update top header avatar
                     const avatar = document.getElementById('userAvatar');
                     if (avatar) {
-                        avatar.innerHTML = `<img src="${data.user.profilePic}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+                        avatar.innerHTML = `<img src="${profilePicUrl}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" onerror="this.textContent='${user.name ? user.name.charAt(0) : 'U'}';">`;
                     }
+                    
+                    // Update profile photo preview
+                    const photoPreview = document.getElementById('profilePhotoPreview');
+                    if (photoPreview) {
+                        photoPreview.innerHTML = `<img src="${profilePicUrl}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.parentElement.innerHTML='<i class=\\"fas fa-user\\" style=\\"font-size: 3rem; color: #999;\\"></i>';">`;
+                    }
+                } else {
+                    console.error('Invalid profile pic URL format:', profilePicUrl);
                 }
             } else {
+                console.error('Upload failed:', data);
                 UI.error(data.message || 'Upload failed');
             }
         } catch (err) {
-            console.error(err);
-            UI.error('Server connection failed');
+            console.error('Upload error:', err);
+            UI.error('Server connection failed: ' + err.message);
         } finally {
             UI.hideLoader();
+            // Reset input to allow uploading same file again
+            input.value = '';
         }
+    } else {
+        console.log('No file selected');
     }
 }
 
