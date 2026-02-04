@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const { User } = require('../models/index');
 
 /**
  * Middleware to verify JWT and User Role
@@ -18,6 +19,24 @@ const authorize = (roles = []) => {
 
         try {
             const decoded = jwt.verify(token, process.env.JWT_SECRET || 'innerspark_secret_key');
+            
+            // SECURITY CHECK: Verify user still exists and is active
+            const user = await User.findById(decoded.id).select('active role name');
+            
+            if (!user) {
+                return res.status(401).json({ 
+                    message: 'User account no longer exists',
+                    invalidAccount: true 
+                });
+            }
+            
+            if (user.active === false) {
+                return res.status(403).json({ 
+                    message: 'Your account has been deactivated by the administrator. Please contact support for assistance.',
+                    inactive: true 
+                });
+            }
+            
             req.user = decoded;
 
             // Check Maintenance Mode

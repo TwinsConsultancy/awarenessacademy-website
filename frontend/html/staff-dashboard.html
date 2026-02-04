@@ -460,6 +460,7 @@
                     </a>
                 </li>
                 <li><a href="#" class="nav-link" onclick="switchSection('live')" title="Live Classroom"><i class="fas fa-video"></i> <span class="sidebar-text">Live Classroom</span></a></li>
+                <li><a href="#" class="nav-link" onclick="switchSection('profile')" title="My Profile"><i class="fas fa-user-circle"></i> <span class="sidebar-text">My Profile</span></a></li>
                 <li><a href="#" id="logoutBtn" class="nav-link" style="color: var(--color-error); margin-top: 50px;" title="Logout"><i
                             class="fas fa-sign-out-alt"></i> <span class="sidebar-text">Logout</span></a></li>
             </ul>
@@ -590,6 +591,198 @@
                     </div>
                     <div id="scheduleList">
                         <!-- Schedules load here -->
+                    </div>
+                </section>
+
+                <!-- Profile Section -->
+                <section id="profileSection" style="display: none;">
+                    <div style="background: linear-gradient(135deg, var(--color-saffron) 0%, var(--color-golden) 100%); padding: 30px; border-radius: 15px; margin-bottom: 30px; color: white; box-shadow: 0 4px 15px rgba(255, 149, 0, 0.2);">
+                        <h2 style="margin: 0 0 10px 0; font-size: 2rem;"><i class="fas fa-user-circle"></i> My Profile</h2>
+                        <p style="margin: 0; opacity: 0.9;">Manage your personal information and account settings</p>
+                    </div>
+                    
+                    <!-- Personal Details Card -->
+                    <div class="glass-card" style="margin-bottom: 25px; border-left: 4px solid var(--color-saffron);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #f0f0f0;">
+                            <h4 style="margin: 0; color: #333; font-size: 1.3rem;"><i class="fas fa-id-card" style="color: var(--color-saffron);"></i> Personal Information</h4>
+                        </div>
+                        <form id="personalDetailsForm">
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+                                <div class="form-group">
+                                    <label style="font-weight: 600; color: #555; margin-bottom: 8px; display: block;">Full Name <span style="color: red;">*</span></label>
+                                    <input type="text" id="profileName" class="form-control" required style="border: 1px solid #ddd; padding: 12px; border-radius: 8px;">
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-weight: 600; color: #555; margin-bottom: 8px; display: block;">Staff ID</label>
+                                    <input type="text" id="profileStaffID" class="form-control" readonly style="background: #f8f9fa; border: 1px solid #e0e0e0; padding: 12px; border-radius: 8px; cursor: not-allowed; color: #666;">
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-weight: 600; color: #555; margin-bottom: 8px; display: block;">Email Address</label>
+                                    <input type="email" id="profileEmail" class="form-control" readonly style="background: #f8f9fa; border: 1px solid #e0e0e0; padding: 12px; border-radius: 8px; cursor: not-allowed; color: #666;">
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-weight: 600; color: #555; margin-bottom: 8px; display: block;">Father's Name</label>
+                                    <input type="text" id="profileFatherName" class="form-control" style="border: 1px solid #ddd; padding: 12px; border-radius: 8px;">
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-weight: 600; color: #555; margin-bottom: 8px; display: block;">Mother's Name</label>
+                                    <input type="text" id="profileMotherName" class="form-control" style="border: 1px solid #ddd; padding: 12px; border-radius: 8px;">
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-weight: 600; color: #555; margin-bottom: 8px; display: block;">Date of Birth</label>
+                                    <input type="date" id="profileDOB" class="form-control" style="border: 1px solid #ddd; padding: 12px; border-radius: 8px;">
+                                    <small id="profileAge" style="color: var(--color-saffron); font-weight: 600; margin-top: 5px; display: block;"></small>
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: flex-end; margin-top: 25px; padding-top: 20px; border-top: 2px solid #f0f0f0;">
+                                <button type="submit" class="btn-primary" style="background: var(--color-saffron); padding: 12px 30px; border-radius: 8px; font-weight: 600; box-shadow: 0 4px 12px rgba(255, 149, 0, 0.3);">
+                                    <i class="fas fa-save"></i> Update Personal Details
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Address Details Card -->
+                    <div class="glass-card" style="margin-bottom: 25px; border-left: 4px solid #4facfe;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #f0f0f0;">
+                            <h4 style="margin: 0; color: #333; font-size: 1.3rem;"><i class="fas fa-map-marker-alt" style="color: #4facfe;"></i> Address Details</h4>
+                        </div>
+                        <form id="addressDetailsForm">
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+                                <div class="form-group">
+                                    <label style="font-weight: 600; color: #555; margin-bottom: 8px; display: block;">Door Number</label>
+                                    <input type="text" id="profileDoorNumber" class="form-control" placeholder="e.g., 123, A/45" style="border: 1px solid #ddd; padding: 12px; border-radius: 8px;">
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-weight: 600; color: #555; margin-bottom: 8px; display: block;">Street Name</label>
+                                    <input type="text" id="profileStreet" class="form-control" placeholder="e.g., Main Street" style="border: 1px solid #ddd; padding: 12px; border-radius: 8px;">
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-weight: 600; color: #555; margin-bottom: 8px; display: block;">Village/Town</label>
+                                    <input type="text" id="profileTown" class="form-control" placeholder="e.g., Chennai" style="border: 1px solid #ddd; padding: 12px; border-radius: 8px;">
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-weight: 600; color: #555; margin-bottom: 8px; display: block;">District</label>
+                                    <input type="text" id="profileDistrict" class="form-control" placeholder="e.g., Chennai" style="border: 1px solid #ddd; padding: 12px; border-radius: 8px;">
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-weight: 600; color: #555; margin-bottom: 8px; display: block;">Pincode</label>
+                                    <input type="text" id="profilePincode" class="form-control" maxlength="6" placeholder="e.g., 600001" style="border: 1px solid #ddd; padding: 12px; border-radius: 8px;">
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: flex-end; margin-top: 25px; padding-top: 20px; border-top: 2px solid #f0f0f0;">
+                                <button type="submit" class="btn-primary" style="background: #4facfe; padding: 12px 30px; border-radius: 8px; font-weight: 600; box-shadow: 0 4px 12px rgba(79, 172, 254, 0.3);">
+                                    <i class="fas fa-save"></i> Update Address Details
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Contact Details Card -->
+                    <div class="glass-card" style="margin-bottom: 25px; border-left: 4px solid #667eea;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #f0f0f0;">
+                            <h4 style="margin: 0; color: #333; font-size: 1.3rem;"><i class="fas fa-phone" style="color: #667eea;"></i> Contact Information</h4>
+                        </div>
+                        <form id="contactDetailsForm">
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+                                <div class="form-group">
+                                    <label style="font-weight: 600; color: #555; margin-bottom: 8px; display: block;">Primary Contact Number <span style="color: red;">*</span></label>
+                                    <input type="tel" id="profilePhone" class="form-control" required maxlength="10" placeholder="10-digit mobile number" style="border: 1px solid #ddd; padding: 12px; border-radius: 8px;">
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-weight: 600; color: #555; margin-bottom: 8px; display: block;">Additional Contact Number</label>
+                                    <input type="tel" id="profileAdditionalPhone" class="form-control" maxlength="10" placeholder="Alternate number (optional)" style="border: 1px solid #ddd; padding: 12px; border-radius: 8px;">
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: flex-end; margin-top: 25px; padding-top: 20px; border-top: 2px solid #f0f0f0;">
+                                <button type="submit" class="btn-primary" style="background: #667eea; padding: 12px 30px; border-radius: 8px; font-weight: 600; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
+                                    <i class="fas fa-save"></i> Update Contact Details
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Bank Details Card -->
+                    <div class="glass-card" style="margin-bottom: 25px; border-left: 4px solid #f093fb;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #f0f0f0;">
+                            <h4 style="margin: 0; color: #333; font-size: 1.3rem;"><i class="fas fa-university" style="color: #f093fb;"></i> Bank Details <small style="color: #999; font-weight: 400; font-size: 0.9rem;">(Optional)</small></h4>
+                        </div>
+                        <form id="bankDetailsForm">
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+                                <div class="form-group">
+                                    <label style="font-weight: 600; color: #555; margin-bottom: 8px; display: block;">Account Holder Name</label>
+                                    <input type="text" id="profileAccountHolder" class="form-control" placeholder="As per bank records" style="border: 1px solid #ddd; padding: 12px; border-radius: 8px;">
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-weight: 600; color: #555; margin-bottom: 8px; display: block;">Account Number</label>
+                                    <input type="text" id="profileAccountNumber" class="form-control" placeholder="Enter account number" style="border: 1px solid #ddd; padding: 12px; border-radius: 8px;">
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-weight: 600; color: #555; margin-bottom: 8px; display: block;">Bank Name</label>
+                                    <input type="text" id="profileBankName" class="form-control" placeholder="e.g., State Bank of India" style="border: 1px solid #ddd; padding: 12px; border-radius: 8px;">
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-weight: 600; color: #555; margin-bottom: 8px; display: block;">IFSC Code</label>
+                                    <input type="text" id="profileIFSC" class="form-control" placeholder="e.g., SBIN0001234" style="border: 1px solid #ddd; padding: 12px; border-radius: 8px; text-transform: uppercase;">
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-weight: 600; color: #555; margin-bottom: 8px; display: block;">Branch Name</label>
+                                    <input type="text" id="profileBranch" class="form-control" placeholder="e.g., Anna Nagar Branch" style="border: 1px solid #ddd; padding: 12px; border-radius: 8px;">
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: flex-end; margin-top: 25px; padding-top: 20px; border-top: 2px solid #f0f0f0;">
+                                <button type="submit" class="btn-primary" style="background: #f093fb; padding: 12px 30px; border-radius: 8px; font-weight: 600; box-shadow: 0 4px 12px rgba(240, 147, 251, 0.3);">
+                                    <i class="fas fa-save"></i> Update Bank Details
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Change Password Card -->
+                    <div class="glass-card" style="margin-bottom: 25px; border-left: 4px solid #ff6b6b;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #f0f0f0;">
+                            <h4 style="margin: 0; color: #333; font-size: 1.3rem;"><i class="fas fa-key" style="color: #ff6b6b;"></i> Security Settings</h4>
+                        </div>
+                        <form id="changePasswordForm">
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+                                <div class="form-group">
+                                    <label style="font-weight: 600; color: #555; margin-bottom: 8px; display: block;">Current Password <span style="color: red;">*</span></label>
+                                    <input type="password" id="currentPassword" class="form-control" required placeholder="Enter current password" style="border: 1px solid #ddd; padding: 12px; border-radius: 8px;">
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-weight: 600; color: #555; margin-bottom: 8px; display: block;">New Password <span style="color: red;">*</span></label>
+                                    <input type="password" id="newPassword" class="form-control" required minlength="8" placeholder="Minimum 8 characters" style="border: 1px solid #ddd; padding: 12px; border-radius: 8px;">
+                                    <small style="color: #999; display: block; margin-top: 5px;"><i class="fas fa-info-circle"></i> Must be at least 8 characters long</small>
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-weight: 600; color: #555; margin-bottom: 8px; display: block;">Confirm New Password <span style="color: red;">*</span></label>
+                                    <input type="password" id="confirmPassword" class="form-control" required minlength="8" placeholder="Re-enter new password" style="border: 1px solid #ddd; padding: 12px; border-radius: 8px;">
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: flex-end; margin-top: 25px; padding-top: 20px; border-top: 2px solid #f0f0f0;">
+                                <button type="submit" class="btn-primary" style="background: #ff6b6b; padding: 12px 30px; border-radius: 8px; font-weight: 600; box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);">
+                                    <i class="fas fa-lock"></i> Update Password
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Account Activity Card -->
+                    <div class="glass-card" style="border-left: 4px solid #17a2b8;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #f0f0f0;">
+                            <h4 style="margin: 0; color: #333; font-size: 1.3rem;"><i class="fas fa-history" style="color: #17a2b8;"></i> Account Activity</h4>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #e3f2fd 0%, #f1f8ff 100%); padding: 20px; border-radius: 10px; border: 1px solid #bbdefb;">
+                            <div style="display: flex; align-items: center; gap: 15px;">
+                                <div style="background: white; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                                    <i class="fas fa-clock" style="color: #17a2b8; font-size: 1.5rem;"></i>
+                                </div>
+                                <div>
+                                    <p style="margin: 0; font-weight: 600; color: #333; font-size: 0.9rem;">Last Login</p>
+                                    <p style="margin: 5px 0 0 0; color: #555; font-size: 1.1rem;" id="lastLoginDisplay">Loading...</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </section>
             </div>
@@ -824,8 +1017,8 @@
         </div> <!-- End main-content -->
     </div> <!-- End dashboard -->
 
-    <script src="../js/auth.js"></script>
     <script src="../js/utils.js"></script>
+    <script src="../js/auth.js"></script>
     <script src="../js/staff.js"></script>
     <script src="../js/chatbot.js"></script>
 
