@@ -88,7 +88,6 @@ app.use('/api/uploads', require('./backend/routes/upload'));
 
 // New modular content system routes
 app.use('/api', require('./backend/routes/modules'));
-app.use('/api', require('./backend/routes/lessons'));
 
 // Basic Route
 app.get('/', (req, res) => {
