@@ -11,28 +11,166 @@
         href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;600&display=swap"
         rel="stylesheet">
     <style>
+        <style>body {
+            font-family: var(--font-body);
+            background-color: var(--color-warm-white);
+            color: var(--color-text-primary);
+            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* --- Global Nav --- */
+        .nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 20px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            transition: var(--transition-smooth);
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .nav .logo {
+            font-size: 1.8rem;
+            font-family: var(--font-heading);
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--color-text-primary);
+            text-decoration: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--color-text-primary);
+            font-weight: 500;
+            margin-left: 30px;
+            transition: var(--transition-smooth);
+            position: relative;
+        }
+
+        .nav-links a:not(.btn-primary)::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--color-saffron);
+            transition: var(--transition-smooth);
+        }
+
+        .nav-links a:not(.btn-primary):hover::after {
+            width: 100%;
+        }
+
+        /* --- Blog Specific --- */
         .blog-header {
-            padding: 100px 20px;
-            background: linear-gradient(rgba(255, 153, 51, 0.1), rgba(255, 195, 0, 0.05));
+            padding: 180px 20px 120px;
+            background: radial-gradient(circle at top right, rgba(255, 153, 51, 0.1), transparent 50%),
+                radial-gradient(circle at bottom left, rgba(255, 195, 0, 0.1), transparent 50%);
             text-align: center;
         }
 
         .blog-content {
-            max-width: 800px;
-            margin: -60px auto 100px;
+            max-width: 900px;
+            margin: -80px auto 100px;
             background: white;
             padding: 60px;
             border-radius: 20px;
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.05);
             line-height: 1.8;
+            position: relative;
+            z-index: 10;
         }
 
         .blog-meta {
             color: var(--color-saffron);
             font-weight: 600;
             text-transform: uppercase;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             margin-bottom: 20px;
+            display: inline-block;
+            letter-spacing: 1px;
+        }
+
+        /* --- Footer --- */
+        .footer {
+            background: #111;
+            color: white;
+            padding: 80px 50px;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 50px;
+            max-width: 1200px;
+            margin: 0 auto;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 50px;
+        }
+
+        .footer a {
+            color: #aaa;
+            text-decoration: none;
+            transition: var(--transition-smooth);
+        }
+
+        .footer a:hover {
+            color: var(--color-saffron);
+        }
+
+        .footer-logo {
+            font-family: var(--font-heading);
+            font-size: 1.5rem;
+            color: white !important;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 20px;
+        }
+
+        .social-icons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .social-icons a {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            color: white;
+        }
+
+        .social-icons a:hover {
+            background: var(--color-saffron);
+            transform: translateY(-3px);
+        }
+
+        .footer ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .footer li {
+            margin-bottom: 12px;
+        }
+
+        .footer h4 {
+            color: var(--color-golden);
+            margin-bottom: 25px;
+            font-size: 1.1rem;
         }
     </style>
 </head>
@@ -44,89 +182,213 @@
             style="color: var(--color-saffron); font-family: var(--font-heading); font-size: 1.8rem; text-decoration: none; font-weight: bold;">✨
             InnerSpark</a>
         <div class="nav-links">
-            <a href="index.html#featuredSection"
-                style="color: var(--color-text-primary); text-decoration: none; margin-left: 30px; font-weight: 500;"><i
-                    class="fas fa-fire"></i> Featured</a>
-            <a href="courses.html"
-                style="color: var(--color-text-primary); text-decoration: none; margin-left: 30px; font-weight: 500;"><i
-                    class="fas fa-compass"></i> Explore Paths</a>
-            <a href="index.html#eventsSection"
-                style="color: var(--color-text-primary); text-decoration: none; margin-left: 30px; font-weight: 500;"><i
-                    class="fas fa-calendar-star"></i> Live Sessions</a>
-            <a href="login.html" class="btn-primary" style="margin-left:30px;"><i class="fas fa-sign-in-alt"></i>
-                Login</a>
+            <a href="index.html">Home</a>
+            <a href="about.html">About</a>
+            <a href="courses.html">Courses</a>
+            <a href="blog.html" style="color: var(--color-saffron);">Blog</a>
+            <a href="contact.html">Contact</a>
+            <a href="login.html" class="btn-primary"
+                style="background: var(--color-saffron); color: white; padding: 12px 30px; border-radius: 30px; margin-left: 30px;">Login</a>
         </div>
     </nav>
 
-    <header class="blog-header">
-        <div id="blog-header-content">
-            <p>Gathering cosmic insights...</p>
-        </div>
+    <!-- Dynamic Header -->
+    <header class="blog-header" id="blogHeader">
+        <!-- JS will populate this -->
     </header>
 
-    <article class="blog-content" id="blog-article">
-        <p>Aligning stars for your wisdom...</p>
-    </article>
+    <!-- Main Content Area -->
+    <main style="max-width: 1200px; margin: -60px auto 100px; padding: 0 20px; position: relative; z-index: 2;">
+
+        <!-- Grid View -->
+        <div id="blogGrid"
+            style="display: none; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 40px;">
+            <!-- JS will populate cards -->
+        </div>
+
+        <!-- Detail View -->
+        <article id="blogDetail" class="blog-content" style="display: none;">
+            <!-- JS will populate article -->
+        </article>
+
+    </main>
 
     <!-- Footer -->
-    <footer style="padding: 80px 50px 40px; background: #1a1a1a; color: white;">
-        <div
-            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 50px; max-width: 1200px; margin: 0 auto; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 50px;">
+    <footer class="footer">
+        <div class="footer-grid">
             <div>
-                <a href="#" class="logo"
-                    style="margin-bottom: 20px; display: block; color: var(--color-golden); font-family: var(--font-heading); font-size: 1.8rem; text-decoration: none; font-weight: bold;">✨
-                    InnerSpark</a>
-                <p style="opacity: 0.6; line-height: 1.8;">A sacred space for those seeking to rediscover their internal
+                <a href="#" class="footer-logo">✨ InnerSpark</a>
+                <p style="opacity: 0.7; line-height: 1.8;">A sacred space for those seeking to rediscover their internal
                     light through ancient wisdom and modern mindfulness.</p>
+                <div class="social-icons">
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-facebook-f"></i></a>
+                </div>
             </div>
             <div>
-                <h4 style="margin-bottom: 25px; color: var(--color-golden);">Quick Links</h4>
-                <ul style="list-style: none; opacity: 0.8; display: grid; gap: 15px;">
-                    <li><a href="courses.html" style="color: white; text-decoration: none;">Explore Courses</a></li>
-                    <li><a href="index.html#eventsSection" style="color: white; text-decoration: none;">Sacred
-                            Gatherings</a></li>
-                    <li><a href="login.html" style="color: white; text-decoration: none;">Login / Register</a></li>
+                <h4>Discover</h4>
+                <ul>
+                    <li><a href="about.html">Our Story</a></li>
+                    <li><a href="courses.html">All Courses</a></li>
+                    <li><a href="blog.html">Wisdom Blog</a></li>
+                    <li><a href="contact.html">Contact Us</a></li>
                 </ul>
             </div>
             <div>
-                <h4 style="margin-bottom: 25px; color: var(--color-golden);">Contact</h4>
-                <ul style="list-style: none; opacity: 0.8; display: grid; gap: 15px;">
-                    <li><i class="fas fa-envelope"></i> support@innerspark.com</li>
-                    <li><i class="fas fa-map-marker-alt"></i> Spiritual Valley, 12345</li>
+                <h4>Community</h4>
+                <ul>
+                    <li><a href="login.html">Login / Register</a></li>
+                    <li><a href="#">Events</a></li>
+                    <li><a href="#">Support</a></li>
+                    <li><a href="#">Privacy Policy</a></li>
                 </ul>
+            </div>
+            <div>
+                <h4>Newsletter</h4>
+                <p style="opacity: 0.7; margin-bottom: 15px; font-size: 0.9rem;">Receive weekly wisdom directly.</p>
+                <div style="position: relative;">
+                    <input type="email" placeholder="Email"
+                        style="width: 100%; padding: 10px; border-radius: 5px; border: none; outline: none;">
+                    <button
+                        style="position: absolute; right: 5px; top: 5px; background: var(--color-saffron); border: none; color: white; border-radius: 3px; padding: 5px 10px; cursor: pointer;"><i
+                            class="fas fa-arrow-right"></i></button>
+                </div>
             </div>
         </div>
-        <p style="text-align: center; margin-top: 40px; opacity: 0.4; font-size: 0.9rem;">&copy; 2026 InnerSpark
-            Sanctuary. All rights reserved.</p>
+        <div
+            style="text-align: center; margin-top: 50px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); opacity: 0.5; font-size: 0.85rem;">
+            &copy; 2026 InnerSpark Community. All rights reserved.
+        </div>
     </footer>
 
+    <script src="../js/config.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/utils.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', async () => {
+        // Mock Data Store (Ideally this comes from API)
+        const BLOG_DATA = {
+            'mindfulness-basics': {
+                title: "The Art of Doing Nothing",
+                category: "Mindfulness",
+                date: "October 12, 2025",
+                author: "Swami Dayananda",
+                image: "https://images.unsplash.com/photo-1508672019048-805c876b67e2?ixlib=rb-1.2.1",
+                content: `
+                    <p class="drop-cap">In our hyper-connected world, silence has become the ultimate luxury. We are constantly bombarded with notifications, deadlines, and the endless scroll of information. Yet, the ancient sages taught that true wisdom arises not from accumulation, but from stillness.</p>
+                    <p>Mindfulness is often misunderstood as "clearing the mind." In reality, it is simply the act of paying attention. It is the art of returning to the present moment, again and again.</p>
+                    <h3>The Power of the Pause</h3>
+                    <p>Neuroscience now confirms what yogis have known for millennia: pausing re-wires the brain. Even just 5 minutes of conscious breathing can lower cortisol levels and improve cognitive function.</p>
+                    <blockquote>"Quiet the mind, and the soul will speak." – Ma Jaya Sati Bhagavati</blockquote>
+                    <p>Start today. Sit for 5 minutes without your phone. Listen to the sounds around you. Watch your breath. In this space of "doing nothing," you might just find everything you've been looking for.</p>
+                `
+            },
+            'vedic-diet': {
+                title: "Eating for Prana: A Vedic Guide",
+                category: "Wellness",
+                date: "November 05, 2025",
+                author: "Dr. Priya Sharma",
+                image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?ixlib=rb-1.2.1",
+                content: `
+                    <p>In Ayurveda, food is not just calories; it is information. It is Prana (life force). What we eat vibrates at a certain frequency, and this vibration directly impacts our consciousness.</p>
+                    <h3>Sattvic Foods</h3>
+                    <p>A Sattvic diet is designed to promote clarity, peace, and spiritual growth. These are foods that are fresh, juicy, and nourishing.</p>
+                    <ul>
+                        <li>Fresh fruits and vegetables</li>
+                        <li>Whole grains and legumes</li>
+                        <li>Nuts and seeds</li>
+                        <li>Herbal teas</li>
+                    </ul>
+                    <p>Avoid Tamasic foods (stale, processed, heavy) which dull the mind. By choosing high-vibration foods, we clear the channel for higher consciousness to flow.</p>
+                `
+            },
+            'modern-stoicism': {
+                title: "Modern Stoicism for Anxiety",
+                category: "Philosophy",
+                date: "December 01, 2025",
+                author: "Marcus A.",
+                image: "https://images.unsplash.com/photo-1524901548305-08eeddc35080?ixlib=rb-1.2.1",
+                content: `
+                    <p>Stoicism is not about suppressing emotion; it's about understanding what is within our control. In a world of chaos, this distinction is our greatest weapon against anxiety.</p>
+                    <p><strong>The Dichotomy of Control:</strong> We can control our actions and our judgments. We cannot control external events or other people's opinions. When we internalize this, we become invincible.</p>
+                `
+            }
+        };
+
+        const listHeaderHTML = `
+            <h1 class="fade-in-up" style="font-size: 3.5rem; color: var(--color-saffron-dark); margin-bottom: 20px;">The Inner Journal</h1>
+            <p class="fade-in-up" style="font-size: 1.2rem; color: #666; max-width: 600px; margin: 0 auto; animation-delay: 0.2s;">
+                Chronicles of wisdom, practice, and spiritual science. Explore our library of thought.
+            </p>
+        `;
+
+        document.addEventListener('DOMContentLoaded', () => {
             const params = new URLSearchParams(window.location.search);
             const id = params.get('id');
-            if (!id) { window.location.href = 'index.html'; return; }
+            const header = document.getElementById('blogHeader');
+            const grid = document.getElementById('blogGrid');
+            const detail = document.getElementById('blogDetail');
 
-            try {
-                const res = await fetch(`/api/extra/blogs/${id}`);
-                const blog = await res.json();
-
+            if (id && BLOG_DATA[id]) {
+                // RENDER DETAIL VIEW
+                const blog = BLOG_DATA[id];
                 document.title = `${blog.title} - InnerSpark`;
-                document.getElementById('blog-header-content').innerHTML = `
-                    <p class="blog-meta">${blog.category || 'Spiritual'}</p>
-                    <h1 style="font-size: 3rem; font-family: var(--font-heading); max-width: 900px; margin: 0 auto;">${blog.title}</h1>
+
+                header.innerHTML = `
+                    <span class="blog-meta fade-in-up">${blog.category} &bull; ${blog.author}</span>
+                    <h1 class="fade-in-up" style="font-size: 3rem; margin-top: 15px; animation-delay: 0.1s;">${blog.title}</h1>
+                    <p class="fade-in-up" style="color: #666; margin-top: 10px; animation-delay: 0.2s;">Published on ${blog.date}</p>
                 `;
-                document.getElementById('blog-article').innerHTML = `
-                    <img src="${blog.thumbnail || 'https://images.unsplash.com/photo-1518199266791-5375a83190b7?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'}" style="width: 100%; border-radius: 12px; margin-bottom: 40px;">
-                    <div style="font-size: 1.1rem; color: #444;">${blog.content.replace(/\n/g, '<br>')}</div>
-                    <hr style="margin: 40px 0; opacity: 0.1;">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <p style="color: grey;">Written by ${blog.author || 'InnerSpark Guide'}</p>
-                        <a href="index.html#blogSection" style="color: var(--color-saffron); text-decoration: none; font-weight: 600;">Back to Insights</a>
+
+                detail.style.display = 'block';
+                detail.innerHTML = `
+                    <img src="${blog.image}" class="scale-up" style="width: 100%; height: 400px; object-fit: cover; border-radius: 12px; margin-bottom: 40px; box-shadow: var(--shadow-soft);">
+                    <div class="blog-text fade-in-up" style="animation-delay: 0.3s; font-size: 1.15rem;">
+                        ${blog.content}
+                    </div>
+                    <div style="margin-top: 50px; padding-top: 30px; border-top: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+                        <a href="blog.html" class="btn-primary" style="background: white; color: var(--color-text-primary); border: 1px solid #ddd;"><i class="fas fa-arrow-left"></i> Back to Journal</a>
+                        <div style="display: flex; gap: 15px;">
+                            <span style="color: #999;">Share:</span>
+                            <a href="#" style="color: var(--color-saffron);"><i class="fab fa-twitter"></i></a>
+                            <a href="#" style="color: var(--color-saffron);"><i class="fab fa-facebook"></i></a>
+                        </div>
                     </div>
                 `;
-            } catch (e) {
-                document.getElementById('blog-article').innerHTML = "The archive is currently sealed.";
+            } else {
+                // RENDER LIST VIEW
+                header.innerHTML = listHeaderHTML;
+                grid.style.display = 'grid';
+
+                Object.keys(BLOG_DATA).forEach((key, index) => {
+                    const b = BLOG_DATA[key];
+                    const delay = index * 0.1;
+
+                    const card = document.createElement('article');
+                    card.className = "glass-card scroll-reveal";
+                    card.style.overflow = "hidden";
+                    card.style.cursor = "pointer";
+                    card.style.animationDelay = `${delay}s`;
+                    card.onclick = () => window.location.href = `blog.html?id=${key}`;
+
+                    card.innerHTML = `
+                        <div style="height: 220px; background: url('${b.image}') center/cover; transition: transform 0.5s;"></div>
+                        <div style="padding: 30px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.8rem; text-transform: uppercase; font-weight: 600; color: #999;">
+                                <span style="color: var(--color-saffron);">${b.category}</span>
+                                <span>${b.date}</span>
+                            </div>
+                            <h3 style="margin-bottom: 15px; font-size: 1.5rem; line-height: 1.3;">${b.title}</h3>
+                            <p style="color: var(--color-text-secondary); margin-bottom: 20px;">Click to read full article...</p>
+                            <span class="gold-link">Read Story <i class="fas fa-arrow-right"></i></span>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
             }
+
+            // Init animations
+            initScrollAnimations();
         });
     </script>
 </body>

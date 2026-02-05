@@ -173,14 +173,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function applyGlobalSettings() {
     try {
-        const res = await fetch(`${Auth.apiBase}/settings/public`); // Auth.apiBase might not be defined if auth.js not loaded?
-        // Fallback or check if Auth exists
-        const apiBase = (typeof Auth !== 'undefined' && Auth.apiBase) ? Auth.apiBase : '/api';
+        // Check if Auth exists, otherwise use default API base
+        const apiBase = (typeof Auth !== 'undefined' && Auth.apiBase) ? Auth.apiBase : 'http://localhost:5001/api';
+        
+        const res = await fetch(`${apiBase}/settings/public`);
 
         if (!res.ok) {
-            // Try explicit path if Auth object missing
-            const res2 = await fetch('/api/settings/public');
-            if (res2.ok) processSettings(await res2.json());
+            console.warn('Failed to load public settings');
             return;
         }
 
@@ -211,4 +210,31 @@ function processSettings(settings) {
         banner.textContent = settings.maintenanceMessage || 'Maintenance Mode Active';
         document.body.prepend(banner);
     }
+    // 3. Scroll Animations
+    initScrollAnimations();
+}
+
+/**
+ * Global Scroll Animation Observer
+ * Triggers animations when elements enter the viewport
+ */
+function initScrollAnimations() {
+    const observerOptions = {
+        root: null,
+        rootMargin: '0px',
+        threshold: 0.1
+    };
+
+    const observer = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                observer.unobserve(entry.target); // Only animate once
+            }
+        });
+    }, observerOptions);
+
+    // Target elements with .scroll-reveal class
+    const elements = document.querySelectorAll('.scroll-reveal, .fade-in-up, .slide-in-left, .slide-in-right, .scale-up');
+    elements.forEach(el => observer.observe(el));
 }

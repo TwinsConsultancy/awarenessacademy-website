@@ -36,7 +36,11 @@ async function loadOrderDetails() {
         basePrice = course.price;
         document.getElementById('courseName').textContent = course.title;
         document.getElementById('courseCat').textContent = course.category;
-        document.getElementById('courseThumb').src = course.thumbnail || 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80';
+        let thumb = course.thumbnail;
+        if (!thumb || thumb.includes('via.placeholder.com')) {
+            thumb = 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80';
+        }
+        document.getElementById('courseThumb').src = thumb;
         document.getElementById('coursePrice').textContent = `$${basePrice}`;
 
         updateTotals();

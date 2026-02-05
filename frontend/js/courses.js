@@ -60,6 +60,14 @@ async function loadMarketplace() {
     }
 }
 
+// Helper to sanitize thumbnail URLs
+function getThumbnail(url) {
+    if (!url || url.includes('via.placeholder.com')) {
+        return 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80';
+    }
+    return url;
+}
+
 function renderCourses(courses) {
     const list = document.getElementById('marketplaceCourses');
 
@@ -99,7 +107,7 @@ function renderCourses(courses) {
     // Helper to generate Card HTML
     const generateCard = (c, isUpcoming) => `
         <div class="course-card glass-premium" ${!isUpcoming ? `onclick="openCourseModal('${c._id}')"` : ''} style="background: white; border-radius: var(--border-radius-lg); overflow: hidden; cursor: ${isUpcoming ? 'default' : 'pointer'}; transition: var(--transition-smooth); opacity: ${isUpcoming ? '0.9' : '1'};">
-            <div class="course-thumb" style="background: url('${c.thumbnail || 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'}'); background-size: cover; background-position: center; height: 200px; width: 100%; position: relative;">
+            <div class="course-thumb" style="background-image: url('${getThumbnail(c.thumbnail)}'); background-size: cover; background-position: center; height: 200px; width: 100%; position: relative;">
                 ${isUpcoming ? '<div style="position: absolute; top: 10px; right: 10px; background: var(--color-saffron); color: white; padding: 5px 10px; border-radius: 5px; font-weight: bold; font-size: 0.8rem;">Coming Soon</div>' : ''}
             </div>
             <div style="padding: 20px;">
@@ -204,7 +212,10 @@ async function openCourseModal(id) {
         document.getElementById('modalMentor').textContent = `By ${course.mentorID?.name}`;
         document.getElementById('modalDesc').textContent = course.description;
         document.getElementById('modalPrice').textContent = `$${course.price}`;
-        document.getElementById('modalImg').src = course.thumbnail || 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80';
+        document.getElementById('modalImg').src = getThumbnail(course.thumbnail);
+        document.getElementById('modalImg').onerror = function () {
+            this.src = 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80';
+        };
 
         const enrollBtn = document.getElementById('enrollBtn');
         if (hasFullAccess) {
@@ -273,6 +284,14 @@ async function openCourseModal(id) {
     } finally {
         UI.hideLoader();
     }
+}
+
+// Helper to sanitize thumbnail URLs
+function getThumbnail(url) {
+    if (!url || url.includes('via.placeholder.com')) {
+        return 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80';
+    }
+    return url;
 }
 
 function closeModal() {

@@ -322,5 +322,33 @@ module.exports = {
         });
 
         return mongoose.model('Ticket', ticketSchema);
+    })(),
+
+    // 12. Contact Messages Collection
+    ContactMessage: (() => {
+        const contactMessageSchema = new Schema({
+            name: { type: String, required: true },
+            email: { type: String, required: true },
+            subject: { type: String, required: true },
+            message: { type: String, required: true },
+            status: { 
+                type: String, 
+                enum: ['New', 'Read', 'Replied', 'Archived'], 
+                default: 'New' 
+            },
+            priority: { 
+                type: String, 
+                enum: ['Low', 'Medium', 'High', 'Urgent'], 
+                default: 'Medium' 
+            },
+            source: { type: String, default: 'Website' }, // Website, Landing Page, etc.
+            ipAddress: { type: String },
+            userAgent: { type: String },
+            adminNotes: { type: String }, // Admin can add notes
+            repliedAt: { type: Date },
+            repliedBy: { type: Schema.Types.ObjectId, ref: 'User' }
+        }, { timestamps: true });
+
+        return mongoose.model('ContactMessage', contactMessageSchema);
     })()
 };

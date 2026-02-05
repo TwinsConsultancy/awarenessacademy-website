@@ -90,6 +90,13 @@ window.closeAffirmation = closeAffirmation;
 window.calculateAge = calculateAge;
 window.toggleSpouseFields = toggleSpouseFields;
 
+function getThumbnail(url) {
+    if (!url || url.includes('via.placeholder.com')) {
+        return 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80';
+    }
+    return url;
+}
+
 function switchSection(section) {
     // This was moved from HTML for cleanliness
     const navLinks = document.querySelectorAll('.nav-link');
@@ -169,7 +176,7 @@ async function loadEnrolledCourses() {
 
         container.innerHTML = courses.map(c => `
             <div class="course-card glass-premium">
-                <div class="course-thumb" style="background: url('${c.thumbnail || 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'}'); background-size: cover;"></div>
+                <div class="course-thumb" style="background: url('${getThumbnail(c.thumbnail)}'); background-size: cover;"></div>
                 <div class="course-info">
                     <h4>${c.title}</h4>
                     <p style="color: var(--color-text-secondary); font-size: 0.85rem; margin-bottom: 15px;">By ${c.mentorID?.name || 'Mentor'}</p>
@@ -712,7 +719,7 @@ async function loadMarketplace() {
             return `
             <div class="course-card glass-premium" style="display: flex; flex-direction: column; justify-content: space-between;">
                 <div>
-                    <div class="course-thumb" style="background: url('${c.thumbnail || 'https://images.unsplash.com/photo-1517960413843-0aee8e2b3285?ixlib=rb-1.2.1'}'); background-size: cover; height: 160px;">
+                    <div class="course-thumb" style="background: url('${getThumbnail(c.thumbnail)}'); background-size: cover; height: 160px;">
                         <span class="badge" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem;">${c.category}</span>
                     </div>
                     <div class="course-info" style="padding: 15px;">
@@ -785,11 +792,11 @@ async function loadProfile() {
     try {
         UI.showLoader();
         const res = await fetch(`${Auth.apiBase}/auth/profile`, { headers: Auth.getHeaders() });
-        
+
         if (!res.ok) {
             throw new Error('Failed to load profile');
         }
-        
+
         const response = await res.json();
         const user = response.data?.user || response.user || response;
 
@@ -1049,7 +1056,7 @@ async function loadCharts() {
 // --- Profile Upload ---
 async function handleProfileUpload(input) {
     console.log('handleProfileUpload called', input);
-    
+
     if (input.files && input.files[0]) {
         const file = input.files[0];
         console.log('File selected:', file.name, file.size, file.type);
@@ -1063,7 +1070,7 @@ async function handleProfileUpload(input) {
         }
 
         if (file.size < 5120 || file.size > 51200) {
-            UI.error(`Size must be between 5KB and 50KB. Current: ${(file.size/1024).toFixed(2)}KB`);
+            UI.error(`Size must be between 5KB and 50KB. Current: ${(file.size / 1024).toFixed(2)}KB`);
             console.error('Invalid file size:', file.size);
             return;
         }
@@ -1075,7 +1082,7 @@ async function handleProfileUpload(input) {
         try {
             UI.showLoader();
             console.log('Uploading to:', `${Auth.apiBase}/auth/profile`);
-            
+
             const res = await fetch(`${Auth.apiBase}/auth/profile`, {
                 method: 'PUT',
                 headers: {
@@ -1086,12 +1093,12 @@ async function handleProfileUpload(input) {
 
             const data = await res.json();
             console.log('Upload response:', data);
-            
+
             if (res.ok) {
                 UI.success('Photo updated successfully!');
                 const profilePicUrl = data.data?.user?.profilePic || data.user?.profilePic;
                 console.log('Profile pic URL:', profilePicUrl);
-                
+
                 // Only update if it's valid base64 or HTTP URL
                 if (profilePicUrl && (profilePicUrl.startsWith('data:') || profilePicUrl.startsWith('http'))) {
                     // Update top header avatar
@@ -1099,7 +1106,7 @@ async function handleProfileUpload(input) {
                     if (avatar) {
                         avatar.innerHTML = `<img src="${profilePicUrl}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" onerror="this.textContent='${user.name ? user.name.charAt(0) : 'U'}';">`;
                     }
-                    
+
                     // Update profile photo preview
                     const photoPreview = document.getElementById('profilePhotoPreview');
                     if (photoPreview) {
@@ -1129,7 +1136,7 @@ async function handleProfileUpload(input) {
 async function loadMyTickets() {
     const container = document.getElementById('myTicketsContainer');
     if (!container) return;
-    
+
     container.innerHTML = '<div style="text-align: center; padding: 20px; color: #999;"><i class="fas fa-spinner fa-spin"></i> Loading tickets...</div>';
 
     try {
@@ -1148,14 +1155,14 @@ async function loadMyTickets() {
         }
 
         const ticketCards = tickets.map(ticket => {
-            const statusClass = ticket.status === 'Open' ? 'status-open' : 
-                              ticket.status === 'In Progress' ? 'status-progress' : 'status-closed';
+            const statusClass = ticket.status === 'Open' ? 'status-open' :
+                ticket.status === 'In Progress' ? 'status-progress' : 'status-closed';
             const priorityClass = ticket.priority === 'Urgent' ? 'priority-urgent' :
-                                ticket.priority === 'High' ? 'priority-high' :
-                                ticket.priority === 'Medium' ? 'priority-medium' : 'priority-low';
-            
-            const created = new Date(ticket.createdAt).toLocaleDateString('en-US', { 
-                month: 'short', day: 'numeric', year: 'numeric' 
+                ticket.priority === 'High' ? 'priority-high' :
+                    ticket.priority === 'Medium' ? 'priority-medium' : 'priority-low';
+
+            const created = new Date(ticket.createdAt).toLocaleDateString('en-US', {
+                month: 'short', day: 'numeric', year: 'numeric'
             });
 
             return `
@@ -1204,7 +1211,7 @@ function closeCreateTicketModal() {
 
 async function handleCreateTicket(e) {
     e.preventDefault();
-    
+
     const subject = document.getElementById('ticketSubject').value;
     const description = document.getElementById('ticketDescription').value;
 
@@ -1231,9 +1238,9 @@ async function handleCreateTicket(e) {
         } else {
             alert('Ticket created successfully!');
         }
-        
+
         closeCreateTicketModal();
-        
+
         // Ensure we're on tickets section and reload immediately
         if (typeof switchSection === 'function') {
             switchSection('tickets');
@@ -1251,7 +1258,7 @@ async function handleCreateTicket(e) {
 async function viewStudentTicket(ticketId) {
     const modal = document.getElementById('viewTicketModal');
     const content = document.getElementById('viewTicketContent');
-    
+
     content.innerHTML = '<div style="text-align: center; padding: 40px;"><i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--color-primary);"></i></div>';
     modal.style.display = 'flex';
 
@@ -1259,18 +1266,18 @@ async function viewStudentTicket(ticketId) {
         const res = await fetch(`${Auth.apiBase}/tickets/${ticketId}`, { headers: Auth.getHeaders() });
         const ticket = await res.json();
 
-        const statusClass = ticket.status === 'Open' ? 'status-open' : 
-                          ticket.status === 'In Progress' ? 'status-progress' : 'status-closed';
+        const statusClass = ticket.status === 'Open' ? 'status-open' :
+            ticket.status === 'In Progress' ? 'status-progress' : 'status-closed';
         const priorityClass = ticket.priority === 'Urgent' ? 'priority-urgent' :
-                            ticket.priority === 'High' ? 'priority-high' :
-                            ticket.priority === 'Medium' ? 'priority-medium' : 'priority-low';
+            ticket.priority === 'High' ? 'priority-high' :
+                ticket.priority === 'Medium' ? 'priority-medium' : 'priority-low';
 
         const replies = ticket.replies || [];
         const conversationHTML = replies.map(reply => {
             const replier = reply.repliedBy || { name: 'Unknown', role: 'N/A' };
             const isStudent = replier.role === 'Student';
             const isAdmin = replier.role === 'Admin';
-            
+
             return `
                 <div style="display: flex; gap: 15px; margin-bottom: 20px; ${isStudent ? 'flex-direction: row-reverse;' : ''}">
                     <div style="width: 40px; height: 40px; border-radius: 50%; background: ${isStudent ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : isAdmin ? 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' : 'linear-gradient(135deg, #ffa726 0%, #fb8c00 100%)'}; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">
@@ -1344,7 +1351,7 @@ function closeViewTicketModal() {
 async function sendStudentReply(ticketId) {
     const messageTextarea = document.getElementById('replyMessage');
     const message = messageTextarea.value.trim();
-    
+
     if (!message) {
         if (typeof UI !== 'undefined' && UI.showToast) {
             UI.showToast('Please enter a message', 'error');
@@ -1365,16 +1372,16 @@ async function sendStudentReply(ticketId) {
 
         // Clear textarea immediately
         messageTextarea.value = '';
-        
+
         if (typeof UI !== 'undefined' && UI.showToast) {
             UI.showToast('Reply sent successfully!', 'success');
         } else {
             alert('Reply sent successfully!');
         }
-        
+
         // Reload ticket to show new reply immediately
         await viewStudentTicket(ticketId);
-        
+
         // Also reload the tickets list to update last reply time
         await loadMyTickets();
     } catch (err) {

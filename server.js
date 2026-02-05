@@ -89,6 +89,7 @@ app.use('/api/analytics', require('./backend/routes/analytics'));
 app.use('/api/settings', require('./backend/routes/settings'));
 app.use('/api/uploads', require('./backend/routes/upload'));
 app.use('/api/tickets', require('./backend/routes/tickets'));
+app.use('/api/contact', require('./backend/routes/contact'));
 
 // New modular content system routes
 app.use('/api', require('./backend/routes/modules'));

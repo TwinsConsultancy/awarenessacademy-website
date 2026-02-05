@@ -11,12 +11,88 @@
         href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;600&display=swap"
         rel="stylesheet">
     <style>
+        body {
+            font-family: var(--font-body);
+            background-color: var(--color-warm-white);
+            color: var(--color-text-primary);
+            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* --- Global Nav (Same as Index) --- */
+        .nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 20px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            transition: var(--transition-smooth);
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .nav .logo,
+        .nav a {
+            color: var(--color-text-primary);
+        }
+
+        .nav a {
+            text-decoration: none;
+            font-weight: 500;
+            margin-left: 30px;
+            transition: var(--transition-smooth);
+            position: relative;
+        }
+
+        .nav-links a:not(.btn-primary)::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--color-saffron);
+            transition: var(--transition-smooth);
+        }
+
+        .nav-links a:not(.btn-primary):hover::after {
+            width: 100%;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-family: var(--font-heading);
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* --- Header --- */
         .marketplace-header {
-            padding: 100px 20px 60px;
-            background: linear-gradient(rgba(255, 153, 51, 0.1), rgba(255, 195, 0, 0.05));
+            padding: 180px 20px 80px;
+            background: radial-gradient(circle at top, rgba(255, 153, 51, 0.1), transparent 70%);
             text-align: center;
         }
 
+        .marketplace-header h1 {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            color: var(--color-saffron-dark);
+        }
+
+        .marketplace-header p {
+            color: var(--color-text-secondary);
+            font-size: 1.2rem;
+            max-width: 600px;
+            margin: 0 auto 50px;
+        }
+
+        /* --- TABS --- */
         .category-tabs {
             display: flex;
             justify-content: center;
@@ -26,28 +102,97 @@
         }
 
         .tab {
-            padding: 10px 25px;
-            border-radius: 25px;
+            padding: 12px 30px;
+            border-radius: 30px;
             background: white;
             border: 1px solid rgba(0, 0, 0, 0.05);
             cursor: pointer;
             transition: var(--transition-smooth);
-            font-weight: 500;
+            font-weight: 600;
+            box-shadow: var(--shadow-soft);
+            color: var(--color-text-secondary);
+        }
+
+        .tab:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-hover);
         }
 
         .tab.active {
             background: var(--color-saffron);
             color: white;
             border-color: var(--color-saffron);
+            box-shadow: 0 10px 20px rgba(255, 153, 51, 0.3);
         }
 
+        /* --- FILTERS --- */
+        .filter-bar {
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            gap: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 50px;
+            box-shadow: var(--shadow-soft);
+            align-items: center;
+        }
+
+        .search-wrapper {
+            position: relative;
+            flex: 1;
+        }
+
+        .search-wrapper input {
+            width: 100%;
+            padding: 15px 20px 15px 50px;
+            border-radius: 30px;
+            border: none;
+            background: #fafafa;
+            font-family: var(--font-body);
+            outline: none;
+            transition: var(--transition-smooth);
+            font-size: 1rem;
+        }
+
+        .search-wrapper input:focus {
+            background: white;
+            box-shadow: inset 0 0 0 2px var(--color-saffron);
+        }
+
+        .sort-wrapper select {
+            padding: 15px 40px 15px 20px;
+            border-radius: 30px;
+            border: 1px solid #eee;
+            font-family: var(--font-body);
+            outline: none;
+            appearance: none;
+            background: white;
+            cursor: pointer;
+            font-size: 0.95rem;
+            color: var(--color-text-secondary);
+        }
+
+        /* --- GRID CONTAINER --- */
         .courses-container {
             max-width: 1200px;
             margin: 0 auto 100px;
             padding: 0 20px;
+            /* Grid layout handled by JS or Default */
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 30px;
+            gap: 40px;
+        }
+
+        /* Style generated cards */
+        .course-card {
+            /* Styles inherited from inline JS or global CSS, verifying consistency */
+            transition: var(--transition-smooth);
+        }
+
+        .course-card:hover {
+            transform: translateY(-10px);
+            box-shadow: var(--shadow-hover) !important;
         }
 
         /* Modal Styles */
@@ -59,41 +204,44 @@
             width: 100%;
             height: 100%;
             background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(5px);
+            backdrop-filter: blur(8px);
             align-items: center;
             justify-content: center;
-            z-index: 1000;
+            z-index: 2000;
             padding: 20px;
         }
 
         .course-modal-content {
             background: white;
             width: 100%;
-            max-width: 900px;
+            max-width: 950px;
             max-height: 90vh;
-            border-radius: var(--border-radius-lg);
+            border-radius: 25px;
             overflow: hidden;
             display: grid;
             grid-template-columns: 1fr 1.5fr;
+            box-shadow: 0 50px 100px rgba(0, 0, 0, 0.2);
         }
 
         .modal-left {
-            background: #f8f8f8;
-            padding: 0;
+            background: #fafafa;
+            border-right: 1px solid #eee;
+            display: flex;
+            flex-direction: column;
         }
 
         .modal-thumb {
             width: 100%;
-            height: 250px;
+            height: 300px;
             object-fit: cover;
         }
 
         .modal-right {
-            padding: 40px;
+            padding: 50px;
             overflow-y: auto;
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 900px) {
             .course-modal-content {
                 grid-template-columns: 1fr;
             }
@@ -101,58 +249,85 @@
             .modal-thumb {
                 height: 200px;
             }
+
+            .modal-right {
+                padding: 30px;
+            }
+
+            .filter-bar {
+                flex-direction: column;
+                background: transparent;
+                box-shadow: none;
+                padding: 0;
+            }
+
+            .search-wrapper,
+            .sort-wrapper {
+                width: 100%;
+            }
+
+            .search-wrapper input {
+                box-shadow: var(--shadow-soft);
+            }
+        }
+
+        /* Footer (Same as Index) */
+        .footer {
+            background: #111;
+            color: white;
+            padding: 80px 50px;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 50px;
+            max-width: 1200px;
+            margin: 0 auto;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 50px;
         }
     </style>
 </head>
 
 <body>
-    <nav class="nav" id="mainNav"
-        style="background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: fixed; top: 0; width: 100%; padding: 15px 50px; display: flex; justify-content: space-between; align-items: center; z-index: 100;">
-        <a href="index.html" class="logo"
-            style="color: var(--color-saffron); font-family: var(--font-heading); font-size: 1.8rem; text-decoration: none; font-weight: bold;">✨
-            InnerSpark</a>
+    <nav class="nav">
+        <a href="index.html" class="logo">
+            <i class="fas fa-bolt" style="color: var(--color-golden);"></i> InnerSpark
+        </a>
         <div class="nav-links">
-            <a href="index.html#featuredSection"
-                style="color: var(--color-text-primary); text-decoration: none; margin-left: 30px; font-weight: 500;"><i
-                    class="fas fa-fire"></i> Featured</a>
-            <a href="courses.html"
-                style="color: var(--color-text-primary); text-decoration: none; margin-left: 30px; font-weight: 500;"><i
-                    class="fas fa-compass"></i> Explore Courses</a>
-            <a href="index.html#eventsSection"
-                style="color: var(--color-text-primary); text-decoration: none; margin-left: 30px; font-weight: 500;"><i
-                    class="fas fa-calendar-star"></i> Live Sessions</a>
-            <a href="index.html#blogSection"
-                style="color: var(--color-text-primary); text-decoration: none; margin-left: 30px; font-weight: 500;"><i
-                    class="fas fa-book-open"></i> Wisdom Blog</a>
-            <a href="login.html" class="btn-primary" style="margin-left: 10px;"><i class="fas fa-sign-in-alt"></i> Begin
-                Journey</a>
+            <a href="index.html">Home</a>
+            <a href="about.html">About</a>
+            <a href="courses.html" style="color: var(--color-saffron);">Courses</a>
+            <a href="blog.html">Blog</a>
+            <a href="contact.html">Contact</a>
+            <a href="login.html" class="btn-primary"
+                style="background: var(--color-saffron); color: white; padding: 12px 30px; border-radius: 30px; margin-left: 30px;">Login</a>
         </div>
     </nav>
 
     <header class="marketplace-header">
-        <h1 style="font-size: 3rem; margin-bottom: 15px;">All Courses</h1>
-        <p style="color: var(--color-text-secondary); font-size: 1.2rem; max-width: 600px; margin: 0 auto 40px;">
-            Discover spiritual paths curated by enlightened mentors to guide your personal spark.</p>
+        <h1 class="fade-in-up">Discover Sacred Paths</h1>
+        <p class="fade-in-up" style="animation-delay: 0.2s;">
+            Explore courses curated by enlightened mentors. Your journey to self-discovery starts here.</p>
 
-        <div class="category-tabs">
+        <div class="category-tabs fade-in-up" style="animation-delay: 0.4s;">
             <div class="tab active">All Paths</div>
             <div class="tab">Meditation</div>
             <div class="tab">Philosophy</div>
             <div class="tab">Motivation</div>
+            <div class="tab">Yoga</div>
         </div>
 
-        <div class="filter-bar"
-            style="max-width: 800px; margin: 0 auto; display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
-            <div class="search-wrapper" style="position: relative; flex: 1; min-width: 250px;">
-                <input type="text" id="searchInput" placeholder="Search for wisdom..."
-                    style="width: 100%; padding: 12px 15px 12px 45px; border-radius: 25px; border: 1px solid rgba(0,0,0,0.1); font-family: var(--font-body); outline: none; transition: all 0.3s ease;">
+        <div class="filter-bar fade-in-up" style="animation-delay: 0.6s;">
+            <div class="search-wrapper">
                 <i class="fas fa-search"
-                    style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #999;"></i>
+                    style="position: absolute; left: 20px; top: 50%; transform: translateY(-50%); color: #bbb;"></i>
+                <input type="text" id="searchInput" placeholder="Search for wisdom, mentors, or topics...">
             </div>
 
-            <div class="sort-wrapper" style="position: relative; min-width: 200px;">
-                <select id="sortSelect"
-                    style="width: 100%; padding: 12px 15px; border-radius: 25px; border: 1px solid rgba(0,0,0,0.1); font-family: var(--font-body); outline: none; appearance: none; background: white; cursor: pointer;">
+            <div class="sort-wrapper" style="position: relative; min-width: 220px;">
+                <select id="sortSelect" style="width: 100%;">
                     <option value="newest">Sort by: Newest</option>
                     <option value="price-asc">Price: Low to High</option>
                     <option value="price-desc">Price: High to Low</option>
@@ -160,14 +335,17 @@
                     <option value="title-desc">Name: Z-A</option>
                 </select>
                 <i class="fas fa-chevron-down"
-                    style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #999; pointer-events: none;"></i>
+                    style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); color: #999; pointer-events: none;"></i>
             </div>
         </div>
     </header>
 
     <div class="courses-container" id="marketplaceCourses">
         <!-- Courses will be loaded via JS -->
-        <p style="text-align:center; grid-column: 1/-1;">Opening the gates to wisdom...</p>
+        <div style="grid-column: 1/-1; text-align: center; padding: 50px;">
+            <div class="sparkle-loader"></div>
+            <p style="margin-top: 15px; color: #999;">Opening the gates to wisdom...</p>
+        </div>
     </div>
 
     <!-- Course Preview Modal -->
@@ -175,70 +353,91 @@
         <div class="course-modal-content glass-card">
             <div class="modal-left">
                 <img id="modalImg" class="modal-thumb" src="" alt="Thumbnail">
-                <div style="padding: 20px;">
-                    <h3 id="modalPrice" style="font-size: 1.8rem; color: var(--color-saffron);">$0</h3>
-                    <p style="font-size: 0.8rem; color: var(--color-text-secondary); margin-bottom: 20px;">One-time
-                        purchase for lifetime access</p>
-                    <button class="btn-primary" id="enrollBtn" style="width: 100%; padding: 15px;">Enroll Now</button>
-                    <p style="text-align: center; margin-top: 15px; font-size: 0.85rem;">
-                        <i class="fas fa-lock" style="margin-right: 5px;"></i> Money-back guarantee
+                <div
+                    style="padding: 30px; text-align: center; flex: 1; display: flex; flex-direction: column; justify-content: center;">
+                    <h3 id="modalPrice" style="font-size: 2.5rem; color: var(--color-saffron); margin-bottom: 5px;">$0
+                    </h3>
+                    <p style="font-size: 0.9rem; color: var(--color-text-secondary); margin-bottom: 25px;">Life-time
+                        access</p>
+                    <button class="btn-primary" id="enrollBtn"
+                        style="width: 100%; padding: 18px; font-size: 1.1rem;">Enroll Now</button>
+                    <p style="text-align: center; margin-top: 20px; font-size: 0.85rem; color: #aaa;">
+                        <i class="fas fa-shield-alt" style="margin-right: 5px;"></i> Money-back guarantee
                     </p>
                 </div>
             </div>
             <div class="modal-right">
                 <div
                     style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
-                    <h2 id="modalTitle" style="font-size: 2rem;">Course Title</h2>
+                    <h2 id="modalTitle"
+                        style="font-size: 2.2rem; margin-right: 20px; color: var(--color-text-primary);">Course Title
+                    </h2>
                     <button onclick="closeModal()"
-                        style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #999;">&times;</button>
+                        style="background: none; border: none; font-size: 2rem; cursor: pointer; color: #ccc; transition: 0.3s;">&times;</button>
                 </div>
-                <p id="modalMentor" style="color: var(--color-saffron); font-weight: 600; margin-bottom: 20px;">By
+                <p id="modalMentor"
+                    style="color: var(--color-saffron); font-weight: 600; margin-bottom: 25px; font-size: 1.1rem;">By
                     Mentor Name</p>
 
-                <h4 style="margin-bottom: 10px;">About this Path</h4>
-                <p id="modalDesc" style="color: var(--color-text-secondary); line-height: 1.8; margin-bottom: 30px;">
+                <h4 style="margin-bottom: 15px; color: var(--color-golden-dark);">About this Path</h4>
+                <p id="modalDesc"
+                    style="color: var(--color-text-secondary); line-height: 1.8; margin-bottom: 40px; font-size: 1.05rem;">
                     Full description goes here...</p>
 
-                <div id="materialList" style="border-top: 1px solid #eee; padding-top: 20px;">
-                    <h4 style="margin-bottom: 15px;">Curriculum Preview</h4>
+                <div id="materialList" style="border-top: 1px solid #eee; padding-top: 30px;">
+                    <h4 style="margin-bottom: 20px; color: var(--color-golden-dark);">Curriculum Preview</h4>
                     <!-- Content list will be here -->
                 </div>
             </div>
         </div>
     </div>
 
-    </div>
-
-    <!-- Footer -->
-    <footer style="padding: 80px 50px 40px; background: #1a1a1a; color: white;">
-        <div
-            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 50px; max-width: 1200px; margin: 0 auto; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 50px;">
+    <footer class="footer">
+        <div class="footer-grid">
             <div>
-                <a href="#" class="logo"
-                    style="margin-bottom: 20px; display: block; color: var(--color-golden); font-family: var(--font-heading); font-size: 1.8rem; text-decoration: none; font-weight: bold;">✨
-                    InnerSpark</a>
-                <p style="opacity: 0.6; line-height: 1.8;">A sacred space for those seeking to rediscover their internal
+                <a href="#" class="footer-logo">✨ InnerSpark</a>
+                <p style="opacity: 0.7; line-height: 1.8;">A sacred space for those seeking to rediscover their internal
                     light through ancient wisdom and modern mindfulness.</p>
+                <div class="social-icons">
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-facebook-f"></i></a>
+                </div>
             </div>
             <div>
-                <h4 style="margin-bottom: 25px; color: var(--color-golden);">Quick Links</h4>
-                <ul style="list-style: none; opacity: 0.8; display: grid; gap: 15px;">
-                    <li><a href="courses.html" style="color: white; text-decoration: none;">Explore Courses</a></li>
-                    <li><a href="index.html#eventsSection" style="color: white; text-decoration: none;">Sacred
-                            Gatherings</a></li>
-                    <li><a href="login.html" style="color: white; text-decoration: none;">Login / Register</a></li>
+                <h4>Discover</h4>
+                <ul>
+                    <li><a href="about.html">Our Story</a></li>
+                    <li><a href="courses.html">All Courses</a></li>
+                    <li><a href="blog.html">Wisdom Blog</a></li>
+                    <li><a href="contact.html">Contact Us</a></li>
                 </ul>
             </div>
             <div>
-                <h4 style="margin-bottom: 25px; color: var(--color-golden);">Contact</h4>
-                <ul style="list-style: none; opacity: 0.8; display: grid; gap: 15px;">
-                    <li><i class="fas fa-envelope"></i> support@innerspark.com</li>
-                    <li><i class="fas fa-map-marker-alt"></i> Spiritual Valley, 12345</li>
+                <h4>Community</h4>
+                <ul>
+                    <li><a href="login.html">Login / Register</a></li>
+                    <li><a href="#">Events</a></li>
+                    <li><a href="#">Support</a></li>
+                    <li><a href="#">Privacy Policy</a></li>
                 </ul>
+            </div>
+            <div>
+                <h4>Newsletter</h4>
+                <p style="opacity: 0.7; margin-bottom: 15px; font-size: 0.9rem;">Receive weekly wisdom directly.</p>
+                <div style="position: relative;">
+                    <input type="email" placeholder="Email"
+                        style="width: 100%; padding: 10px; border-radius: 5px; border: none; outline: none;">
+                    <button
+                        style="position: absolute; right: 5px; top: 5px; background: var(--color-saffron); border: none; color: white; border-radius: 3px; padding: 5px 10px; cursor: pointer;"><i
+                            class="fas fa-arrow-right"></i></button>
+                </div>
             </div>
         </div>
-        <p style="text-align: center; margin-top: 40px; opacity: 0.4; font-size: 0.9rem;">&copy; 2026 InnerSpark
-            Community. All rights reserved.</p>
+        <div
+            style="text-align: center; margin-top: 50px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); opacity: 0.5; font-size: 0.85rem;">
+            &copy; 2026 InnerSpark Sanctuary. All rights reserved.
+        </div>
     </footer>
 
     <script src="../js/config.js"></script>

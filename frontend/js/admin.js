@@ -5,6 +5,33 @@
 let selectedContentID = null;
 let currentUserRoleView = 'Student';
 
+// Toast notification function
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        position: fixed;
+        top: 80px;
+        right: 20px;
+        padding: 15px 25px;
+        background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
+        color: white;
+        border-radius: 8px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        z-index: 10000;
+        font-weight: 500;
+        animation: slideInRight 0.3s ease;
+    `;
+    toast.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}" style="margin-right: 10px;"></i>
+        ${message}
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+        toast.style.animation = 'slideOutRight 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Verify Auth
     const authData = Auth.checkAuth(['Admin']);
@@ -28,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
 /* --- NAVIGATION --- */
 function switchSection(section) {
     // Hide all sections
-    ['overview', 'analytics', 'users', 'courses', 'content', 'finance', 'tickets', 'settings'].forEach(s => {
+    ['overview', 'analytics', 'users', 'courses', 'content', 'finance', 'tickets', 'messages', 'settings'].forEach(s => {
         const el = document.getElementById(s + 'Section');
         if (el) el.style.display = 'none';
 
@@ -88,6 +115,12 @@ function switchSection(section) {
     if (section === 'tickets') {
         loadTickets();
         loadUnreadTicketCount();
+    }
+    if (section === 'messages') {
+        loadMessages();
+    }
+    if (section === 'settings') {
+        loadSettings();
     }
 }
 
@@ -616,6 +649,13 @@ async function loadCertificates() {
             </table>
          `;
     } catch (err) { UI.error('Certificates load failed.'); }
+}
+
+function getThumbnail(url) {
+    if (!url || url.includes('via.placeholder.com')) {
+        return 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80';
+    }
+    return url;
 }
 
 async function revokeCert(id) {
@@ -1149,6 +1189,10 @@ function loadDeleteStage1() {
             <div style="padding: 12px; background: white; border-radius: 6px;">
                 <div style="font-size: 0.8rem; color: #999; margin-bottom: 5px;">Status</div>
                 <div style="font-weight: 600;">${course.approvalStatus || 'Draft'}</div>
+            </div>
+            <div style="padding: 12px; background: white; border-radius: 6px;">
+                <div style="font-size: 0.8rem; color: #999; margin-bottom: 5px;">Thumbnail</div>
+                <div style="width: 80px; height: 60px; background: url('${getThumbnail(course.thumbnail)}') center/cover; border-radius: 8px;"></div>
             </div>
             <div style="padding: 12px; background: white; border-radius: 6px;">
                 <div style="font-size: 0.8rem; color: #999; margin-bottom: 5px;">Price</div>
@@ -1701,12 +1745,12 @@ async function loadTickets() {
                 </thead>
                 <tbody>
                     ${tickets.map(ticket => {
-                        const statusColor = statusColors[ticket.status] || statusColors['Open'];
-                        const priorityColor = priorityColors[ticket.priority] || priorityColors['Medium'];
-                        const isUnread = !ticket.isReadByAdmin;
-                        const creator = ticket.createdBy || { name: 'Unknown', role: 'N/A', studentID: null };
-                        
-                        return `
+            const statusColor = statusColors[ticket.status] || statusColors['Open'];
+            const priorityColor = priorityColors[ticket.priority] || priorityColors['Medium'];
+            const isUnread = !ticket.isReadByAdmin;
+            const creator = ticket.createdBy || { name: 'Unknown', role: 'N/A', studentID: null };
+
+            return `
                             <tr style="border-bottom: 1px solid #f0f0f0; ${isUnread ? 'background: #f8f9ff;' : ''}">
                                 <td style="padding: 15px;">
                                     <div style="font-weight: 600; color: var(--color-primary); font-family: monospace;">
@@ -1745,7 +1789,7 @@ async function loadTickets() {
                                 </td>
                             </tr>
                         `;
-                    }).join('')}
+        }).join('')}
                 </tbody>
             </table>
         `;
@@ -1757,7 +1801,7 @@ async function loadTickets() {
 
 async function viewTicketDetail(ticketId) {
     currentTicketId = ticketId;
-    
+
     try {
         UI.showLoader();
         const res = await fetch(`${Auth.apiBase}/tickets/${ticketId}`, { headers: Auth.getHeaders() });
@@ -1863,8 +1907,8 @@ async function viewTicketDetail(ticketId) {
                 <div style="max-height: 400px; overflow-y: auto; background: #f8f9fa; padding: 15px; border-radius: 12px; border: 1px solid #e9ecef;">
                     ${ticket.replies.length === 0 ? '<div style="text-align: center; color: #999; padding: 40px;"><i class="fas fa-inbox" style="font-size: 3rem; opacity: 0.3; margin-bottom: 10px; display: block;"></i><p style="margin: 0;">No replies yet. Be the first to respond!</p></div>' : ''}
                     ${ticket.replies.map(reply => {
-                        const replier = reply.repliedBy || { name: 'Unknown', role: 'N/A' };
-                        return `
+            const replier = reply.repliedBy || { name: 'Unknown', role: 'N/A' };
+            return `
                         <div style="background: ${reply.isAdminReply ? 'linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%)' : 'white'}; padding: 18px; border-radius: 10px; margin-bottom: 12px; border-left: 4px solid ${reply.isAdminReply ? '#667eea' : '#cbd5e0'}; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                                 <div style="font-weight: 600; color: ${reply.isAdminReply ? '#667eea' : '#333'}; display: flex; align-items: center; gap: 8px;">
@@ -1991,11 +2035,11 @@ function closeTicketDetailModal() {
 async function loadUnreadTicketCount() {
     try {
         const res = await fetch(`${Auth.apiBase}/tickets/admin/unread-count`, { headers: Auth.getHeaders() });
-        
+
         if (res.ok) {
             const data = await res.json();
             const badge = document.getElementById('ticketBadge');
-            
+
             if (data.count > 0) {
                 badge.textContent = data.count;
                 badge.style.display = 'inline-block';
@@ -2012,7 +2056,366 @@ async function loadUnreadTicketCount() {
 document.addEventListener('DOMContentLoaded', () => {
     if (Auth.checkAuth(['Admin'])) {
         loadUnreadTicketCount();
-        // Refresh unread count every 30 seconds
+        loadNewMessagesCount();
+        // Refresh counts every 30 seconds
         setInterval(loadUnreadTicketCount, 30000);
+        setInterval(loadNewMessagesCount, 30000);
+    }
+});
+
+/* =========================================
+   CONTACT MESSAGES MANAGEMENT
+   ========================================= */
+
+let currentMessageId = null;
+let currentPage = 1;
+let messagesPerPage = 20;
+
+async function loadMessages(page = 1) {
+    try {
+        currentPage = page;
+        
+        // Get filter values
+        const search = document.getElementById('messageSearch').value.trim();
+        const status = document.getElementById('messageStatusFilter').value;
+        const priority = document.getElementById('messagePriorityFilter').value;
+        const sortBy = document.getElementById('messageSortFilter').value;
+
+        // Build query string
+        const params = new URLSearchParams({
+            page,
+            limit: messagesPerPage,
+            sortBy
+        });
+
+        if (search) params.append('search', search);
+        if (status) params.append('status', status);
+        if (priority) params.append('priority', priority);
+
+        const res = await fetch(`${Auth.apiBase}/contact/admin?${params}`, { headers: Auth.getHeaders() });
+
+        if (!res.ok) {
+            throw new Error('Failed to load messages');
+        }
+
+        const data = await res.json();
+
+        // Update stats
+        document.getElementById('newMessagesCount').textContent = data.stats.New || 0;
+        document.getElementById('readMessagesCount').textContent = data.stats.Read || 0;
+        document.getElementById('repliedMessagesCount').textContent = data.stats.Replied || 0;
+        document.getElementById('totalMessagesCount').textContent = data.total || 0;
+
+        // Update messages badge
+        updateMessagesBadge(data.stats.New || 0);
+
+        // Render table
+        renderMessagesTable(data.data);
+
+        // Update pagination
+        renderMessagesPagination(data.page, data.pages, data.total);
+
+    } catch (error) {
+        console.error('Load messages error:', error);
+        const tbody = document.getElementById('messagesTableBody');
+        if (tbody) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" style="padding: 40px; text-align: center; color: #ef4444;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 15px;"></i>
+                        <p style="margin: 0; font-size: 1.1rem;">Failed to load messages</p>
+                        <p style="margin: 5px 0 0 0; font-size: 0.9rem;">${error.message}</p>
+                        <button onclick="loadMessages()" class="btn-primary" style="margin-top: 15px; padding: 10px 20px;">
+                            <i class="fas fa-sync-alt"></i> Retry
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }
+        showToast('Failed to load messages', 'error');
+    }
+}
+
+function renderMessagesTable(messages) {
+    const tbody = document.getElementById('messagesTableBody');
+
+    if (messages.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" style="padding: 40px; text-align: center; color: #9ca3af;">
+                    <i class="fas fa-inbox" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.3;"></i>
+                    <p style="margin: 0; font-size: 1.1rem;">No messages found</p>
+                    <p style="margin: 5px 0 0 0; font-size: 0.9rem;">Try adjusting your filters</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    tbody.innerHTML = messages.map(msg => {
+        const statusColors = {
+            'New': '#3b82f6',
+            'Read': '#8b5cf6',
+            'Replied': '#10b981',
+            'Archived': '#6b7280'
+        };
+
+        const priorityColors = {
+            'Urgent': '#ef4444',
+            'High': '#f59e0b',
+            'Medium': '#3b82f6',
+            'Low': '#6b7280'
+        };
+
+        const date = new Date(msg.createdAt);
+        const formattedDate = date.toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric', 
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+        return `
+            <tr style="border-bottom: 1px solid #e5e7eb; cursor: pointer; transition: background 0.2s;" onclick="viewMessage('${msg._id}')" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='white'">
+                <td style="padding: 15px;">
+                    <span style="padding: 4px 12px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; background: ${statusColors[msg.status]}15; color: ${statusColors[msg.status]};">
+                        ${msg.status}
+                    </span>
+                </td>
+                <td style="padding: 15px;">
+                    <span style="padding: 4px 12px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; background: ${priorityColors[msg.priority]}15; color: ${priorityColors[msg.priority]};">
+                        ${msg.priority}
+                    </span>
+                </td>
+                <td style="padding: 15px; font-weight: 500; color: #111827;">${msg.name}</td>
+                <td style="padding: 15px; color: #6b7280;">${msg.email}</td>
+                <td style="padding: 15px; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${msg.subject}</td>
+                <td style="padding: 15px; color: #6b7280; font-size: 0.85rem;">${formattedDate}</td>
+                <td style="padding: 15px; text-align: center;">
+                    <button class="btn-primary" onclick="event.stopPropagation(); viewMessage('${msg._id}')" style="padding: 6px 12px; font-size: 0.85rem;">
+                        <i class="fas fa-eye"></i> View
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function renderMessagesPagination(currentPage, totalPages, total) {
+    const info = document.getElementById('messagesInfo');
+    const buttonsContainer = document.getElementById('messagesPaginationButtons');
+
+    const start = (currentPage - 1) * messagesPerPage + 1;
+    const end = Math.min(currentPage * messagesPerPage, total);
+
+    info.textContent = `Showing ${start}-${end} of ${total} messages`;
+
+    if (totalPages <= 1) {
+        buttonsContainer.innerHTML = '';
+        return;
+    }
+
+    let buttons = '';
+
+    // Previous button
+    if (currentPage > 1) {
+        buttons += `<button class="btn-secondary" onclick="loadMessages(${currentPage - 1})" style="padding: 8px 12px; background: #e5e7eb; color: #374151; border: none; border-radius: 6px; cursor: pointer;">
+            <i class="fas fa-chevron-left"></i> Previous
+        </button>`;
+    }
+
+    // Page numbers
+    for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+            const active = i === currentPage ? 'background: var(--color-saffron); color: white;' : 'background: #e5e7eb; color: #374151;';
+            buttons += `<button onclick="loadMessages(${i})" style="padding: 8px 14px; ${active} border: none; border-radius: 6px; cursor: pointer; font-weight: ${i === currentPage ? '600' : '400'};">
+                ${i}
+            </button>`;
+        } else if (i === currentPage - 3 || i === currentPage + 3) {
+            buttons += `<span style="padding: 8px;">...</span>`;
+        }
+    }
+
+    // Next button
+    if (currentPage < totalPages) {
+        buttons += `<button class="btn-secondary" onclick="loadMessages(${currentPage + 1})" style="padding: 8px 12px; background: #e5e7eb; color: #374151; border: none; border-radius: 6px; cursor: pointer;">
+            Next <i class="fas fa-chevron-right"></i>
+        </button>`;
+    }
+
+    buttonsContainer.innerHTML = buttons;
+}
+
+async function viewMessage(messageId) {
+    try {
+        currentMessageId = messageId;
+
+        const res = await fetch(`${Auth.apiBase}/contact/admin/${messageId}`, { headers: Auth.getHeaders() });
+
+        if (!res.ok) {
+            throw new Error('Failed to load message');
+        }
+
+        const data = await res.json();
+        const msg = data.data;
+
+        // Populate modal
+        document.getElementById('modalMessageName').textContent = msg.name;
+        document.getElementById('modalMessageEmail').textContent = msg.email;
+        document.getElementById('modalMessageSubject').textContent = msg.subject;
+        document.getElementById('modalMessageContent').textContent = msg.message;
+        document.getElementById('modalMessageStatus').value = msg.status;
+        document.getElementById('modalMessagePriority').value = msg.priority;
+        document.getElementById('modalAdminNotes').value = msg.adminNotes || '';
+        document.getElementById('modalMessageIP').textContent = msg.ipAddress || 'N/A';
+        document.getElementById('modalMessageUA').textContent = msg.userAgent || 'N/A';
+        document.getElementById('modalMessageSource').textContent = msg.source || 'Website';
+
+        const date = new Date(msg.createdAt);
+        document.getElementById('modalMessageDate').textContent = date.toLocaleString('en-US', {
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+        // Set reply email link
+        const subject = encodeURIComponent(`Re: ${msg.subject}`);
+        const replyLink = document.getElementById('replyEmailLink');
+        replyLink.href = `mailto:${msg.email}?subject=${subject}`;
+
+        // Show modal
+        document.getElementById('messageDetailsModal').style.display = 'flex';
+
+        // Reload messages to update status
+        setTimeout(() => loadMessages(currentPage), 500);
+
+    } catch (error) {
+        console.error('View message error:', error);
+        showToast('Failed to load message details', 'error');
+    }
+}
+
+function closeMessageModal() {
+    document.getElementById('messageDetailsModal').style.display = 'none';
+    currentMessageId = null;
+}
+
+async function updateMessageStatus() {
+    const status = document.getElementById('modalMessageStatus').value;
+    await updateMessage({ status });
+}
+
+async function updateMessagePriority() {
+    const priority = document.getElementById('modalMessagePriority').value;
+    await updateMessage({ priority });
+}
+
+async function saveMessageNotes() {
+    const adminNotes = document.getElementById('modalAdminNotes').value;
+    await updateMessage({ adminNotes });
+}
+
+async function updateMessage(updates) {
+    if (!currentMessageId) return;
+
+    try {
+        const res = await fetch(`${Auth.apiBase}/contact/admin/${currentMessageId}`, {
+            method: 'PATCH',
+            headers: Auth.getHeaders(),
+            body: JSON.stringify(updates)
+        });
+
+        if (!res.ok) {
+            throw new Error('Failed to update message');
+        }
+
+        showToast('Message updated successfully', 'success');
+        loadMessages(currentPage);
+
+    } catch (error) {
+        console.error('Update message error:', error);
+        showToast('Failed to update message', 'error');
+    }
+}
+
+async function deleteMessage() {
+    if (!currentMessageId) return;
+
+    if (!confirm('Are you sure you want to delete this message? This action cannot be undone.')) {
+        return;
+    }
+
+    try {
+        const res = await fetch(`${Auth.apiBase}/contact/admin/${currentMessageId}`, {
+            method: 'DELETE',
+            headers: Auth.getHeaders()
+        });
+
+        if (!res.ok) {
+            throw new Error('Failed to delete message');
+        }
+
+        showToast('Message deleted successfully', 'success');
+        closeMessageModal();
+        loadMessages(currentPage);
+
+    } catch (error) {
+        console.error('Delete message error:', error);
+        showToast('Failed to delete message', 'error');
+    }
+}
+
+async function loadNewMessagesCount() {
+    try {
+        const res = await fetch(`${Auth.apiBase}/contact/admin?status=New&limit=1`, { headers: Auth.getHeaders() });
+
+        if (res.ok) {
+            const data = await res.json();
+            updateMessagesBadge(data.total || 0);
+        }
+    } catch (error) {
+        console.error('Load new messages count error:', error);
+    }
+}
+
+function updateMessagesBadge(count) {
+    const badge = document.getElementById('messagesBadge');
+
+    if (count > 0) {
+        badge.textContent = count;
+        badge.style.display = 'inline-block';
+    } else {
+        badge.style.display = 'none';
+    }
+}
+
+// Add event listeners for filters
+document.addEventListener('DOMContentLoaded', () => {
+    const messageSearch = document.getElementById('messageSearch');
+    const messageStatusFilter = document.getElementById('messageStatusFilter');
+    const messagePriorityFilter = document.getElementById('messagePriorityFilter');
+    const messageSortFilter = document.getElementById('messageSortFilter');
+
+    if (messageSearch) {
+        let searchTimeout;
+        messageSearch.addEventListener('input', () => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => loadMessages(1), 500);
+        });
+    }
+
+    if (messageStatusFilter) {
+        messageStatusFilter.addEventListener('change', () => loadMessages(1));
+    }
+
+    if (messagePriorityFilter) {
+        messagePriorityFilter.addEventListener('change', () => loadMessages(1));
+    }
+
+    if (messageSortFilter) {
+        messageSortFilter.addEventListener('change', () => loadMessages(1));
     }
 });
