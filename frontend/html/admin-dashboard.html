@@ -1874,7 +1874,7 @@
     <div id="courseModal" class="modal"
         style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center;">
         <div class="glass-card"
-            style="background: white; padding: 0; border-radius: 15px; width: 600px; margin: 20px; position: relative; overflow: hidden; display: flex; flex-direction: column; max-height: 90vh;">
+            style="background: white; padding: 0; border-radius: 15px; width: 90%; max-width: 900px; margin: 20px; position: relative; overflow: hidden; display: flex; flex-direction: column; max-height: 90vh;">
 
             <!-- Header -->
             <div
@@ -1884,90 +1884,227 @@
                     onclick="document.getElementById('courseModal').style.display='none'">&times;</span>
             </div>
 
-            <!-- Tabs -->
-            <div
-                style="display: flex; background: white; padding: 10px 30px 0; gap: 5px; border-bottom: 1px solid #eee;">
-                <button type="button" class="course-tab-btn active" onclick="switchCourseTab('details', this)"
-                    style="padding: 10px 15px; background: none; border: none; border-bottom: 2px solid var(--color-primary); font-weight: 600; color: var(--color-primary); cursor: pointer;">Details</button>
-                <button type="button" class="course-tab-btn" onclick="switchCourseTab('logistics', this)"
-                    style="padding: 10px 15px; background: none; border: none; border-bottom: 2px solid transparent; color: #666; cursor: pointer;">Media
-                    & Mentors</button>
+            <!-- Stepper Header -->
+            <div style="padding: 25px 30px 10px; background: white;">
+                <div class="stepper-header"
+                    style="display: flex; justify-content: space-between; margin-bottom: 30px; position: relative; max-width: 850px; margin-left: auto; margin-right: auto;">
+                    <!-- Line -->
+                    <div
+                        style="position: absolute; top: 15px; left: 0; width: 100%; height: 2px; background: #eee; z-index: 1;">
+                    </div>
+                    <div id="adminStepProgress"
+                        style="position: absolute; top: 15px; left: 0; height: 2px; background: var(--color-saffron); z-index: 1; width: 0%; transition: width 0.3s;">
+                    </div>
+
+                    <!-- Steps -->
+                    <div class="step-indicator active" data-step="1" onclick="jumpAdminStep(1)"
+                        style="padding: 8px 16px; border-radius: 20px; background: var(--color-saffron); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; position: relative; z-index: 2; font-size: 0.85rem; cursor: pointer; white-space: nowrap;">
+                        Basic Info</div>
+                    <div class="step-indicator" data-step="2" onclick="jumpAdminStep(2)"
+                        style="padding: 8px 16px; border-radius: 20px; background: #eee; color: #999; display: flex; align-items: center; justify-content: center; font-weight: bold; position: relative; z-index: 2; font-size: 0.85rem; cursor: pointer; white-space: nowrap;">
+                        Key Details</div>
+                    <div class="step-indicator" data-step="3" onclick="jumpAdminStep(3)"
+                        style="padding: 8px 16px; border-radius: 20px; background: #eee; color: #999; display: flex; align-items: center; justify-content: center; font-weight: bold; position: relative; z-index: 2; font-size: 0.85rem; cursor: pointer; white-space: nowrap;">
+                        Media</div>
+                    <div class="step-indicator" data-step="4" onclick="jumpAdminStep(4)"
+                        style="padding: 8px 16px; border-radius: 20px; background: #eee; color: #999; display: flex; align-items: center; justify-content: center; font-weight: bold; position: relative; z-index: 2; font-size: 0.85rem; cursor: pointer; white-space: nowrap;">
+                        Faculty</div>
+                    <div class="step-indicator" data-step="5" onclick="jumpAdminStep(5)"
+                        style="padding: 8px 16px; border-radius: 20px; background: #eee; color: #999; display: flex; align-items: center; justify-content: center; font-weight: bold; position: relative; z-index: 2; font-size: 0.85rem; cursor: pointer; white-space: nowrap;">
+                        Finalize</div>
+                </div>
+                <div style="text-align: center; margin-bottom: 10px; font-weight: 600; color: #555; display: none;">
+                    <span id="stepLabel">Essential Details</span>
+                </div>
             </div>
 
-            <form id="courseForm" onsubmit="event.preventDefault();" style="flex: 1; overflow-y: auto; padding: 30px;">
+            <form id="courseForm" onsubmit="event.preventDefault();"
+                style="flex: 1; overflow-y: auto; padding: 20px 40px;">
                 <input type="hidden" id="courseId">
 
-                <!-- Tab 1: Details -->
-                <div id="courseTab_details" class="course-section">
+                <!-- Step 1: Essentials -->
+                <div id="adminCourseStep1" class="wizard-step">
                     <div class="form-group mb-3">
                         <label>Course Title <span style="color:red">*</span></label>
-                        <input type="text" id="courseTitle" class="form-control" required
+                        <input type="text" id="courseTitle" class="form-control" role="presentation" autocomplete="off"
                             placeholder="e.g. Advanced Meditation">
                     </div>
                     <div class="form-group mb-3">
+                        <label>Category <span style="color:red">*</span></label>
+                        <input type="text" id="courseCategory" class="form-control" role="presentation"
+                            autocomplete="off" placeholder="e.g. Spiritual, Tech">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label>Difficulty <span style="color:red">*</span></label>
+                        <select id="courseDifficulty" class="form-control">
+                            <option value="Beginner">Beginner</option>
+                            <option value="Intermediate">Intermediate</option>
+                            <option value="Advanced">Advanced</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Step 2: Key Details -->
+                <div id="adminCourseStep2" class="wizard-step" style="display: none;">
+                    <div class="form-group mb-3">
                         <label>Description <span style="color:red">*</span></label>
-                        <textarea id="courseDesc" class="form-control" rows="3" required
+                        <textarea id="courseDesc" class="form-control" rows="4"
                             placeholder="Course summary..."></textarea>
                     </div>
                     <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                         <div class="form-group mb-3">
                             <label>Price (₹) <span style="color:red">*</span></label>
-                            <input type="number" id="coursePrice" class="form-control" min="0" required
-                                placeholder="0 for Free">
+                            <input type="number" id="coursePrice" class="form-control" min="0" placeholder="0 for Free">
                         </div>
                         <div class="form-group mb-3">
                             <label>Duration <span style="color:red">*</span></label>
-                            <input type="text" id="courseDuration" class="form-control" required
-                                placeholder="e.g. 4 Weeks / 10 Hours">
+                            <input type="text" id="courseDuration" class="form-control" placeholder="e.g. 4 Weeks">
                         </div>
                     </div>
-                    <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                        <div class="form-group mb-3">
-                            <label>Category <span style="color:red">*</span></label>
-                            <input type="text" id="courseCategory" class="form-control" required
-                                placeholder="e.g. Spiritual, Tech">
-                        </div>
-                        <div class="form-group mb-3">
-                            <label>Difficulty <span style="color:red">*</span></label>
-                            <select id="courseDifficulty" class="form-control">
-                                <option value="Beginner">Beginner</option>
-                                <option value="Intermediate">Intermediate</option>
-                                <option value="Advanced">Advanced</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div style="text-align: right; margin-top: 20px;">
-                        <button type="button" class="btn-primary" onclick="switchCourseTab('logistics', null, 1)">Next
-                            &rarr;</button>
-                    </div>
-                </div>
-
-                <!-- Tab 2: Media & Mentors -->
-                <div id="courseTab_logistics" class="course-section" style="display: none;">
                     <div class="form-group mb-3">
                         <label>Thumbnail URL</label>
                         <input type="text" id="courseThumb" class="form-control" placeholder="https://...">
                     </div>
+                </div>
 
+                <!-- Step 3: Intro & Preview -->
+                <div id="adminCourseStep3" class="wizard-step" style="display: none;">
                     <div class="form-group mb-3">
-                        <label>Assign Mentors <span style="color:red">*</span> <small>(Required to
-                                Publish)</small></label>
-                        <div id="mentorListContainer"
-                            style="border: 1px solid #ddd; padding: 10px; border-radius: 8px; max-height: 150px; overflow-y: auto; background: #fafafa;">
-                            <p style="color:#999; font-size:0.9rem;">Loading mentors...</p>
+                        <label>Introduction Text</label>
+                        <textarea id="courseIntroText" class="form-control" rows="3"
+                            placeholder="Compelling headline for the landing page..."></textarea>
+                    </div>
+                    <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div class="form-group">
+                            <label>Preview Duration (Sec)</label>
+                            <input type="number" id="coursePreviewDuration" class="form-control" value="60" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Introduction Video</label>
+                            <div id="adminIntroVideoDropzone"
+                                style="border: 2px dashed #ddd; padding: 20px; text-align: center; border-radius: 8px; position: relative; cursor: pointer; background: #fafafa; transition: all 0.2s;">
+                                <div id="adminDropzoneContent">
+                                    <i class="fas fa-cloud-upload-alt"
+                                        style="font-size: 1.5rem; color: #ccc; margin-bottom: 5px;"></i><br>
+                                    <span style="font-size: 0.85rem; color: #666;">Drag & Drop Video</span>
+                                </div>
+                                <input type="file" id="adminIntroVideoInput" accept="video/*"
+                                    style="opacity: 0; position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: pointer;">
+                                <input type="hidden" id="courseIntroVideoUrl">
+
+                                <div id="adminUploadProgress"
+                                    style="display: none; height: 4px; background: #eee; margin-top: 10px; border-radius: 2px; overflow: hidden;">
+                                    <div id="adminProgressBar"
+                                        style="width: 0%; height: 100%; background: var(--color-success);"></div>
+                                </div>
+
+                                <div id="adminVideoPreview" style="display: none; margin-top: 10px;">
+                                    <!-- Moved outside dropzone -->
+                                </div>
+                            </div>
+
+                            <!-- Actual Preview Output (Outside Dropzone) -->
+                            <div id="adminVideoPreviewContainer"
+                                style="display: none; margin-top: 15px; padding: 15px; background: #f0fff4; border: 1px solid #c3e6cb; border-radius: 8px;">
+                                <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+                                    <div
+                                        style="display: flex; align-items: center; justify-content: center; gap: 5px; color: var(--color-success); font-weight: 600; font-size: 0.9rem;">
+                                        <i class="fas fa-check-circle"></i> Video Uploaded
+                                        <button type="button" id="adminRemoveVideoBtn"
+                                            style="background: #fee; border: none; color: var(--color-error); width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; margin-left: 10px; font-size: 1rem;">&times;</button>
+                                    </div>
+                                    <a id="adminVideoLink" href="#" target="_blank" class="btn-primary"
+                                        style="padding: 8px 16px; font-size: 0.9rem; text-decoration: none; background: #17a2b8;">
+                                        <i class="fas fa-play"></i> Watch Video
+                                    </a>
+                                </div>
+                            </div>
                         </div>
                     </div>
+                </div>
 
-                    <div style="display: flex; gap: 10px; margin-top: 25px;">
-                        <button type="button" class="btn-primary" style="background: #ccc; flex: 1;"
-                            onclick="switchCourseTab('details', null, 0)">&larr; Back</button>
-                        <button type="button" class="btn-primary" style="background: #ffc107; color: #000; flex: 1;"
-                            onclick="saveCourse(event, 'Draft')">Save as Draft</button>
-                        <button type="button" class="btn-primary" style="background: var(--color-success); flex: 1;"
-                            onclick="saveCourse(event, 'Published')">Publish</button>
+                <!-- Step 4: Faculty Allocation -->
+                <div id="adminCourseStep4" class="wizard-step" style="display: none;">
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="margin: 0 0 10px 0; color: #333;">Faculty Allocation</h4>
+                        <p style="margin: 0; color: #666; font-size: 0.9rem;">Assign mentors to facilitate this course.
+                        </p>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label>Assign Mentors <span style="color:red">*</span></label>
+                        <div id="mentorListContainer"
+                            style="border: 1px solid #ddd; padding: 15px; border-radius: 8px; max-height: 300px; overflow-y: auto; background: #fcfcfc;">
+                            <p style="color:#999;">Loading...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 5: Finalize Status -->
+                <div id="adminCourseStep5" class="wizard-step" style="display: none;">
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <h4 style="color: #333; margin-bottom: 10px;">Ready to Finalize?</h4>
+                        <p style="color: #666; font-size: 0.95rem;">Choose an action to proceed.</p>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 15px; max-width: 400px; margin: 0 auto;">
+                        <button type="button" class="btn-primary" onclick="saveCourse(event, 'Draft')"
+                            style="width: 100%; padding: 15px; background: #fff3cd; color: #856404; border: 1px solid #ffeeba; text-align: left; display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-save" style="font-size: 1.2rem;"></i>
+                            <div>
+                                <div style="font-weight: 600;">Save as Draft</div>
+                                <div style="font-size: 0.8rem; opacity: 0.8;">Save your progress and edit later</div>
+                            </div>
+                        </button>
+
+                        <button type="button" class="btn-primary" onclick="saveCourse(event, 'Approved')"
+                            style="width: 100%; padding: 15px; background: #e3f2fd; color: #0d47a1; border: 1px solid #bbdefb; text-align: left; display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-calendar-alt" style="font-size: 1.2rem;"></i>
+                            <div>
+                                <div style="font-weight: 600;">Mark as Upcoming (Approved)</div>
+                                <div style="font-size: 0.8rem; opacity: 0.8;">Visible as 'Upcoming' to students</div>
+                            </div>
+                        </button>
+
+                        <button type="button" class="btn-primary" onclick="saveCourse(event, 'Published')"
+                            style="width: 100%; padding: 15px; background: #e6f4ea; color: #1e7e34; border: 1px solid #c3e6cb; text-align: left; display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-globe" style="font-size: 1.2rem;"></i>
+                            <div>
+                                <div style="font-weight: 600;">Publish Course</div>
+                                <div style="font-size: 0.8rem; opacity: 0.8;">Make visible to all students immediately
+                                </div>
+                            </div>
+                        </button>
+
+                        <button type="button" class="btn-primary" onclick="saveCourse(event, 'Archived')"
+                            style="width: 100%; padding: 15px; background: #f8f9fa; color: #6c757d; border: 1px solid #dee2e6; text-align: left; display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-archive" style="font-size: 1.2rem;"></i>
+                            <div>
+                                <div style="font-weight: 600;">Archive Course</div>
+                                <div style="font-size: 0.8rem; opacity: 0.8;">Hide from new enrollments</div>
+                            </div>
+                        </button>
                     </div>
                 </div>
             </form>
+
+            <!-- Footer Buttons -->
+            <div
+                style="padding: 20px 40px; border-top: 1px solid #eee; display: flex; justify-content: space-between; background: #fafafa;">
+                <button type="button" id="prevBtn" class="btn-primary"
+                    style="background: #ccc; padding: 10px 25px; visibility: hidden;"
+                    onclick="changeAdminStep(-1)">Back</button>
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" id="draftBtn" class="btn-primary"
+                        style="background: #ffc107; color: #000; display: none;"
+                        onclick="saveCourse(event, 'Draft')">Save
+                        Draft</button>
+                    <button type="button" id="nextBtn" class="btn-primary" style="padding: 10px 30px;"
+                        onclick="changeAdminStep(1)">Next</button>
+                    <button type="button" id="publishBtn" class="btn-primary"
+                        style="background: var(--color-success); padding: 10px 30px; display: none;"
+                        onclick="saveCourse(event, 'Published')">Publish Course</button>
+                </div>
+            </div>
         </div>
     </div>
 

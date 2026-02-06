@@ -106,7 +106,7 @@ function renderCourses(courses) {
 
     // Helper to generate Card HTML
     const generateCard = (c, isUpcoming) => `
-        <div class="course-card glass-premium" ${!isUpcoming ? `onclick="openCourseModal('${c._id}')"` : ''} style="background: white; border-radius: var(--border-radius-lg); overflow: hidden; cursor: ${isUpcoming ? 'default' : 'pointer'}; transition: var(--transition-smooth); opacity: ${isUpcoming ? '0.9' : '1'};">
+        <div class="course-card glass-premium" ${!isUpcoming ? `onclick="window.location.href='course-intro.html?id=${c._id}'"` : ''} style="background: white; border-radius: var(--border-radius-lg); overflow: hidden; cursor: ${isUpcoming ? 'default' : 'pointer'}; transition: var(--transition-smooth); opacity: ${isUpcoming ? '0.9' : '1'};">
             <div class="course-thumb" style="background-image: url('${getThumbnail(c.thumbnail)}'); background-size: cover; background-position: center; height: 200px; width: 100%; position: relative;">
                 ${isUpcoming ? '<div style="position: absolute; top: 10px; right: 10px; background: var(--color-saffron); color: white; padding: 5px 10px; border-radius: 5px; font-weight: bold; font-size: 0.8rem;">Coming Soon</div>' : ''}
             </div>
@@ -333,20 +333,39 @@ function playPreview(url, duration, courseId, contentId) {
     const video = document.getElementById('previewVideo');
     const overlay = document.getElementById('previewOverlay');
     const timeLeftSpan = document.getElementById('timeLeft');
-    let timeLeft = duration;
+    const limit = parseFloat(duration) || 30; // Default 30s if invalid
+    let timeLeft = limit;
 
     // Monitor Playback
     video.addEventListener('timeupdate', () => {
-        const current = Math.floor(video.currentTime);
-        if (current >= duration) {
+        if (video.currentTime >= limit) {
             video.pause();
-            video.currentTime = duration; // Lock at end
+            video.currentTime = limit; // Lock at end
             overlay.style.display = 'flex'; // Show overlay
 
+            // Disable controls to prevent seeking past limit
+            video.controls = false;
+
             // Track Completion
-            trackMetric('PreviewCompleted', `Watched ${duration}s preview`, courseId);
+            trackMetric('PreviewCompleted', `Watched ${limit}s preview`, courseId);
         }
-        timeLeftSpan.textContent = Math.max(0, duration - current);
+
+        // Prevent seeking past limit
+        if (video.currentTime > limit) {
+            video.currentTime = limit;
+            video.pause();
+        }
+
+        const remaining = Math.max(0, Math.ceil(limit - video.currentTime));
+        timeLeftSpan.textContent = remaining;
+    });
+
+    // Prevent Seeking via progress bar (Basic protection)
+    video.addEventListener('seeking', () => {
+        if (video.currentTime > limit) {
+            video.currentTime = limit;
+            video.pause();
+        }
     });
 
     // Initial Track
@@ -362,7 +381,7 @@ function closePreview() {
 function openNotifyModal(courseId, courseTitle) {
     window.currentNotifyCourseId = courseId;
     window.currentNotifyCourseTitle = courseTitle;
-    
+
     // Create modal if it doesn't exist
     if (!document.getElementById('notifyMeModal')) {
         const modalHTML = `
@@ -406,15 +425,15 @@ function openNotifyModal(courseId, courseTitle) {
             </div>
         `;
         document.body.insertAdjacentHTML('beforeend', modalHTML);
-        
+
         // Add form submit handler
         document.getElementById('notifyMeForm').addEventListener('submit', handleNotifySubmit);
     }
-    
+
     // Show modal and set course title
     document.getElementById('notifyCourseTitle').textContent = courseTitle;
     document.getElementById('notifyMeModal').style.display = 'block';
-    
+
     // Clear form
     document.getElementById('notifyMeForm').reset();
     document.getElementById('phoneValidationMsg').textContent = '';
@@ -427,13 +446,13 @@ function closeNotifyModal() {
 function validateNotifyPhone() {
     const phoneInput = document.getElementById('notifyPhone');
     const validationMsg = document.getElementById('phoneValidationMsg');
-    
+
     // Remove non-numeric characters
     phoneInput.value = phoneInput.value.replace(/\D/g, '');
-    
+
     const phone = phoneInput.value;
     const remaining = 10 - phone.length;
-    
+
     if (phone.length === 0) {
         validationMsg.textContent = '';
         validationMsg.style.color = '';
@@ -448,21 +467,21 @@ function validateNotifyPhone() {
 
 async function handleNotifySubmit(e) {
     e.preventDefault();
-    
+
     const name = document.getElementById('notifyName').value.trim();
     const email = document.getElementById('notifyEmail').value.trim();
     const phone = document.getElementById('notifyPhone').value.trim();
-    
+
     // Validate phone
     if (!/^[0-9]{10}$/.test(phone)) {
         UI.error('Please enter a valid 10-digit phone number');
         return;
     }
-    
+
     const submitBtn = document.getElementById('submitNotifyBtn');
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Subscribing...';
-    
+
     try {
         const res = await fetch(`${Auth.apiBase}/subscribers/subscribe`, {
             method: 'POST',
@@ -474,9 +493,9 @@ async function handleNotifySubmit(e) {
                 phone
             })
         });
-        
+
         const data = await res.json();
-        
+
         if (res.ok) {
             UI.success(data.message || 'Successfully subscribed! We will notify you when the course is available.');
             closeNotifyModal();

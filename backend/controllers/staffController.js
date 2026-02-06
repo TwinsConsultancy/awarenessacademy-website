@@ -3,7 +3,7 @@ const { Course, Content, User, Exam, Result, Certificate } = require('../models/
 // Create Course
 exports.createCourse = async (req, res) => {
     try {
-        const { title, description, category, price, difficulty, duration } = req.body;
+        const { title, description, category, price, difficulty, duration, introVideoUrl, introText, previewDuration } = req.body;
         const mentorID = req.user.id;
 
         const newCourse = new Course({
@@ -14,6 +14,9 @@ exports.createCourse = async (req, res) => {
             mentors: [mentorID], // Assign creator as mentor
             difficulty: difficulty || 'Beginner',
             duration: duration || '4 Weeks',
+            introVideoUrl,
+            introText,
+            previewDuration: previewDuration || 60,
             status: 'Draft', // Staff courses start as Draft
             createdBy: mentorID,
             thumbnail: 'https://via.placeholder.com/300x200'
@@ -255,8 +258,8 @@ exports.getProfile = async (req, res) => {
 // Update Staff Profile
 exports.updateProfile = async (req, res) => {
     try {
-        const { 
-            name, fatherName, motherName, dob, 
+        const {
+            name, fatherName, motherName, dob,
             doorNumber, streetName, town, district, pincode,
             phone, additionalPhone,
             accountHolderName, accountNumber, bankName, ifscCode, branchName
@@ -283,13 +286,13 @@ exports.updateProfile = async (req, res) => {
         };
 
         // Remove undefined values
-        Object.keys(updateData).forEach(key => 
+        Object.keys(updateData).forEach(key =>
             updateData[key] === undefined && delete updateData[key]
         );
 
         const user = await User.findByIdAndUpdate(
-            req.user.id, 
-            updateData, 
+            req.user.id,
+            updateData,
             { new: true, runValidators: true }
         ).select('-password -verificationToken -resetPasswordToken');
 

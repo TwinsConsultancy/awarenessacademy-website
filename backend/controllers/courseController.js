@@ -58,7 +58,10 @@ exports.getCoursePreview = async (req, res) => {
                 mentor: course.mentors && course.mentors.length > 0 ? course.mentors.map(m => m.name).join(', ') : 'No mentor assigned',
                 price: course.price,
                 thumbnail: course.thumbnail,
-                status: course.status
+                status: course.status,
+                introVideoUrl: course.introVideoUrl,
+                introText: course.introText,
+                previewDuration: course.previewDuration
             },
             previews: previewModules // Rename or keep as previews? Keeping generic.
         });
@@ -162,7 +165,7 @@ exports.getAllCoursesAdmin = async (req, res) => {
 // Create Course
 exports.createCourse = async (req, res) => {
     try {
-        const { title, description, price, mentors, category, difficulty, duration, thumbUrl, status } = req.body;
+        const { title, description, price, mentors, category, difficulty, duration, thumbUrl, status, introVideoUrl, introText, previewDuration } = req.body;
         const user = await User.findById(req.user.id);
 
         // Determine course status based on role:
@@ -184,6 +187,9 @@ exports.createCourse = async (req, res) => {
             difficulty: difficulty || 'Beginner',
             duration: duration || '4 Weeks',
             thumbnail: thumbUrl || 'https://via.placeholder.com/300x200',
+            introVideoUrl,
+            introText,
+            previewDuration: previewDuration || 60,
             status: initialStatus,
             createdBy: req.user.id
         });
@@ -199,24 +205,25 @@ exports.updateCourse = async (req, res) => {
     try {
         const { id } = req.params;
         const updates = req.body;
-        
+
         // Get the old course to check status change
         const oldCourse = await Course.findById(id);
         if (!oldCourse) return res.status(404).json({ message: 'Course not found' });
-        
+
         const course = await Course.findByIdAndUpdate(id, updates, { new: true }).populate('mentors', 'name');
-        
+
         // If status changed from anything to Published, notify subscribers
-        if (oldCourse.status !== 'Published' && updates.status === 'Published') {
+        if (oldCourse.status !== 'Published' && updates.status === 'Published') { // Status changed to Published
+
             // Find all subscribers for this course who haven't been notified
-            const subscribers = await CourseSubscriber.find({ 
-                courseID: id, 
-                notified: false 
+            const subscribers = await CourseSubscriber.find({
+                courseID: id,
+                notified: false
             });
-            
+
             if (subscribers.length > 0) {
                 console.log(`📧 Notifying ${subscribers.length} subscribers about published course: ${course.title}`);
-                
+
                 // Send emails to all subscribers
                 const emailPromises = subscribers.map(async (subscriber) => {
                     try {
@@ -228,25 +235,25 @@ exports.updateCourse = async (req, res) => {
                             courseMentor: course.mentors?.map(m => m.name).join(', ') || 'InnerSpark Team',
                             coursePrice: course.price
                         });
-                        
+
                         // Mark subscriber as notified
                         subscriber.notified = true;
                         subscriber.notifiedAt = new Date();
                         await subscriber.save();
-                        
+
                         return { success: true, email: subscriber.email };
                     } catch (error) {
                         console.error(`Failed to notify ${subscriber.email}:`, error.message);
                         return { success: false, email: subscriber.email, error: error.message };
                     }
                 });
-                
+
                 const results = await Promise.allSettled(emailPromises);
                 const successCount = results.filter(r => r.status === 'fulfilled' && r.value.success).length;
                 console.log(`✅ Successfully notified ${successCount}/${subscribers.length} subscribers`);
             }
         }
-        
+
         res.status(200).json({ message: 'Course updated', course });
     } catch (err) {
         res.status(500).json({ message: 'Update failed', error: err.message });

@@ -50,6 +50,94 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 3. Initial Load
     loadQueue(); // For Overview
+
+    // Admin Course Info Video Upload Logic
+    const adminIntroDropzone = document.getElementById('adminIntroVideoDropzone');
+    const adminIntroInput = document.getElementById('adminIntroVideoInput');
+    const adminIntroHidden = document.getElementById('courseIntroVideoUrl');
+    const adminUploadProgress = document.getElementById('adminUploadProgress');
+    const adminProgressBar = document.getElementById('adminProgressBar');
+    // Updated container ID
+    const adminVideoPreview = document.getElementById('adminVideoPreviewContainer');
+    const adminRemoveBtn = document.getElementById('adminRemoveVideoBtn');
+    const adminDropzoneContent = document.getElementById('adminDropzoneContent');
+
+    if (adminIntroInput) {
+        adminIntroInput.addEventListener('change', handleAdminIntroUpload);
+
+        // Drag & Drop visual feedback
+        adminIntroDropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            adminIntroDropzone.style.borderColor = 'var(--color-saffron)';
+            adminIntroDropzone.style.background = 'rgba(0,0,0,0.02)';
+        });
+        adminIntroDropzone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            adminIntroDropzone.style.borderColor = '#ddd';
+            adminIntroDropzone.style.background = 'white';
+        });
+        adminIntroDropzone.addEventListener('drop', (e) => {
+            adminIntroDropzone.style.borderColor = '#ddd';
+            adminIntroDropzone.style.background = 'white';
+        });
+
+        adminRemoveBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent re-triggering dropzone click if any
+            adminIntroInput.value = '';
+            adminIntroHidden.value = '';
+            adminVideoPreview.style.display = 'none';
+            adminDropzoneContent.style.display = 'block';
+            adminUploadProgress.style.display = 'none';
+        });
+    }
+
+    async function handleAdminIntroUpload(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Reset UI
+        adminUploadProgress.style.display = 'block';
+        adminProgressBar.style.width = '0%';
+        adminDropzoneContent.style.display = 'none';
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            // Fake progress
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 10;
+                if (progress > 90) clearInterval(interval);
+                adminProgressBar.style.width = `${progress}%`;
+            }, 200);
+
+            const res = await fetch(`${Auth.apiBase}/uploads/content`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+                body: formData
+            });
+
+            clearInterval(interval);
+            adminProgressBar.style.width = '100%';
+
+            if (res.ok) {
+                const data = await res.json();
+                adminIntroHidden.value = data.url;
+
+                // Show Preview indicator
+                adminVideoPreview.style.display = 'block';
+                document.getElementById('adminVideoLink').href = data.url;
+                adminUploadProgress.style.display = 'none';
+            } else {
+                throw new Error('Upload failed');
+            }
+        } catch (err) {
+            console.error(err);
+            UI.error('Upload failed');
+            adminDropzoneContent.style.display = 'block';
+        }
+    }
 });
 
 /* --- NAVIGATION --- */
@@ -980,12 +1068,10 @@ function renderCourses(courses) {
                                     <i class="fas fa-eye" style="margin-right:5px;"></i> Preview
                                 </a>
                             </td>
-                            <td style="padding:15px;">
-                                <select onchange="changeCourseStatus('${c._id}', this.value)" 
-                                    style="padding: 6px 10px; border-radius: 20px; border: 1px solid rgba(0,0,0,0.1); font-size: 0.75rem; font-weight: 600; cursor: pointer; outline: none; appearance: none; -webkit-appearance: none; text-align: center;
-                                    background-color: ${statusColor.bg}; color: ${statusColor.text}; width: 100px;">
-                                    ${options.map(opt => `<option value="${opt}" ${opt === displayStatus ? 'selected' : ''}>${opt}</option>`).join('')}
-                                </select>
+                            <td style="padding:15px; text-align: center;">
+                                <span style="background-color: ${statusColor.bg}; color: ${statusColor.text}; padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; display: inline-block; min-width: 80px;">
+                                    ${displayStatus}
+                                </span>
                             </td>
                             <td style="padding:15px; text-align:right;">
                                 <button class="btn-primary" title="View Details" style="padding:6px 10px; font-size:0.8rem; margin-right:5px; background: #17a2b8;" 
@@ -1047,11 +1133,132 @@ async function changeCourseStatus(id, newStatus) {
 
 }
 
+/* --- STEPPER WIZARD LOGIC --- */
+let currentAdminStep = 1;
+
+function changeAdminStep(n) {
+    // Validation only when moving forward
+    if (n === 1 && !validateAdminStep(currentAdminStep)) return;
+
+    jumpAdminStep(currentAdminStep + n);
+}
+
+// Hybrid Navigation: Click on steps
+function jumpAdminStep(n) {
+    if (n < 1 || n > 5) return;
+
+    // Free navigation as requested. 
+    // Jumping between sections is allowed without immediate validation blocking.
+    // Final validation happens at 'Save/Publish' time.
+
+    currentAdminStep = n;
+    updateAdminStepUI();
+}
+
+function updateAdminStepUI() {
+    // 1. Show/Hide Steps
+    for (let i = 1; i <= 5; i++) {
+        const stepEl = document.getElementById(`adminCourseStep${i}`);
+        if (stepEl) stepEl.style.display = (i === currentAdminStep) ? 'block' : 'none';
+    }
+
+    // 2. Update Header Indicators
+    const stepLabels = ['Basic Info', 'Key Details', 'Media', 'Faculty', 'Finalize'];
+
+    document.querySelectorAll('.step-indicator').forEach(el => {
+        const step = parseInt(el.dataset.step);
+        const labelText = stepLabels[step - 1] || step;
+
+        if (step < currentAdminStep) {
+            el.className = 'step-indicator completed';
+            el.style.background = 'var(--color-success)';
+            el.style.color = 'white';
+            el.innerHTML = `<i class="fas fa-check"></i> ${labelText}`;
+        } else if (step === currentAdminStep) {
+            el.className = 'step-indicator active';
+            el.style.background = 'var(--color-saffron)';
+            el.style.color = 'white';
+            el.innerHTML = labelText;
+        } else {
+            el.className = 'step-indicator';
+            el.style.background = '#eee';
+            el.style.color = '#999';
+            el.innerHTML = labelText;
+        }
+    });
+
+    // 3. Update Progress Bar
+    const progress = ((currentAdminStep - 1) / 4) * 100; // 0%, 25%, 50%, 75%, 100%
+    const bar = document.getElementById('adminStepProgress');
+    if (bar) bar.style.width = `${progress}%`;
+
+    // 4. Update Header Label
+    const labels = ['Essential Details', 'Key Information', 'Media & Preview', 'Faculty Allocation', 'Finalize & Launch'];
+    const labelEl = document.getElementById('stepLabel');
+    if (labelEl) labelEl.innerText = labels[currentAdminStep - 1];
+
+    // 5. Update Footer Buttons
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const draftBtn = document.getElementById('draftBtn');
+    const publishBtn = document.getElementById('publishBtn');
+
+    if (prevBtn) prevBtn.style.visibility = (currentAdminStep === 1) ? 'hidden' : 'visible';
+
+    if (currentAdminStep === 5) {
+        if (nextBtn) nextBtn.style.display = 'none';
+        if (draftBtn) draftBtn.style.display = 'none';
+        if (publishBtn) publishBtn.style.display = 'none'; // Custom buttons in Step 5 body
+    } else {
+        if (nextBtn) {
+            nextBtn.style.display = 'block';
+            nextBtn.innerText = 'Next';
+        }
+        if (draftBtn) draftBtn.style.display = 'none';
+        if (publishBtn) publishBtn.style.display = 'none';
+    }
+}
+
+function validateAdminStep(step) {
+    let isValid = true;
+    let errorMsg = '';
+
+    if (step === 1) {
+        const title = document.getElementById('courseTitle').value;
+        const category = document.getElementById('courseCategory').value;
+        if (!title || !title.trim()) {
+            isValid = false; errorMsg = 'Course Title is required.';
+        } else if (!category || !category.trim()) {
+            isValid = false; errorMsg = 'Category is required.';
+        }
+    }
+
+    if (step === 2) {
+        const desc = document.getElementById('courseDesc').value;
+        const price = document.getElementById('coursePrice').value;
+        const dur = document.getElementById('courseDuration').value;
+        if (!desc || !desc.trim()) {
+            isValid = false; errorMsg = 'Description is required.';
+        } else if (!price) {
+            isValid = false; errorMsg = 'Price is required.';
+        } else if (!dur || !dur.trim()) {
+            isValid = false; errorMsg = 'Duration is required.';
+        }
+    }
+
+    if (!isValid) {
+        UI.error(errorMsg);
+    }
+    return isValid;
+}
+
 async function openCourseModal(course = null) {
     const modal = document.getElementById('courseModal');
     const title = document.getElementById('courseModalTitle');
 
-    switchCourseTab('details', null, 0); // Reset to first tab
+    // switchCourseTab('details', null, 0); // Reset to first tab
+    currentAdminStep = 1;
+    updateAdminStepUI();
 
     // Load Mentors and render Checkboxes
     await loadMentorsForDropdown(course ? (course.mentors || []) : []);
@@ -1066,12 +1273,48 @@ async function openCourseModal(course = null) {
         document.getElementById('courseCategory').value = course.category || '';
         document.getElementById('courseDuration').value = course.duration || '';
         document.getElementById('courseThumb').value = course.thumbnail || '';
+        document.getElementById('courseIntroText').value = course.introText || '';
+        document.getElementById('courseIntroVideoUrl').value = course.introVideoUrl || '';
+        document.getElementById('courseIntroVideoUrl').value = course.introVideoUrl || '';
+        document.getElementById('coursePreviewDuration').value = course.previewDuration || 60;
+
+        // Populate Status
+        if (document.getElementById('courseStatusInput')) {
+            document.getElementById('courseStatusInput').value = course.approvalStatus || 'Draft';
+        }
+
+        // Populate Status
+        if (document.getElementById('courseStatusInput')) {
+            document.getElementById('courseStatusInput').value = course.approvalStatus || 'Draft';
+        }
+
+        // Show uploaded state if video exists
+        if (course.introVideoUrl) {
+            const previewCont = document.getElementById('adminVideoPreviewContainer');
+            if (previewCont) previewCont.style.display = 'block';
+            document.getElementById('adminDropzoneContent').style.display = 'none';
+            document.getElementById('adminVideoLink').href = course.introVideoUrl;
+        } else {
+            const previewCont = document.getElementById('adminVideoPreviewContainer');
+            if (previewCont) previewCont.style.display = 'none';
+            document.getElementById('adminDropzoneContent').style.display = 'block';
+        }
     } else {
         title.innerText = 'Add New Course';
         document.getElementById('courseForm').reset();
         document.getElementById('courseId').value = '';
         // Uncheck all
         document.querySelectorAll('input[name="mentorId"]').forEach(cb => cb.checked = false);
+        document.getElementById('courseIntroText').value = '';
+        document.getElementById('courseIntroVideoUrl').value = '';
+        document.getElementById('courseIntroVideoUrl').value = '';
+        document.getElementById('coursePreviewDuration').value = 60;
+
+        if (document.getElementById('courseStatusInput')) {
+            document.getElementById('courseStatusInput').value = 'Draft';
+        }
+        document.getElementById('adminVideoPreview').style.display = 'none';
+        document.getElementById('adminDropzoneContent').style.display = 'block';
     }
     modal.style.display = 'flex';
 }
@@ -1095,9 +1338,13 @@ async function loadMentorsForDropdown(selectedMentors = []) {
     } catch (e) { console.error('Mentor load failed', e); }
 }
 
-async function saveCourse(e, status) {
+async function saveCourse(e, statusArg) {
     if (e) e.preventDefault();
     const id = document.getElementById('courseId').value;
+
+    // Status preference: Argument (Button) > Dropdown > Default
+    const statusInput = document.getElementById('courseStatusInput');
+    const status = statusArg || (statusInput ? statusInput.value : 'Draft');
 
     // Gather Checkboxes
     const mentorCheckboxes = document.querySelectorAll('input[name="mentorId"]:checked');
@@ -1111,7 +1358,8 @@ async function saveCourse(e, status) {
 
     if (status === 'Published' && selectedMentors.length === 0) {
         UI.error('Disclaimer: You must assign at least one mentor to Publish.');
-        switchCourseTab('logistics', null, 1); // Switch to tab to show error context
+        currentAdminStep = 4;
+        updateAdminStepUI();
         return;
     }
 
@@ -1124,6 +1372,9 @@ async function saveCourse(e, status) {
         duration: document.getElementById('courseDuration').value,
         thumbUrl: document.getElementById('courseThumb').value,
         mentors: selectedMentors,
+        introText: document.getElementById('courseIntroText').value,
+        introVideoUrl: document.getElementById('courseIntroVideoUrl').value,
+        previewDuration: document.getElementById('coursePreviewDuration').value,
         status: status
     };
 
@@ -2451,31 +2702,31 @@ async function loadSubscribers() {
     try {
         UI.showLoader();
         const filterStatus = document.getElementById('subscriberFilterStatus')?.value || '';
-        
+
         const res = await fetch(`${Auth.apiBase}/subscribers/all`, {
             headers: Auth.getHeaders()
         });
-        
+
         const data = await res.json();
-        
+
         if (!res.ok) {
             throw new Error(data.message || 'Failed to load subscribers');
         }
-        
+
         let subscribers = data.data.subscribers;
-        
+
         // Filter by status
         if (filterStatus === 'pending') {
             subscribers = subscribers.filter(s => !s.notified);
         } else if (filterStatus === 'notified') {
             subscribers = subscribers.filter(s => s.notified);
         }
-        
+
         // Load stats
         loadSubscriberStats();
-        
+
         const tbody = document.getElementById('subscribersTableBody');
-        
+
         if (subscribers.length === 0) {
             tbody.innerHTML = `
                 <tr>
@@ -2487,29 +2738,29 @@ async function loadSubscribers() {
             `;
             return;
         }
-        
+
         tbody.innerHTML = subscribers.map(sub => {
             const subscribedDate = new Date(sub.createdAt).toLocaleDateString('en-IN', {
                 day: '2-digit',
                 month: 'short',
                 year: 'numeric'
             });
-            
-            const notifiedDate = sub.notifiedAt 
+
+            const notifiedDate = sub.notifiedAt
                 ? new Date(sub.notifiedAt).toLocaleDateString('en-IN', {
                     day: '2-digit',
                     month: 'short',
                     year: 'numeric'
                 })
                 : '-';
-            
+
             const statusBadge = sub.notified
                 ? '<span style="background: var(--color-success); color: white; padding: 4px 12px; border-radius: 12px; font-size: 0.8rem;"><i class="fas fa-check"></i> Notified</span>'
                 : '<span style="background: #F59E0B; color: white; padding: 4px 12px; border-radius: 12px; font-size: 0.8rem;"><i class="fas fa-clock"></i> Pending</span>';
-            
+
             const courseTitle = sub.courseID?.title || 'Unknown Course';
             const courseStatus = sub.courseID?.status || '-';
-            
+
             return `
                 <tr>
                     <td>${sub.name}</td>
@@ -2532,7 +2783,7 @@ async function loadSubscribers() {
                 </tr>
             `;
         }).join('');
-        
+
     } catch (err) {
         console.error('Error loading subscribers:', err);
         UI.error('Failed to load subscribers');
@@ -2554,9 +2805,9 @@ async function loadSubscriberStats() {
         const res = await fetch(`${Auth.apiBase}/subscribers/stats`, {
             headers: Auth.getHeaders()
         });
-        
+
         const data = await res.json();
-        
+
         if (res.ok) {
             document.getElementById('totalSubscribersCount').textContent = data.data.totalSubscribers || 0;
             document.getElementById('pendingSubscribersCount').textContent = data.data.pendingCount || 0;
@@ -2571,16 +2822,16 @@ async function deleteSubscriber(subscriberId) {
     if (!confirm('Are you sure you want to delete this subscriber? This action cannot be undone.')) {
         return;
     }
-    
+
     try {
         UI.showLoader();
         const res = await fetch(`${Auth.apiBase}/subscribers/${subscriberId}`, {
             method: 'DELETE',
             headers: Auth.getHeaders()
         });
-        
+
         const data = await res.json();
-        
+
         if (res.ok) {
             UI.success('Subscriber deleted successfully');
             loadSubscribers(); // Reload the list
