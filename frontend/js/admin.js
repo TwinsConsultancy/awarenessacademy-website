@@ -262,6 +262,10 @@ async function loadUserManagement(role) {
     const search = document.getElementById('userSearchInput')?.value || '';
     const status = document.getElementById('userStatusFilter')?.value || '';
 
+    // Get current user to check if they're default admin
+    const currentUser = JSON.parse(localStorage.getItem('user'));
+    const isCurrentUserDefaultAdmin = currentUser && currentUser.isDefaultAdmin === true;
+
     container.innerHTML = '<p>Loading records...</p>';
 
     try {
@@ -324,18 +328,34 @@ async function loadUserManagement(role) {
                                 <button class="btn-primary" style="padding: 5px 10px; font-size: 0.7rem; background: #337ab7; margin-right: 5px;" onclick='openEditUserModal(${JSON.stringify(u).replace(/'/g, "&#39;")})'>
                                     <i class="fas fa-edit"></i> Edit
                                 </button>
-                                <button class="btn-primary" style="padding: 5px 10px; font-size: 0.7rem; background: ${u.active ? '#f0ad4e' : '#5cb85c'}; margin-right: 5px;" onclick="requestToggleStatus('${u._id}', '${u.studentID || ''}', '${u.role}', ${u.active}, '${u.name}', ${u.isDefaultAdmin || false})" ${u.isDefaultAdmin ? 'title="Default admin cannot be disabled"' : ''}>
-                                    ${u.active ? 'Disable' : 'Enable'}
-                                </button>
-                                ${u.role === 'Admin' && !u.isDefaultAdmin ? 
+                                ${u.role === 'Admin' && u.isDefaultAdmin ?
+                                    `<button class="btn-primary" style="padding: 5px 10px; font-size: 0.7rem; background: #ccc; cursor: not-allowed; margin-right: 5px;" disabled title="Default admin cannot be disabled">
+                                        <i class="fas fa-lock"></i>
+                                    </button>` :
+                                    u.role === 'Admin' && !isCurrentUserDefaultAdmin ?
+                                    `<button class="btn-primary" style="padding: 5px 10px; font-size: 0.7rem; background: #ccc; cursor: not-allowed; margin-right: 5px;" disabled title="Only default admin can disable other admins">
+                                        <i class="fas fa-lock"></i>
+                                    </button>` :
+                                    `<button class="btn-primary" style="padding: 5px 10px; font-size: 0.7rem; background: ${u.active ? '#f0ad4e' : '#5cb85c'}; margin-right: 5px;" onclick="requestToggleStatus('${u._id}', '${u.studentID || ''}', '${u.role}', ${u.active}, '${u.name}', ${u.isDefaultAdmin || false})">
+                                        ${u.active ? 'Disable' : 'Enable'}
+                                    </button>`}
+                                ${u.role === 'Admin' && !u.isDefaultAdmin && isCurrentUserDefaultAdmin ? 
                                     `<button class="btn-primary" style="padding: 5px 10px; font-size: 0.7rem; background: #FF6B6B; margin-right: 5px;" onclick="setDefaultAdmin('${u._id}', '${u.name}')" title="Set as Default Admin">
                                         <i class="fas fa-shield-alt"></i>
+                                    </button>` : 
+                                    u.role === 'Admin' && !u.isDefaultAdmin && !isCurrentUserDefaultAdmin ?
+                                    `<button class="btn-primary" style="padding: 5px 10px; font-size: 0.7rem; background: #ccc; cursor: not-allowed; margin-right: 5px;" disabled title="Only default admin can change default admin">
+                                        <i class="fas fa-shield-alt" style="opacity: 0.5;"></i>
                                     </button>` : ''}
                                 ${u.role === 'Admin' && u.isDefaultAdmin ? 
                                     `<button class="btn-primary" style="padding: 5px 10px; font-size: 0.7rem; background: #ccc; cursor: not-allowed;" disabled title="Default admin cannot be deleted">
                                         <i class="fas fa-lock"></i>
                                     </button>` :
-                                    `<button class="btn-primary" style="padding: 5px 10px; font-size: 0.7rem; background: #d9534f;" onclick="requestDeleteUser('${u._id}', '${u.studentID || ''}')">
+                                    u.role === 'Admin' && !isCurrentUserDefaultAdmin ?
+                                    `<button class="btn-primary" style="padding: 5px 10px; font-size: 0.7rem; background: #ccc; cursor: not-allowed;" disabled title="Only default admin can delete other admins">
+                                        <i class="fas fa-lock"></i>
+                                    </button>` :
+                                    `<button class="btn-primary" style="padding: 5px 10px; font-size: 0.7rem; background: #d9534f;" onclick="requestDeleteUser('${u._id}', '${u.studentID || ''}', '${u.role}')">
                                         <i class="fas fa-trash"></i>
                                     </button>`}
                             </td>
@@ -651,7 +671,14 @@ function openEditUserModal(user) {
 // Global variables for delete logic
 let targetDeleteID = null;
 
-function requestDeleteUser(id, studentID) {
+function requestDeleteUser(id, studentID, userRole) {
+    // Check if trying to delete an admin and current user is not default admin
+    const currentUser = JSON.parse(localStorage.getItem('user'));
+    if (userRole === 'Admin' && !currentUser.isDefaultAdmin) {
+        UI.error('Only the default admin can delete other admins.');
+        return;
+    }
+
     targetDeleteID = id;
     const displayID = studentID || 'NO-ID-ASSIGNED';
     document.getElementById('deleteTargetID').textContent = displayID;
@@ -873,7 +900,14 @@ async function deleteUser(id) {
 }
 
 async function setDefaultAdmin(adminId, adminName) {
-    const confirmed = confirm(`Set "${adminName}" as the default admin?\n\nThe current default admin will lose their default status, and this admin will become protected from deletion.`);
+    // Check if current user is default admin
+    const currentUser = JSON.parse(localStorage.getItem('user'));
+    if (!currentUser.isDefaultAdmin) {
+        UI.error('Only the current default admin can transfer default admin privileges.');
+        return;
+    }
+
+    const confirmed = confirm(`Set "${adminName}" as the default admin?\n\nYou will lose your default admin status, and "${adminName}" will become the new default admin with full privileges.`);
     if (!confirmed) return;
 
     try {
@@ -887,7 +921,21 @@ async function setDefaultAdmin(adminId, adminName) {
 
         if (res.ok) {
             UI.success(`${adminName} is now the default admin`);
+            // Update current user in localStorage
+            currentUser.isDefaultAdmin = false;
+            localStorage.setItem('user', JSON.stringify(currentUser));
             loadUserManagement(currentUserRoleView);
+            
+            // Show info popup about privilege transfer
+            setTimeout(() => {
+                UI.createPopup({
+                    title: 'Default Admin Changed',
+                    message: `${adminName} is now the default admin with full privileges.\n\nYou are now a regular admin with limited admin management capabilities.`,
+                    type: 'info',
+                    icon: 'info-circle',
+                    confirmText: 'Understood'
+                });
+            }, 500);
         } else {
             UI.error(result.message || 'Failed to set default admin');
         }

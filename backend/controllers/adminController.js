@@ -23,7 +23,8 @@ exports.addStaff = async (req, res) => {
             password: hashedPassword,
             role: 'Staff',
             studentID,
-            phone
+            phone,
+            isVerified: true // Auto-verify staff created by admin
         });
 
         await newStaff.save();
@@ -348,6 +349,7 @@ exports.createUser = async (req, res) => {
             initial,
             gender,
             active: true,
+            isVerified: true, // Auto-verify users created by admin
             lastEditedBy: req.user ? req.user.role : 'Admin:Self', // Assume Admin creates it
             auditHistory: [{
                 action: 'Create',
@@ -426,6 +428,17 @@ exports.deleteUser = async (req, res) => {
             });
         }
 
+        // Only default admin can delete other admins
+        if (user.role === 'Admin') {
+            const currentAdmin = await User.findById(req.user.id);
+            if (!currentAdmin.isDefaultAdmin) {
+                return res.status(403).json({ 
+                    message: 'Only the default admin can delete other admins.',
+                    requiresDefaultAdmin: true
+                });
+            }
+        }
+
         // Strict ID Check (Frontend should also handle this, but double check)
         // Since we are deleting, we can't store logs IN the user document. 
         // We will just proceed with deletion if confirmed.
@@ -462,6 +475,17 @@ exports.toggleUserStatus = async (req, res) => {
             });
         }
 
+        // Only default admin can disable other admins
+        if (user.role === 'Admin' && user.active) {
+            const currentAdmin = await User.findById(req.user.id);
+            if (!currentAdmin.isDefaultAdmin) {
+                return res.status(403).json({ 
+                    message: 'Only the default admin can disable other admins.',
+                    requiresDefaultAdmin: true
+                });
+            }
+        }
+
         const wasActive = user.active; // Track previous status
         const newStatus = !user.active;
         user.active = newStatus;
@@ -494,6 +518,15 @@ exports.toggleUserStatus = async (req, res) => {
 exports.setDefaultAdmin = async (req, res) => {
     try {
         const { id } = req.params;
+        
+        // Only current default admin can change default status
+        const currentAdmin = await User.findById(req.user.id);
+        if (!currentAdmin.isDefaultAdmin) {
+            return res.status(403).json({ 
+                message: 'Only the current default admin can transfer default admin privileges.',
+                requiresDefaultAdmin: true
+            });
+        }
         
         // Find the target admin
         const targetAdmin = await User.findById(id);
