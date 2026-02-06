@@ -7,16 +7,23 @@ let statusCheckInterval = null; // Store interval ID for cleanup
 
 const Auth = {
     // Check if user is logged in
-    checkAuth: (allowedRoles = []) => {
+    // passive: if true, just return auth state without redirecting (for pages that work with/without login)
+    checkAuth: (allowedRoles = [], passive = false) => {
         const token = localStorage.getItem('token');
         const user = JSON.parse(localStorage.getItem('user'));
 
         if (!token || !user) {
+            if (passive) {
+                return null; // Just return null, don't redirect
+            }
             window.location.href = 'login.html';
             return;
         }
 
         if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
+            if (passive) {
+                return null; // Return null if role doesn't match in passive mode
+            }
             alert('Access Denied: You do not have permission to view this page.');
             window.location.href = 'index.html';
             return;
@@ -49,16 +56,16 @@ const Auth = {
         // Prevent multiple logout attempts
         if (isLoggingOut) return;
         isLoggingOut = true;
-        
+
         // Clear the status check interval
         if (statusCheckInterval) {
             clearInterval(statusCheckInterval);
             statusCheckInterval = null;
         }
-        
+
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        
+
         // Use UI popup if available, otherwise fallback to alert
         if (typeof UI !== 'undefined' && UI.createPopup) {
             const popup = UI.createPopup({
@@ -72,7 +79,7 @@ const Auth = {
                     window.location.href = 'login.html';
                 }
             });
-            
+
             // Also auto-redirect after 3 seconds in case user doesn't click
             setTimeout(() => {
                 window.location.href = 'login.html';
@@ -86,31 +93,31 @@ const Auth = {
 
 // Global Fetch Interceptor to detect inactive accounts
 const originalFetch = window.fetch;
-window.fetch = async function(...args) {
+window.fetch = async function (...args) {
     // If already logging out, return early to prevent loops
     if (isLoggingOut) {
         return Promise.reject(new Error('Session terminated'));
     }
-    
+
     const response = await originalFetch(...args);
-    
+
     // Check if response is 403 (Forbidden) - likely an inactive account
     if (response.status === 403) {
         // Clone response to read it without consuming the original
         const clonedResponse = response.clone();
-        
+
         // Check if response is JSON and has inactive flag
         const contentType = response.headers.get('content-type');
         if (contentType && contentType.includes('application/json')) {
             try {
                 const data = await clonedResponse.json();
-                
+
                 // If account is inactive, force logout immediately
                 if (data.inactive === true && !isLoggingOut) {
                     Auth.forceLogout('Your account has been deactivated by the administrator.\n\nYou have been automatically logged out.\n\nPlease contact the administrator for assistance.');
                     return response;
                 }
-                
+
                 if (data.invalidAccount === true && !isLoggingOut) {
                     Auth.forceLogout('Your account is no longer valid.\n\nYou have been automatically logged out.');
                     return response;
@@ -120,7 +127,7 @@ window.fetch = async function(...args) {
             }
         }
     }
-    
+
     return response;
 };
 
@@ -133,13 +140,13 @@ document.addEventListener('DOMContentLoaded', () => {
             Auth.logout();
         });
     }
-    
+
     // Periodic status check (every 10 seconds) to detect account deactivation
     // Only run on dashboard pages (not login/register)
     if (localStorage.getItem('token') && !window.location.pathname.includes('login') && !window.location.pathname.includes('register')) {
         const userRole = JSON.parse(localStorage.getItem('user') || '{}').role;
         let checkEndpoint = null;
-        
+
         // Use appropriate lightweight endpoint based on role
         if (userRole === 'Staff') {
             checkEndpoint = `${Auth.apiBase}/staff/profile`;
@@ -148,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (userRole === 'Admin') {
             checkEndpoint = `${Auth.apiBase}/admin/stats`;
         }
-        
+
         if (checkEndpoint) {
             statusCheckInterval = setInterval(async () => {
                 // Stop if token is gone or logging out
@@ -159,13 +166,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     return;
                 }
-                
+
                 try {
                     // Lightweight endpoint check - will trigger 403 if inactive
                     await fetch(checkEndpoint, {
                         headers: Auth.getHeaders()
                     }).catch(() => null);
-                    
+
                     // If 403, the fetch interceptor will handle it
                     // This just ensures we check periodically even if user is idle
                 } catch (e) {
