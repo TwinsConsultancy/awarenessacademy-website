@@ -345,7 +345,8 @@ exports.login = catchAsync(async (req, res, next) => {
             role: user.role,
             studentID: user.studentID,
             profilePic: user.profilePic,
-            lastLogin: user.lastLogin
+            lastLogin: user.lastLogin,
+            isDefaultAdmin: user.isDefaultAdmin || false
         }
     });
 });
