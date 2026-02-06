@@ -63,38 +63,113 @@ document.addEventListener('DOMContentLoaded', () => {
     const courseModal = document.getElementById('courseModal');
     const uploadModal = document.getElementById('uploadModal');
 
-    document.getElementById('newCourseBtn').addEventListener('click', () => courseModal.style.display = 'flex');
+    document.getElementById('newCourseBtn').addEventListener('click', () => {
+        staffResetWizard();
+        courseModal.style.display = 'flex';
+    });
     document.getElementById('closeModal').addEventListener('click', () => courseModal.style.display = 'none');
     document.getElementById('closeUploadModal').addEventListener('click', () => uploadModal.style.display = 'none');
+
+    // Intro Video Upload Logic
+    const introDropzone = document.getElementById('introVideoDropzone');
+    const introInput = document.getElementById('introVideoInput');
+    const introHidden = document.getElementById('introVideoUrl');
+    const uploadProgress = document.getElementById('uploadProgress');
+    const progressBar = document.getElementById('progressBar');
+    const uploadStatus = document.getElementById('uploadStatus');
+    const videoPreview = document.getElementById('videoPreviewContainer');
+    // const previewPlayer = document.getElementById('previewPlayer');
+    const removeBtn = document.getElementById('removeVideoBtn');
+    const dropzoneContent = document.getElementById('dropzoneContent');
+
+    if (introInput) {
+        introInput.addEventListener('change', handleIntroUpload);
+
+        // Drag & Drop visual feedback
+        introDropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            introDropzone.style.borderColor = 'var(--color-saffron)';
+            introDropzone.style.background = 'rgba(0,0,0,0.02)';
+        });
+        introDropzone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            introDropzone.style.borderColor = '#ddd';
+            introDropzone.style.background = 'white';
+        });
+        introDropzone.addEventListener('drop', (e) => {
+            introDropzone.style.borderColor = '#ddd';
+            introDropzone.style.background = 'white';
+        });
+
+        removeBtn.addEventListener('click', () => {
+            introInput.value = '';
+            introHidden.value = '';
+            videoPreview.style.display = 'none';
+            // previewPlayer.src = '';
+            dropzoneContent.style.display = 'block';
+            uploadProgress.style.display = 'none';
+        });
+    }
+
+    async function handleIntroUpload(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Reset UI
+        uploadProgress.style.display = 'block';
+        progressBar.style.width = '0%';
+        uploadStatus.textContent = 'Uploading...';
+        dropzoneContent.style.display = 'none';
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            // Fake progress
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 10;
+                if (progress > 90) clearInterval(interval);
+                progressBar.style.width = `${progress}%`;
+            }, 200);
+
+            const res = await fetch(`${Auth.apiBase}/uploads/content`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+                body: formData
+            });
+
+            clearInterval(interval);
+            progressBar.style.width = '100%';
+
+            if (res.ok) {
+                const data = await res.json();
+                uploadStatus.textContent = 'Upload Complete';
+                introHidden.value = data.url;
+
+                // Show Preview
+                document.getElementById('videoPreview').style.display = 'block';
+                document.getElementById('videoLink').href = data.url;
+                videoPreview.style.display = 'block';
+                // previewPlayer.src = data.url;
+                uploadProgress.style.display = 'none';
+            } else {
+                throw new Error('Upload failed');
+            }
+        } catch (err) {
+            console.error(err);
+            uploadStatus.textContent = 'Upload Failed';
+            uploadStatus.style.color = 'var(--color-error)';
+            progressBar.style.background = 'var(--color-error)';
+            dropzoneContent.style.display = 'block';
+        }
+    }
 
     // 3. Load Overview (Default) and Courses
     loadOverview();
     loadCourses();
     checkDeletedCourses();
 
-    // 4. Create Course
-    document.getElementById('courseForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const data = Object.fromEntries(new FormData(e.target).entries());
-
-        try {
-            UI.showLoader();
-            const res = await fetch(`${Auth.apiBase}/staff/courses`, {
-                method: 'POST',
-                headers: Auth.getHeaders(),
-                body: JSON.stringify(data)
-            });
-            if (res.ok) {
-                UI.success('Course draft created!');
-                courseModal.style.display = 'none';
-                loadCourses();
-            }
-        } catch (err) {
-            UI.error('Could not initiate the course draft.');
-        } finally {
-            UI.hideLoader();
-        }
-    });
 
     // 5. Upload Content
     document.getElementById('uploadForm').addEventListener('submit', async (e) => {
@@ -1132,7 +1207,7 @@ async function loadProfile() {
         document.getElementById('profileFatherName').value = user.fatherName || '';
         document.getElementById('profileMotherName').value = user.motherName || '';
         document.getElementById('profileDOB').value = user.dob ? new Date(user.dob).toISOString().split('T')[0] : '';
-        
+
         // Calculate and display age
         if (user.dob) {
             const age = calculateAge(new Date(user.dob));
@@ -1186,7 +1261,7 @@ function calculateAge(dob) {
 }
 
 // Update age when DOB changes
-document.getElementById('profileDOB')?.addEventListener('change', function() {
+document.getElementById('profileDOB')?.addEventListener('change', function () {
     if (this.value) {
         const age = calculateAge(new Date(this.value));
         document.getElementById('profileAge').textContent = `Age: ${age} years`;
@@ -1196,7 +1271,7 @@ document.getElementById('profileDOB')?.addEventListener('change', function() {
 });
 
 // Personal Details Form Submission
-document.getElementById('personalDetailsForm')?.addEventListener('submit', async function(e) {
+document.getElementById('personalDetailsForm')?.addEventListener('submit', async function (e) {
     e.preventDefault();
 
     const personalData = {
@@ -1230,7 +1305,7 @@ document.getElementById('personalDetailsForm')?.addEventListener('submit', async
 });
 
 // Address Details Form Submission
-document.getElementById('addressDetailsForm')?.addEventListener('submit', async function(e) {
+document.getElementById('addressDetailsForm')?.addEventListener('submit', async function (e) {
     e.preventDefault();
 
     const addressData = {
@@ -1262,7 +1337,7 @@ document.getElementById('addressDetailsForm')?.addEventListener('submit', async 
 });
 
 // Contact Details Form Submission
-document.getElementById('contactDetailsForm')?.addEventListener('submit', async function(e) {
+document.getElementById('contactDetailsForm')?.addEventListener('submit', async function (e) {
     e.preventDefault();
 
     const contactData = {
@@ -1302,7 +1377,7 @@ document.getElementById('contactDetailsForm')?.addEventListener('submit', async 
 });
 
 // Bank Details Form Submission
-document.getElementById('bankDetailsForm')?.addEventListener('submit', async function(e) {
+document.getElementById('bankDetailsForm')?.addEventListener('submit', async function (e) {
     e.preventDefault();
 
     const bankData = {
@@ -1334,7 +1409,7 @@ document.getElementById('bankDetailsForm')?.addEventListener('submit', async fun
 });
 
 // Change Password Form Submission
-document.getElementById('changePasswordForm')?.addEventListener('submit', async function(e) {
+document.getElementById('changePasswordForm')?.addEventListener('submit', async function (e) {
     e.preventDefault();
 
     const currentPassword = document.getElementById('currentPassword').value;
@@ -1386,7 +1461,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('materialTypeFilter')?.addEventListener('change', searchMaterials);
     document.getElementById('studentSearchInput')?.addEventListener('input', searchStudents);
     document.getElementById('studentCourseFilter')?.addEventListener('change', searchStudents);
-    
+
     // Setup create ticket form
     document.getElementById('createTicketForm')?.addEventListener('submit', handleCreateTicket);
 });
@@ -1545,8 +1620,8 @@ async function viewStaffTicket(ticketId) {
                 <div style="max-height: 400px; overflow-y: auto; background: #f8f9fa; padding: 15px; border-radius: 12px; border: 1px solid #e9ecef;">
                     ${!ticket.replies || ticket.replies.length === 0 ? '<div style="text-align: center; color: #999; padding: 40px;"><i class="fas fa-inbox" style="font-size: 3rem; opacity: 0.3; margin-bottom: 10px; display: block;"></i><p>No replies yet. Waiting for admin response...</p></div>' : ''}
                     ${ticket.replies ? ticket.replies.map(reply => {
-                        const replier = reply.repliedBy || { name: 'Unknown', role: 'N/A' };
-                        return `
+            const replier = reply.repliedBy || { name: 'Unknown', role: 'N/A' };
+            return `
                         <div style="background: ${reply.isAdminReply ? 'linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%)' : 'white'}; padding: 18px; border-radius: 10px; margin-bottom: 12px; border-left: 4px solid ${reply.isAdminReply ? '#667eea' : '#cbd5e0'}; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                                 <div style="font-weight: 600; color: ${reply.isAdminReply ? '#667eea' : '#333'}; display: flex; align-items: center; gap: 8px;">
@@ -1621,3 +1696,150 @@ async function sendStaffReply(ticketId) {
 }
 
 window.sendStaffReply = sendStaffReply;
+
+/* --- STAFF STEPPER WIZARD --- */
+let currentStaffStep = 1;
+
+window.staffResetWizard = function () {
+    currentStaffStep = 1;
+    document.getElementById('courseForm').reset();
+    // Reset video upload UI
+    // Reset video upload UI
+    const vidUrl = document.getElementById('introVideoUrl');
+    if (vidUrl) vidUrl.value = '';
+    const vidPrev = document.getElementById('videoPreviewContainer');
+    if (vidPrev) vidPrev.style.display = 'none';
+    const dropCont = document.getElementById('dropzoneContent');
+    if (dropCont) dropCont.style.display = 'block';
+
+    updateStaffStepUI();
+}
+
+window.staffStepNext = function () {
+    if (!validateStaffStep(currentStaffStep)) return;
+    currentStaffStep++;
+    updateStaffStepUI();
+}
+
+window.jumpStaffStep = function (n) {
+    // Validate if jumping ahead deeply? For now allow "Edit Mode" freedom
+    // But basic validation of step 1 is useful if creating new
+    if (n > currentStaffStep + 1 && currentStaffStep === 1) {
+        if (!validateStaffStep(1)) return;
+    }
+
+    currentStaffStep = n;
+    updateStaffStepUI();
+}
+
+window.staffStepBack = function () {
+    if (currentStaffStep > 1) currentStaffStep--;
+    updateStaffStepUI();
+}
+
+function updateStaffStepUI() {
+    // 1. Show/Hide Steps
+    for (let i = 1; i <= 4; i++) {
+        const el = document.getElementById(`step${i}`);
+        if (el) el.style.display = (i === currentStaffStep) ? 'block' : 'none';
+
+        // 2. Update Header Indicators
+        const stepLabels = ['Basic Info', 'Key Details', 'Media', 'Finalize'];
+
+        document.querySelectorAll('.step-indicator').forEach(el => {
+            const step = parseInt(el.dataset.step);
+            const labelText = stepLabels[step - 1] || step;
+
+            if (step < currentStaffStep) {
+                el.className = 'step-indicator completed';
+                el.style.background = 'var(--color-success)';
+                el.style.color = 'white';
+                el.innerHTML = `<i class="fas fa-check"></i> ${labelText}`;
+            } else if (step === currentStaffStep) {
+                el.className = 'step-indicator active';
+                el.style.background = 'var(--color-saffron)';
+                el.style.color = 'white';
+                el.innerHTML = labelText;
+            } else {
+                el.className = 'step-indicator';
+                el.style.background = '#eee';
+                el.style.color = '#999';
+                el.innerHTML = labelText;
+            }
+        });
+    }
+
+    // 2. Progress Bar
+    const progress = ((currentStaffStep - 1) / 3) * 100;
+    const bar = document.getElementById('staffStepProgress');
+    if (bar) bar.style.width = `${progress}%`;
+
+    // 3. Label
+    const labels = ['Essential Details', 'Key Information', 'Media & Preview', 'Finalize & Launch'];
+    const labelEl = document.getElementById('staffStepLabel');
+    if (labelEl) labelEl.innerText = labels[currentStaffStep - 1];
+
+    const stepDisp = document.getElementById('staffCurrentStepDisplay');
+    if (stepDisp) stepDisp.innerText = currentStaffStep;
+
+    // 4. Buttons
+    const prev = document.getElementById('staffPrevBtn');
+    const next = document.getElementById('staffNextBtn');
+    const draft = document.getElementById('staffDraftBtn');
+
+    if (prev) prev.style.visibility = (currentStaffStep === 1) ? 'hidden' : 'visible';
+
+    if (currentStaffStep === 4) {
+        if (next) next.style.display = 'none';
+        if (draft) draft.style.display = 'block';
+    } else {
+        if (next) {
+            next.style.display = 'block';
+            next.innerText = 'Next';
+        }
+        if (draft) draft.style.display = 'none';
+    }
+}
+
+function validateStaffStep(step) {
+    let isValid = true;
+    let msg = '';
+
+    if (step === 1) {
+        if (!document.getElementById('courseTitle').value.trim()) { isValid = false; msg = 'Title is required.'; }
+    } else if (step === 2) {
+        if (!document.getElementById('coursePrice').value) { isValid = false; msg = 'Price is required.'; }
+        if (!document.getElementById('courseDesc').value.trim()) { isValid = false; msg = 'Description is required.'; }
+        if (!document.getElementById('courseDuration').value.trim()) { isValid = false; msg = 'Duration is required.'; }
+    }
+
+    if (!isValid) UI.error(msg);
+    return isValid;
+}
+
+window.submitCourse = async function () {
+    const form = document.getElementById('courseForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+
+    try {
+        UI.showLoader();
+        const res = await fetch(`${Auth.apiBase}/staff/courses`, {
+            method: 'POST',
+            headers: Auth.getHeaders(),
+            body: JSON.stringify(data)
+        });
+        if (res.ok) {
+            UI.success('Course draft created!');
+            document.getElementById('courseModal').style.display = 'none';
+            loadCourses();
+        } else {
+            const err = await res.json();
+            UI.error(err.message || 'Creation failed');
+        }
+    } catch (err) {
+        UI.error('Could not initiate the course draft.');
+    } finally {
+        UI.hideLoader();
+    }
+};

@@ -25,7 +25,7 @@ const userSchema = new Schema({
     resetPasswordToken: { type: String },
     resetPasswordExpires: { type: Date },
     lastLogin: { type: Date }, // Track last login
-    
+
     // OTP for registration
     registrationOTP: { type: String },
     registrationOTPExpires: { type: Date },
@@ -90,6 +90,9 @@ const courseSchema = new Schema({
     duration: { type: String, required: true }, // e.g., "10 Hours"
     mentors: [{ type: Schema.Types.ObjectId, ref: 'User' }], // Multiple, Optional for Draft
     thumbnail: { type: String },
+    introVideoUrl: { type: String }, // Introduction Video URL
+    introText: { type: String }, // Rich text description
+    previewDuration: { type: Number, default: 60 }, // Seconds
     status: {
         type: String,
         enum: ['Draft', 'Pending', 'Approved', 'Published', 'Inactive'],
@@ -311,7 +314,7 @@ module.exports = {
         }, { timestamps: true });
 
         // Generate unique ticket ID before saving
-        ticketSchema.pre('save', async function() {
+        ticketSchema.pre('save', async function () {
             if (!this.ticketID) {
                 const year = new Date().getFullYear();
                 const month = String(new Date().getMonth() + 1).padStart(2, '0');
@@ -337,15 +340,15 @@ module.exports = {
             email: { type: String, required: true },
             subject: { type: String, required: true },
             message: { type: String, required: true },
-            status: { 
-                type: String, 
-                enum: ['New', 'Read', 'Replied', 'Archived'], 
-                default: 'New' 
+            status: {
+                type: String,
+                enum: ['New', 'Read', 'Replied', 'Archived'],
+                default: 'New'
             },
-            priority: { 
-                type: String, 
-                enum: ['Low', 'Medium', 'High', 'Urgent'], 
-                default: 'Medium' 
+            priority: {
+                type: String,
+                enum: ['Low', 'Medium', 'High', 'Urgent'],
+                default: 'Medium'
             },
             source: { type: String, default: 'Website' }, // Website, Landing Page, etc.
             ipAddress: { type: String },
