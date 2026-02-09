@@ -189,15 +189,24 @@ function loadModuleContent(module) {
 
     // Handle different content types
     const contentType = module.contentType || 'rich-content';
-    const fileUrl = module.fileUrl;
+    let fileUrl = module.fileUrl;
 
     console.log('Content type:', contentType, 'File URL:', fileUrl); // Debug log
 
     if (contentType === 'video' && fileUrl) {
-        // VIDEO MODULE
+        // VIDEO MODULE - Direct Static URL
         video.src = fileUrl;
         video.style.display = 'block';
         video.load();
+
+        // Disable right-click on video to prevent easy download
+        video.addEventListener('contextmenu', e => e.preventDefault());
+
+        // Show description if available
+        if (module.content) {
+            contentDisplay.innerHTML = module.content;
+            contentDisplay.style.display = 'block';
+        }
 
         // Show description if available
         if (module.content) {
@@ -205,7 +214,7 @@ function loadModuleContent(module) {
             contentDisplay.style.display = 'block';
         }
     } else if (contentType === 'pdf' && fileUrl) {
-        // PDF MODULE
+        // PDF MODULE - Direct Static URL
         contentDisplay.innerHTML = `
             <div style="width: 100%; height: 700px; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
                 <iframe src="${fileUrl}" width="100%" height="100%" style="border: none;">
