@@ -3618,11 +3618,16 @@ function displayGalleryImages(images) {
     emptyState.style.display = 'none';
     
     grid.innerHTML = images.map(img => `
-        <div class="gallery-card" style="background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,0.08); transition: all 0.3s; position: relative;">
+        <div class="gallery-card" draggable="true" data-id="${img._id}" style="background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,0.08); transition: all 0.3s; position: relative; cursor: move;">
+            <!-- Drag Handle -->
+            <div class="drag-handle" style="position: absolute; top: 12px; left: 12px; background: rgba(0,0,0,0.6); color: white; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 50; cursor: grab;">
+                <i class="fas fa-grip-vertical"></i>
+            </div>
+            
             <!-- Image Container -->
             <div style="position: relative; height: 220px; overflow: hidden; background: #f8f8f8;">
                 <img src="/${img.imageUrl}" alt="${img.description}" 
-                     style="width: 100%; height: 100%; object-fit: cover;" 
+                     style="width: 100%; height: 100%; object-fit: cover; pointer-events: none;" 
                      onerror="this.src='https://via.placeholder.com/400x220?text=Image+Error'" />
                 
                 <!-- 3-Dot Menu -->
@@ -3674,15 +3679,61 @@ function displayGalleryImages(images) {
         </div>
     `).join('');
 
-    // Add hover effect
-    document.querySelectorAll('.gallery-card').forEach(card => {
+    // Add hover effect and drag & drop handlers
+    const cards = document.querySelectorAll('.gallery-card');
+    let draggedElement = null;
+    
+    cards.forEach(card => {
+        // Hover effects
         card.addEventListener('mouseenter', function() {
-            this.style.transform = 'translateY(-8px)';
-            this.style.boxShadow = '0 12px 35px rgba(0,0,0,0.15)';
+            if (!this.classList.contains('dragging')) {
+                this.style.transform = 'translateY(-8px)';
+                this.style.boxShadow = '0 12px 35px rgba(0,0,0,0.15)';
+            }
         });
         card.addEventListener('mouseleave', function() {
+            if (!this.classList.contains('dragging')) {
+                this.style.transform = 'translateY(0)';
+                this.style.boxShadow = '0 5px 20px rgba(0,0,0,0.08)';
+            }
+        });
+
+        // Drag & Drop events
+        card.addEventListener('dragstart', function(e) {
+            draggedElement = this;
+            this.classList.add('dragging');
+            this.style.opacity = '0.5';
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', this.innerHTML);
+        });
+
+        card.addEventListener('dragend', function() {
+            this.classList.remove('dragging');
+            this.style.opacity = '1';
             this.style.transform = 'translateY(0)';
-            this.style.boxShadow = '0 5px 20px rgba(0,0,0,0.08)';
+            draggedElement = null;
+            
+            // Show save button
+            document.getElementById('galleryDragInfo').style.display = 'flex';
+        });
+
+        card.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            if (draggedElement && draggedElement !== this) {
+                const rect = this.getBoundingClientRect();
+                const midpoint = rect.left + rect.width / 2;
+                
+                if (e.clientX < midpoint) {
+                    this.parentNode.insertBefore(draggedElement, this);
+                } else {
+                    this.parentNode.insertBefore(draggedElement, this.nextSibling);
+                }
+            }
+        });
+
+        card.addEventListener('drop', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
         });
     });
 }
@@ -3770,6 +3821,39 @@ async function deleteGalleryImage(imageId) {
     }
 }
 
+// Save Gallery Order
+async function saveGalleryOrder() {
+    const cards = document.querySelectorAll('.gallery-card');
+    const orderedIds = Array.from(cards).map(card => card.getAttribute('data-id'));
+
+    try {
+        UI.showLoader();
+        const res = await fetch(`${Auth.apiBase}/gallery/update-order`, {
+            method: 'PUT',
+            headers: {
+                ...Auth.getHeaders(),
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ orderedIds })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            UI.success('Gallery order saved successfully!');
+            document.getElementById('galleryDragInfo').style.display = 'none';
+            loadGalleryImages();
+        } else {
+            UI.error(data.message || 'Failed to save order');
+        }
+    } catch (err) {
+        console.error('Error saving gallery order:', err);
+        UI.error('Failed to save gallery order');
+    } finally {
+        UI.hideLoader();
+    }
+}
+
 // Expose functions globally
 window.initGallerySection = initGallerySection;
 window.loadGalleryImages = loadGalleryImages;
@@ -3781,3 +3865,4 @@ window.removeGalleryPreview = removeGalleryPreview;
 window.searchGalleryImages = searchGalleryImages;
 window.filterGalleryImages = filterGalleryImages;
 window.toggleGalleryMenu = toggleGalleryMenu;
+window.saveGalleryOrder = saveGalleryOrder;

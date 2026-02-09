@@ -394,10 +394,11 @@ module.exports = {
             uploadedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
             fileSize: { type: Number }, // in bytes
             fileName: { type: String },
+            displayOrder: { type: Number, default: 0 }, // Order for display
             active: { type: Boolean, default: true }
         }, { timestamps: true });
 
-        gallerySchema.index({ active: 1, createdAt: -1 });
+        gallerySchema.index({ active: 1, displayOrder: 1 });
 
         return mongoose.model('Gallery', gallerySchema);
     })()

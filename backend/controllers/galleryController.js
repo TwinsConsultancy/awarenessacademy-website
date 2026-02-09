@@ -42,13 +42,18 @@ exports.uploadGalleryImage = async (req, res) => {
             });
         }
 
+        // Get max displayOrder and increment
+        const maxOrderImage = await Gallery.findOne().sort({ displayOrder: -1 }).select('displayOrder');
+        const nextOrder = maxOrderImage ? (maxOrderImage.displayOrder || 0) + 1 : 1;
+
         // Create gallery entry
         const galleryImage = new Gallery({
             imageUrl: req.file.path.replace(/\\/g, '/'), // Normalize path
             description: description.trim(),
             uploadedBy: req.user.id,
             fileSize: fileSize,
-            fileName: req.file.filename
+            fileName: req.file.filename,
+            displayOrder: nextOrder
         });
 
         await galleryImage.save();
@@ -86,7 +91,7 @@ exports.getAllGalleryImages = async (req, res) => {
 
         const images = await Gallery.find(query)
             .populate('uploadedBy', 'name')
-            .sort({ createdAt: -1 })
+            .sort({ displayOrder: 1 })
             .limit(parseInt(limit))
             .skip((parseInt(page) - 1) * parseInt(limit));
 
@@ -326,6 +331,34 @@ exports.getImageById = async (req, res) => {
     } catch (err) {
         res.status(500).json({ 
             message: 'Failed to fetch image details', 
+            error: err.message 
+        });
+    }
+};
+
+// Update Display Order (Admin Only)
+exports.updateDisplayOrder = async (req, res) => {
+    try {
+        const { orderedIds } = req.body;
+
+        if (!Array.isArray(orderedIds) || orderedIds.length === 0) {
+            return res.status(400).json({ message: 'orderedIds must be a non-empty array' });
+        }
+
+        // Update each image's displayOrder
+        const updatePromises = orderedIds.map((id, index) => 
+            Gallery.findByIdAndUpdate(id, { displayOrder: index + 1 })
+        );
+
+        await Promise.all(updatePromises);
+
+        res.status(200).json({
+            message: 'Display order updated successfully'
+        });
+
+    } catch (err) {
+        res.status(500).json({ 
+            message: 'Failed to update display order', 
             error: err.message 
         });
     }

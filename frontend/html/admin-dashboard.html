@@ -917,6 +917,16 @@
                 transform: translateY(0);
             }
         }
+
+        /* Gallery Drag & Drop */
+        .gallery-card.dragging {
+            opacity: 0.5;
+            cursor: grabbing !important;
+        }
+
+        .drag-handle:active {
+            cursor: grabbing !important;
+        }
     </style>
 </head>
 
@@ -1572,6 +1582,16 @@
 
                     <!-- Gallery Grid -->
                     <div class="glass-ultra" style="padding: 30px; border-radius: 20px;">
+                        <!-- Drag Info Banner -->
+                        <div id="galleryDragInfo" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 20px; border-radius: 10px; margin-bottom: 20px; display: none; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <i class="fas fa-arrows-alt" style="font-size: 1.3rem;"></i>
+                                <span style="font-weight: 500;">Drag and drop images to reorder them</span>
+                            </div>
+                            <button onclick="saveGalleryOrder()" class="btn-primary" style="background: white; color: #667eea; border: none; padding: 10px 20px; font-weight: 600; border-radius: 8px; cursor: pointer;">
+                                <i class="fas fa-save"></i> Save Order
+                            </button>
+                        </div>
 
                         <div id="galleryImagesGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px;">
                             <!-- Images will be loaded dynamically -->

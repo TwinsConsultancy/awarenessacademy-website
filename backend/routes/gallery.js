@@ -21,6 +21,11 @@ router.get('/stats',
     galleryController.getGalleryStats
 );
 
+router.put('/update-order', 
+    authorize(['Admin']), 
+    galleryController.updateDisplayOrder
+);
+
 router.put('/image/:id/description', 
     authorize(['Admin']), 
     galleryController.updateImageDescription
