@@ -3,6 +3,13 @@ require('dotenv').config({ path: './backend/.env' });
 
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5000';
 
+// Log SMTP configuration status
+console.log('📧 Email Service Configuration:');
+console.log('   SMTP_HOST:', process.env.SMTP_HOST || 'smtp.gmail.com (default)');
+console.log('   SMTP_PORT:', process.env.SMTP_PORT || '587 (default)');
+console.log('   SMTP_USER:', process.env.SMTP_USER ? '✅ Configured' : '❌ NOT SET');
+console.log('   SMTP_PASS:', process.env.SMTP_PASS ? '✅ Configured' : '❌ NOT SET');
+
 // Create Reusable Transporter (SMTP via EmailJS)
 const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
@@ -300,6 +307,39 @@ exports.sendCoursePublishedNotification = async ({
         return { success: true, email: subscriberEmail };
     } catch (error) {
         console.error(`❌ Error sending course notification to ${subscriberEmail}:`, error);
+        throw error;
+    }
+};
+
+/**
+ * Generic Send Mail Function
+ */
+exports.sendMail = async ({ to, subject, html }) => {
+    try {
+        console.log(`📤 Attempting to send email to ${to}...`);
+        
+        // Check if SMTP credentials are configured
+        if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+            throw new Error('SMTP credentials not configured. Set SMTP_USER and SMTP_PASS in .env file');
+        }
+        
+        await transporter.sendMail({
+            from: `"InnerSpark Security" <${process.env.SMTP_USER}>`,
+            to,
+            subject,
+            html
+        });
+        console.log(`✅ Email sent successfully to ${to}`);
+        return { success: true };
+    } catch (error) {
+        console.error(`❌ Error sending email to ${to}:`);
+        console.error('   Error code:', error.code);
+        console.error('   Error message:', error.message);
+        if (error.code === 'EAUTH') {
+            console.error('   → Authentication failed. Check SMTP_USER and SMTP_PASS credentials');
+        } else if (error.code === 'ECONNECTION') {
+            console.error('   → Connection failed. Check SMTP_HOST and network connection');
+        }
         throw error;
     }
 };

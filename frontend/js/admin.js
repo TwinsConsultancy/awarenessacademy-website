@@ -1373,31 +1373,690 @@ async function loadLedger() {
 }
 
 /* --- ANALYTICS --- */
+// Switch between analytics categories
+function switchAnalyticsCategory(category) {
+    // Hide all categories
+    document.querySelectorAll('.analytics-category').forEach(cat => {
+        cat.classList.remove('active');
+    });
+    
+    // Remove active from all tabs
+    document.querySelectorAll('.analytics-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    // Show selected category
+    const selectedCategory = document.querySelector(`[data-category="${category}"]`);
+    if (selectedCategory) {
+        selectedCategory.classList.add('active');
+    }
+    
+    // Activate corresponding tab
+    const tabs = document.querySelectorAll('.analytics-tab');
+    const categoryOrder = ['users', 'courses', 'revenue', 'content', 'attendance', 'engagement', 'support', 'system'];
+    const index = categoryOrder.indexOf(category);
+    if (index !== -1 && tabs[index]) {
+        tabs[index].classList.add('active');
+    }
+}
+
 async function loadAnalytics() {
-    // Re-use logic from previous version, just ensure IDs match HTML
     try {
+        UI.showLoader();
         const res = await fetch(`${Auth.apiBase}/admin/analytics`, { headers: Auth.getHeaders() });
         const data = await res.json();
-        // ... (Chart updating logic) ...
-        // Simplification for brevity in this update, assuming Chart.js is handled
-        const ctx = document.getElementById('growthChart').getContext('2d');
-        if (window.myChart) window.myChart.destroy();
-        // ... Chart init code ...
-        const labels = data.growth.map(g => g._id); // Simplified
-        const values = data.growth.map(g => g.revenue);
-        window.myChart = new Chart(ctx, {
+
+        // Destroy existing charts
+        if (window.analyticsCharts) {
+            Object.values(window.analyticsCharts).forEach(chart => {
+                if (chart && typeof chart.destroy === 'function') chart.destroy();
+            });
+        }
+        window.analyticsCharts = {};
+
+        // Common chart options for interactivity
+        const commonOptions = {
+            responsive: true,
+            maintainAspectRatio: true,
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
+            plugins: {
+                tooltip: {
+                    enabled: true,
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    padding: 12,
+                    titleFont: { size: 14, weight: 'bold' },
+                    bodyFont: { size: 13 },
+                    cornerRadius: 8
+                }
+            },
+            animation: {
+                duration: 1000,
+                easing: 'easeInOutQuart'
+            }
+        };
+
+        // === 1. USER & GROWTH ANALYTICS ===
+        
+        // KPI Cards
+        document.getElementById('kpiStudents').textContent = data.userOverview.totalStudents;
+        document.getElementById('kpiStaff').textContent = data.userOverview.totalStaff;
+        document.getElementById('kpiAdmins').textContent = data.userOverview.totalAdmins;
+        document.getElementById('kpiActive').textContent = data.userOverview.activeUsers;
+        document.getElementById('kpiInactive').textContent = data.userOverview.inactiveUsers;
+
+        // Student Growth Chart
+        const growthLabels = data.studentGrowth.map(d => new Date(d._id).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+        const growthData = data.studentGrowth.map(d => d.count);
+        window.analyticsCharts.studentGrowth = new Chart(document.getElementById('studentGrowthChart'), {
             type: 'line',
             data: {
-                labels: labels,
+                labels: growthLabels,
                 datasets: [{
-                    label: 'Revenue',
-                    data: values,
-                    borderColor: '#FF9933',
-                    fill: true
+                    label: 'New Students',
+                    data: growthData,
+                    borderColor: '#3498db',
+                    backgroundColor: 'rgba(52, 152, 219, 0.2)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: '#3498db',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2
                 }]
+            },
+            options: {
+                ...commonOptions,
+                plugins: {
+                    ...commonOptions.plugins,
+                    legend: { display: true, position: 'top' }
+                },
+                scales: {
+                    y: { 
+                        beginAtZero: true, 
+                        ticks: { stepSize: 1 },
+                        grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                    },
+                    x: { grid: { display: false } }
+                }
             }
         });
-    } catch (e) { console.error(e); }
+
+        // Active vs Inactive Chart (Account Status)
+        window.analyticsCharts.activeInactive = new Chart(document.getElementById('activeInactiveChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Active Accounts', 'Inactive Accounts'],
+                datasets: [{
+                    data: [data.activeVsInactive.active, data.activeVsInactive.inactive],
+                    backgroundColor: ['#2ecc71', '#e74c3c'],
+                    borderWidth: 2,
+                    borderColor: '#fff',
+                    hoverOffset: 10
+                }]
+            },
+            options: {
+                ...commonOptions,
+                plugins: {
+                    ...commonOptions.plugins,
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+
+        // Recently Active vs Dormant Chart (Login Activity)
+        if (data.recentlyActiveVsDormant) {
+            window.analyticsCharts.recentlyActive = new Chart(document.getElementById('recentlyActiveChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Recently Active', 'Dormant'],
+                    datasets: [{
+                        data: [data.recentlyActiveVsDormant.recentlyActive || 0, data.recentlyActiveVsDormant.dormant || 0],
+                        backgroundColor: ['#3498db', '#95a5a6'],
+                        borderWidth: 2,
+                        borderColor: '#fff',
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    ...commonOptions,
+                    plugins: {
+                        ...commonOptions.plugins,
+                        legend: { position: 'bottom' },
+                        tooltip: {
+                            ...commonOptions.plugins.tooltip,
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                    return `${label}: ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // === 2. COURSE PERFORMANCE ANALYTICS ===
+        
+        // Course Enrollment Chart
+        const enrollmentLabels = data.courseEnrollments.map(c => c.courseTitle?.substring(0, 25) || 'Unknown');
+        const enrollmentData = data.courseEnrollments.map(c => c.enrollmentCount);
+        window.analyticsCharts.courseEnrollment = new Chart(document.getElementById('courseEnrollmentChart'), {
+            type: 'bar',
+            data: {
+                labels: enrollmentLabels,
+                datasets: [{
+                    label: 'Enrollments',
+                    data: enrollmentData,
+                    backgroundColor: 'rgba(255, 153, 51, 0.8)',
+                    borderColor: '#FF9933',
+                    borderWidth: 1,
+                    borderRadius: 6,
+                    hoverBackgroundColor: '#FF9933'
+                }]
+            },
+            options: {
+                ...commonOptions,
+                indexAxis: 'y',
+                plugins: {
+                    ...commonOptions.plugins,
+                    legend: { display: false }
+                },
+                scales: {
+                    x: { 
+                        beginAtZero: true,
+                        grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                    },
+                    y: { grid: { display: false } }
+                }
+            }
+        });
+
+        // Course Completion Chart
+        const completionLabels = data.courseCompletion.map(c => c.courseTitle?.substring(0, 25) || 'Unknown');
+        const completionData = data.courseCompletion.map(c => c.completionRate || 0);
+        window.analyticsCharts.courseCompletion = new Chart(document.getElementById('courseCompletionChart'), {
+            type: 'bar',
+            data: {
+                labels: completionLabels,
+                datasets: [{
+                    label: 'Completion %',
+                    data: completionData,
+                    backgroundColor: 'rgba(46, 204, 113, 0.8)',
+                    borderColor: '#2ecc71',
+                    borderWidth: 1,
+                    borderRadius: 6,
+                    hoverBackgroundColor: '#2ecc71'
+                }]
+            },
+            options: {
+                ...commonOptions,
+                indexAxis: 'y',
+                plugins: {
+                    ...commonOptions.plugins,
+                    legend: { display: false }
+                },
+                scales: {
+                    x: { 
+                        beginAtZero: true, 
+                        max: 100,
+                        grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                    },
+                    y: { grid: { display: false } }
+                }
+            }
+        });
+
+        // Paid vs Free Chart
+        window.analyticsCharts.paidFree = new Chart(document.getElementById('paidFreeChart'), {
+            type: 'pie',
+            data: {
+                labels: ['Paid Courses', 'Free Courses'],
+                datasets: [{
+                    data: [data.paidVsFree.paid, data.paidVsFree.free],
+                    backgroundColor: ['#FF9933', '#138808'],
+                    borderWidth: 2,
+                    borderColor: '#fff',
+                    hoverOffset: 10
+                }]
+            },
+            options: {
+                ...commonOptions,
+                plugins: {
+                    ...commonOptions.plugins,
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+
+        // === 3. REVENUE & PAYMENT ANALYTICS ===
+        
+        // Total Revenue KPI
+        document.getElementById('totalRevenueKPI').textContent = `₹${data.totalRevenue.toLocaleString()}`;
+
+        // Revenue Growth Chart
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const revenueLabels = data.revenueGrowth.map(r => `${monthNames[r._id.month - 1]} ${r._id.year}`);
+        const revenueData = data.revenueGrowth.map(r => r.revenue);
+        window.analyticsCharts.revenueGrowth = new Chart(document.getElementById('revenueGrowthChart'), {
+            type: 'line',
+            data: {
+                labels: revenueLabels,
+                datasets: [{
+                    label: 'Revenue (₹)',
+                    data: revenueData,
+                    borderColor: '#FF9933',
+                    backgroundColor: 'rgba(255, 153, 51, 0.2)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: '#FF9933',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2
+                }]
+            },
+            options: {
+                ...commonOptions,
+                plugins: {
+                    ...commonOptions.plugins,
+                    legend: { display: true, position: 'top' },
+                    tooltip: {
+                        ...commonOptions.plugins.tooltip,
+                        callbacks: {
+                            label: context => 'Revenue: ₹' + context.parsed.y.toLocaleString()
+                        }
+                    }
+                },
+                scales: {
+                    y: { 
+                        beginAtZero: true,
+                        grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                        ticks: {
+                            callback: value => '₹' + value.toLocaleString()
+                        }
+                    },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // Payment Status Chart
+        window.analyticsCharts.paymentStatus = new Chart(document.getElementById('paymentStatusChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Success', 'Failed'],
+                datasets: [{
+                    data: [data.paymentStatus.success, data.paymentStatus.failed],
+                    backgroundColor: ['#2ecc71', '#e74c3c'],
+                    borderWidth: 2,
+                    borderColor: '#fff',
+                    hoverOffset: 10
+                }]
+            },
+            options: {
+                ...commonOptions,
+                plugins: {
+                    ...commonOptions.plugins,
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+
+        // Revenue by Course Chart
+        const revenueCourseLabels = data.revenueByCourse.map(c => c.courseTitle?.substring(0, 30) || 'Unknown');
+        const revenueCourseData = data.revenueByCourse.map(c => c.revenue);
+        window.analyticsCharts.revenueByCourse = new Chart(document.getElementById('revenueByCourseChart'), {
+            type: 'bar',
+            data: {
+                labels: revenueCourseLabels,
+                datasets: [{
+                    label: 'Revenue (₹)',
+                    data: revenueCourseData,
+                    backgroundColor: 'rgba(255, 153, 51, 0.8)',
+                    borderColor: '#FF9933',
+                    borderWidth: 1,
+                    borderRadius: 6,
+                    hoverBackgroundColor: '#FF9933'
+                }]
+            },
+            options: {
+                ...commonOptions,
+                indexAxis: 'y',
+                plugins: {
+                    ...commonOptions.plugins,
+                    legend: { display: false },
+                    tooltip: {
+                        ...commonOptions.plugins.tooltip,
+                        callbacks: {
+                            label: context => 'Revenue: ₹' + context.parsed.x.toLocaleString()
+                        }
+                    }
+                },
+                scales: {
+                    x: { 
+                        beginAtZero: true,
+                        grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                        ticks: {
+                            callback: value => '₹' + value.toLocaleString()
+                        }
+                    },
+                    y: { grid: { display: false } }
+                }
+            }
+        });
+
+        // === 4. CONTENT & STAFF ANALYTICS ===
+        
+        // Content Status Chart
+        window.analyticsCharts.contentStatus = new Chart(document.getElementById('contentStatusChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Pending', 'Approved', 'Rejected'],
+                datasets: [{
+                    data: [data.contentStatus.pending, data.contentStatus.approved, data.contentStatus.rejected],
+                    backgroundColor: ['#f39c12', '#2ecc71', '#e74c3c'],
+                    borderWidth: 2,
+                    borderColor: '#fff',
+                    hoverOffset: 10
+                }]
+            },
+            options: {
+                ...commonOptions,
+                plugins: {
+                    ...commonOptions.plugins,
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+
+        // Staff Contribution Chart
+        const staffLabels = data.staffContributions.map(s => s.staffName || 'Unknown');
+        const staffData = data.staffContributions.map(s => s.contentCount);
+        window.analyticsCharts.staffContribution = new Chart(document.getElementById('staffContributionChart'), {
+            type: 'bar',
+            data: {
+                labels: staffLabels,
+                datasets: [{
+                    label: 'Content Created',
+                    data: staffData,
+                    backgroundColor: 'rgba(155, 89, 182, 0.8)',
+                    borderColor: '#9b59b6',
+                    borderWidth: 1,
+                    borderRadius: 6,
+                    hoverBackgroundColor: '#9b59b6'
+                }]
+            },
+            options: {
+                ...commonOptions,
+                plugins: {
+                    ...commonOptions.plugins,
+                    legend: { display: false }
+                },
+                scales: {
+                    y: { 
+                        beginAtZero: true,
+                        grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                    },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // Live Classes by Staff Chart
+        const liveStaffLabels = data.liveClassesByStaff.map(s => s.staffName || 'Unknown');
+        const liveStaffData = data.liveClassesByStaff.map(s => s.classCount);
+        window.analyticsCharts.liveClassStaff = new Chart(document.getElementById('liveClassStaffChart'), {
+            type: 'bar',
+            data: {
+                labels: liveStaffLabels,
+                datasets: [{
+                    label: 'Live Classes',
+                    data: liveStaffData,
+                    backgroundColor: 'rgba(52, 152, 219, 0.8)',
+                    borderColor: '#3498db',
+                    borderWidth: 1,
+                    borderRadius: 6,
+                    hoverBackgroundColor: '#3498db'
+                }]
+            },
+            options: {
+                ...commonOptions,
+                plugins: {
+                    ...commonOptions.plugins,
+                    legend: { display: false }
+                },
+                scales: {
+                    y: { 
+                        beginAtZero: true,
+                        grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                    },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // === 5. LIVE CLASS & ATTENDANCE ANALYTICS ===
+        
+        // Attendance Rate Chart
+        const attendanceLabels = data.attendanceRate.map(a => new Date(a.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+        const attendanceData = data.attendanceRate.map(a => a.attendanceRate);
+        window.analyticsCharts.attendanceRate = new Chart(document.getElementById('attendanceRateChart'), {
+            type: 'line',
+            data: {
+                labels: attendanceLabels,
+                datasets: [{
+                    label: 'Attendance %',
+                    data: attendanceData,
+                    borderColor: '#2ecc71',
+                    backgroundColor: 'rgba(46, 204, 113, 0.2)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: '#2ecc71',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2
+                }]
+            },
+            options: {
+                ...commonOptions,
+                plugins: {
+                    ...commonOptions.plugins,
+                    legend: { display: true, position: 'top' }
+                },
+                scales: {
+                    y: { 
+                        beginAtZero: true, 
+                        max: 100,
+                        grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                        ticks: {
+                            callback: value => value + '%'
+                        }
+                    },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // === 6. STUDENT ENGAGEMENT ANALYTICS ===
+        
+        // Video Completion Chart
+        const completionRanges = ['0-25%', '25-50%', '50-75%', '75-100%'];
+        const completionCounts = data.videoCompletion.map(v => v.count || 0);
+        window.analyticsCharts.videoCompletion = new Chart(document.getElementById('videoCompletionChart'), {
+            type: 'bar',
+            data: {
+                labels: completionRanges,
+                datasets: [{
+                    label: 'Students',
+                    data: completionCounts,
+                    backgroundColor: [
+                        'rgba(231, 76, 60, 0.8)',
+                        'rgba(243, 156, 18, 0.8)',
+                        'rgba(52, 152, 219, 0.8)',
+                        'rgba(46, 204, 113, 0.8)'
+                    ],
+                    borderColor: ['#e74c3c', '#f39c12', '#3498db', '#2ecc71'],
+                    borderWidth: 1,
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                ...commonOptions,
+                plugins: {
+                    ...commonOptions.plugins,
+                    legend: { display: false }
+                },
+                scales: {
+                    y: { 
+                        beginAtZero: true,
+                        grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                    },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // Average Engagement KPI
+        document.getElementById('avgEngagementKPI').textContent = `${data.avgEngagement.toFixed(1)}%`;
+
+        // === 7. SUPPORT & FEEDBACK ANALYTICS ===
+        
+        // Support Requests Chart
+        const supportLabels = data.supportRequests.map(s => new Date(s._id).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+        const supportData = data.supportRequests.map(s => s.count);
+        window.analyticsCharts.supportRequests = new Chart(document.getElementById('supportRequestsChart'), {
+            type: 'line',
+            data: {
+                labels: supportLabels,
+                datasets: [{
+                    label: 'Tickets',
+                    data: supportData,
+                    borderColor: '#e74c3c',
+                    backgroundColor: 'rgba(231, 76, 60, 0.2)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: '#e74c3c',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2
+                }]
+            },
+            options: {
+                ...commonOptions,
+                plugins: {
+                    ...commonOptions.plugins,
+                    legend: { display: true, position: 'top' }
+                },
+                scales: {
+                    y: { 
+                        beginAtZero: true,
+                        grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                    },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // Ticket Status Chart
+        window.analyticsCharts.ticketStatus = new Chart(document.getElementById('ticketStatusChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Open', 'Resolved', 'Closed'],
+                datasets: [{
+                    data: [data.ticketStatus.open, data.ticketStatus.resolved, data.ticketStatus.closed],
+                    backgroundColor: ['#f39c12', '#2ecc71', '#95a5a6'],
+                    borderWidth: 2,
+                    borderColor: '#fff',
+                    hoverOffset: 10
+                }]
+            },
+            options: {
+                ...commonOptions,
+                plugins: {
+                    ...commonOptions.plugins,
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+
+        // === 8. SYSTEM HEALTH & SECURITY ===
+        
+        // Login Activity Chart
+        const loginLabels = data.loginActivity.map(l => new Date(l._id).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+        const loginData = data.loginActivity.map(l => l.logins);
+        window.analyticsCharts.loginActivity = new Chart(document.getElementById('loginActivityChart'), {
+            type: 'line',
+            data: {
+                labels: loginLabels,
+                datasets: [{
+                    label: 'Logins',
+                    data: loginData,
+                    borderColor: '#3498db',
+                    backgroundColor: 'rgba(52, 152, 219, 0.2)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: '#3498db',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2
+                }]
+            },
+            options: {
+                ...commonOptions,
+                plugins: {
+                    ...commonOptions.plugins,
+                    legend: { display: true, position: 'top' }
+                },
+                scales: {
+                    y: { 
+                        beginAtZero: true,
+                        grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                    },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // Role Distribution Chart
+        window.analyticsCharts.roleDistribution = new Chart(document.getElementById('roleDistributionChart'), {
+            type: 'pie',
+            data: {
+                labels: ['Students', 'Staff', 'Admins'],
+                datasets: [{
+                    data: [data.roleDistribution.students, data.roleDistribution.staff, data.roleDistribution.admins],
+                    backgroundColor: ['#3498db', '#9b59b6', '#e67e22'],
+                    borderWidth: 2,
+                    borderColor: '#fff',
+                    hoverOffset: 10
+                }]
+            },
+            options: {
+                ...commonOptions,
+                plugins: {
+                    ...commonOptions.plugins,
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+
+        UI.hideLoader();
+        UI.success('Analytics loaded successfully');
+    } catch (e) { 
+        console.error('Analytics loading error:', e);
+        UI.hideLoader();
+        UI.error('Failed to load analytics data');
+    }
 }
 
 /* --- SHARED --- */

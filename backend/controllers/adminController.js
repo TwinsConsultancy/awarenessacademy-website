@@ -37,14 +37,28 @@ exports.addStaff = async (req, res) => {
 // Get Pending Content Queue
 exports.getPendingContent = async (req, res) => {
     try {
-        const { Module } = require('../models/index'); // Use Module model
-        // We can still support legacy Content/Exam if needed, but primary is Module now.
+        const { Module, Course } = require('../models/index');
 
+        // Get pending modules
         const pendingModules = await Module.find({ status: 'Pending' })
-            .populate('courseId', 'title') // Note: Module schema uses courseId (lowercase d)
+            .populate('courseId', 'title')
             .populate('createdBy', 'name');
 
-        res.status(200).json({ content: pendingModules, exams: [] }); // Sending modules in 'content' array for frontend compatibility
+        // Get pending courses
+        const pendingCourses = await Course.find({ status: 'Pending' })
+            .populate('createdBy', 'name')
+            .populate('mentors', 'name');
+
+        // Mark courses with a type field for frontend distinction
+        const coursesWithType = pendingCourses.map(course => ({
+            ...course.toObject(),
+            type: 'Course'
+        }));
+
+        // Combine modules and courses
+        const allPendingContent = [...pendingModules, ...coursesWithType];
+
+        res.status(200).json({ content: allPendingContent, exams: [] });
     } catch (err) {
         res.status(500).json({ message: 'Failed to fetch queue', error: err.message });
     }
@@ -188,49 +202,376 @@ exports.sendBroadcast = async (req, res) => {
 // Advanced Analytics for Charts
 exports.getAdvancedAnalytics = async (req, res) => {
     try {
-        const { Payment, Impression, Progress, User } = require('../models/index');
+        const { Payment, Impression, Progress, User, Course, Enrollment, Schedule, Attendance, Module, Ticket } = require('../models/index');
 
-        // Revenue Growth
-        const growth = await Payment.aggregate([
-            { $match: { status: 'Success' } },
+        // === 1. USER & GROWTH ANALYTICS ===
+        
+        // Total Users Overview (KPI Cards)
+        const totalStudents = await User.countDocuments({ role: 'Student' });
+        const totalStaff = await User.countDocuments({ role: 'Staff' });
+        const totalAdmins = await User.countDocuments({ role: 'Admin' });
+        
+        // Active/Inactive based on account status (active field)
+        const activeUsers = await User.countDocuments({ active: true });
+        const inactiveUsers = await User.countDocuments({ active: { $ne: true } });
+        
+        // Recently active based on login activity (last 7 days)
+        const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+        const recentlyActiveUsers = await User.countDocuments({ lastLogin: { $gte: sevenDaysAgo } });
+        const dormantUsers = await User.countDocuments({ 
+            $or: [
+                { lastLogin: { $lt: sevenDaysAgo } },
+                { lastLogin: { $exists: false } }
+            ]
+        });
+
+        // Student Growth Over Time (Last 30 days)
+        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+        const studentGrowth = await User.aggregate([
+            { $match: { role: 'Student', createdAt: { $gte: thirtyDaysAgo } } },
             {
                 $group: {
-                    _id: { $month: "$createdAt" },
-                    revenue: { $sum: "$amount" }
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+                    count: { $sum: 1 }
                 }
             },
             { $sort: { "_id": 1 } }
         ]);
 
-        // Conversion: Impressions vs Enrollments
-        const totalImpressions = await Impression.countDocuments();
-        const totalEnrollments = await Payment.countDocuments({ status: 'Success' });
-        const conversionRate = totalImpressions > 0 ? (totalEnrollments / totalImpressions) * 100 : 0;
+        // Active vs Inactive Students (Based on account status)
+        const activeStudents = await User.countDocuments({ role: 'Student', active: true });
+        const inactiveStudents = await User.countDocuments({ role: 'Student', active: { $ne: true } });
+        
+        // Recently Active vs Dormant (Based on login activity)
+        const recentlyActiveStudents = await User.countDocuments({ role: 'Student', lastLogin: { $gte: sevenDaysAgo } });
+        const dormantStudents = totalStudents - recentlyActiveStudents;
 
-        // Student Activity: Active (logged in last 7 days) vs Total
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-        const activeStudents = await User.countDocuments({ role: 'Student', lastLogin: { $gte: sevenDaysAgo } });
-
-        // Video Drop-off (Simulated average watch time %)
-        const stats = await Progress.aggregate([
+        // === 2. COURSE PERFORMANCE ANALYTICS ===
+        
+        // Course Enrollment Distribution
+        const courseEnrollments = await Enrollment.aggregate([
             {
                 $group: {
-                    _id: null,
+                    _id: "$courseID",
+                    enrollmentCount: { $sum: 1 }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'courses',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'course'
+                }
+            },
+            { $unwind: '$course' },
+            {
+                $project: {
+                    courseTitle: '$course.title',
+                    enrollmentCount: 1
+                }
+            },
+            { $sort: { enrollmentCount: -1 } },
+            { $limit: 10 }
+        ]);
+
+        // Course Completion Rate
+        const courseCompletion = await Progress.aggregate([
+            {
+                $group: {
+                    _id: "$courseID",
                     avgCompletion: { $avg: "$percentComplete" },
-                    totalRecords: { $count: {} }
+                    totalStudents: { $sum: 1 }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'courses',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'course'
+                }
+            },
+            { $unwind: '$course' },
+            {
+                $project: {
+                    courseTitle: '$course.title',
+                    completionRate: '$avgCompletion',
+                    totalStudents: 1
+                }
+            },
+            { $sort: { completionRate: -1 } }
+        ]);
+
+        // Paid vs Free Courses
+        const paidCourses = await Course.countDocuments({ price: { $gt: 0 } });
+        const freeCourses = await Course.countDocuments({ price: 0 });
+
+        // === 3. REVENUE & PAYMENT ANALYTICS ===
+        
+        // Revenue Growth (Monthly)
+        const revenueGrowth = await Payment.aggregate([
+            { $match: { status: 'Success' } },
+            {
+                $group: {
+                    _id: { 
+                        year: { $year: "$createdAt" },
+                        month: { $month: "$createdAt" }
+                    },
+                    revenue: { $sum: "$amount" },
+                    count: { $sum: 1 }
+                }
+            },
+            { $sort: { "_id.year": 1, "_id.month": 1 } }
+        ]);
+
+        // Total Revenue
+        const totalRevenue = await Payment.aggregate([
+            { $match: { status: 'Success' } },
+            { $group: { _id: null, total: { $sum: "$amount" } } }
+        ]);
+
+        // Revenue by Course
+        const revenueByCourse = await Payment.aggregate([
+            { $match: { status: 'Success' } },
+            {
+                $group: {
+                    _id: "$courseID",
+                    revenue: { $sum: "$amount" },
+                    enrollments: { $sum: 1 }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'courses',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'course'
+                }
+            },
+            { $unwind: '$course' },
+            {
+                $project: {
+                    courseTitle: '$course.title',
+                    revenue: 1,
+                    enrollments: 1
+                }
+            },
+            { $sort: { revenue: -1 } },
+            { $limit: 10 }
+        ]);
+
+        // Payment Success vs Failure
+        const successPayments = await Payment.countDocuments({ status: 'Success' });
+        const failedPayments = await Payment.countDocuments({ status: { $in: ['Failed', 'Pending'] } });
+
+        // === 4. CONTENT & STAFF ANALYTICS ===
+        
+        // Content Status Distribution
+        const pendingContent = await Module.countDocuments({ status: 'Pending' });
+        const approvedContent = await Module.countDocuments({ status: { $in: ['Approved', 'Published'] } });
+        const rejectedContent = await Module.countDocuments({ status: 'Rejected' });
+
+        // Staff Content Contribution
+        const staffContributions = await Module.aggregate([
+            {
+                $group: {
+                    _id: "$createdBy",
+                    contentCount: { $sum: 1 }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'staff'
+                }
+            },
+            { $unwind: '$staff' },
+            {
+                $project: {
+                    staffName: '$staff.name',
+                    contentCount: 1
+                }
+            },
+            { $sort: { contentCount: -1 } }
+        ]);
+
+        // Live Classes by Staff
+        const liveClassesByStaff = await Schedule.aggregate([
+            {
+                $group: {
+                    _id: "$staffID",
+                    classCount: { $sum: 1 }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'staff'
+                }
+            },
+            { $unwind: '$staff' },
+            {
+                $project: {
+                    staffName: '$staff.name',
+                    classCount: 1
+                }
+            },
+            { $sort: { classCount: -1 } }
+        ]);
+
+        // === 5. LIVE CLASS & ATTENDANCE ANALYTICS ===
+        
+        // Live Class Attendance Rate (Last 30 days)
+        const attendanceRate = await Attendance.aggregate([
+            { $match: { timestamp: { $gte: thirtyDaysAgo } } },
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$timestamp" } },
+                    present: {
+                        $sum: { $cond: [{ $eq: ["$status", "Present"] }, 1, 0] }
+                    },
+                    total: { $sum: 1 }
+                }
+            },
+            {
+                $project: {
+                    date: "$_id",
+                    attendanceRate: { 
+                        $multiply: [{ $divide: ["$present", "$total"] }, 100] 
+                    }
+                }
+            },
+            { $sort: { "date": 1 } }
+        ]);
+
+        // === 6. STUDENT ENGAGEMENT ANALYTICS ===
+        
+        // Video Completion Rate
+        const videoCompletion = await Progress.aggregate([
+            {
+                $bucket: {
+                    groupBy: "$percentComplete",
+                    boundaries: [0, 25, 50, 75, 100],
+                    default: "Other",
+                    output: {
+                        count: { $sum: 1 }
+                    }
                 }
             }
         ]);
 
+        // Average Time Spent per Student (based on progress records)
+        const avgTimeSpent = await Progress.aggregate([
+            {
+                $group: {
+                    _id: "$studentID",
+                    avgProgress: { $avg: "$percentComplete" },
+                    totalRecords: { $sum: 1 }
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    overallAvg: { $avg: "$avgProgress" }
+                }
+            }
+        ]);
+
+        // === 7. SUPPORT & FEEDBACK ANALYTICS ===
+        
+        // Support Requests Over Time
+        const supportRequests = await Ticket.aggregate([
+            { $match: { createdAt: { $gte: thirtyDaysAgo } } },
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+                    count: { $sum: 1 }
+                }
+            },
+            { $sort: { "_id": 1 } }
+        ]);
+
+        // Ticket Status Distribution
+        const openTickets = await Ticket.countDocuments({ status: 'Open' });
+        const resolvedTickets = await Ticket.countDocuments({ status: 'Resolved' });
+        const closedTickets = await Ticket.countDocuments({ status: 'Closed' });
+
+        // === 8. SYSTEM HEALTH & SECURITY ===
+        
+        // Login Activity Trend (Last 30 days)
+        const loginActivity = await User.aggregate([
+            { $match: { lastLogin: { $gte: thirtyDaysAgo, $exists: true } } },
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$lastLogin" } },
+                    logins: { $sum: 1 }
+                }
+            },
+            { $sort: { "_id": 1 } }
+        ]);
+
+        // Role-Based Usage
+        const roleDistribution = {
+            students: totalStudents,
+            staff: totalStaff,
+            admins: totalAdmins
+        };
+
+        // === RESPONSE ===
         res.status(200).json({
-            growth,
-            conversion: { rate: conversionRate.toFixed(2), totalImpressions, totalEnrollments },
-            activity: { active: activeStudents, total: await User.countDocuments({ role: 'Student' }) },
-            completion: stats[0] || { avgCompletion: 0 }
+            // User & Growth
+            userOverview: {
+                totalStudents,
+                totalStaff,
+                totalAdmins,
+                activeUsers,
+                inactiveUsers,
+                recentlyActiveUsers,
+                dormantUsers
+            },
+            studentGrowth,
+            activeVsInactive: { active: activeStudents, inactive: inactiveStudents },
+            recentlyActiveVsDormant: { recentlyActive: recentlyActiveStudents, dormant: dormantStudents },
+            
+            // Course Performance
+            courseEnrollments,
+            courseCompletion,
+            paidVsFree: { paid: paidCourses, free: freeCourses },
+            
+            // Revenue & Payment
+            revenueGrowth,
+            totalRevenue: totalRevenue[0]?.total || 0,
+            revenueByCourse,
+            paymentStatus: { success: successPayments, failed: failedPayments },
+            
+            // Content & Staff
+            contentStatus: { pending: pendingContent, approved: approvedContent, rejected: rejectedContent },
+            staffContributions,
+            liveClassesByStaff,
+            
+            // Live Class & Attendance
+            attendanceRate,
+            
+            // Student Engagement
+            videoCompletion,
+            avgEngagement: avgTimeSpent[0]?.overallAvg || 0,
+            
+            // Support
+            supportRequests,
+            ticketStatus: { open: openTickets, resolved: resolvedTickets, closed: closedTickets },
+            
+            // System Health
+            loginActivity,
+            roleDistribution
         });
     } catch (err) {
-        res.status(500).json({ message: 'Analytics calculation failed' });
+        console.error('Analytics error:', err);
+        res.status(500).json({ message: 'Analytics calculation failed', error: err.message });
     }
 };
 // Banner Management
