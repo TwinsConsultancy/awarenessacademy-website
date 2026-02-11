@@ -106,7 +106,7 @@ function switchSection(section) {
     });
 
     // Hide all sections including analyticsSection
-    ['journey', 'timetable', 'payments', 'tickets', 'support', 'certificates', 'marketplace', 'profile', 'analytics'].forEach(s => {
+    ['course', 'timetable', 'payments', 'tickets', 'support', 'certificates', 'marketplace', 'profile', 'analytics'].forEach(s => {
         const el = document.getElementById(s + 'Section');
         if (el) el.style.display = 'none';
     });
@@ -181,14 +181,14 @@ async function loadEnrolledCourses() {
                     <h4>${c.title}</h4>
                     <p style="color: var(--color-text-secondary); font-size: 0.85rem; margin-bottom: 15px;">By ${c.mentorID?.name || 'Mentor'}</p>
                     <div style="display: flex; flex-direction: column; gap: 10px;">
-                        <button onclick="window.location.href='player.html?course=${c._id}&content=first'" class="btn-primary" style="width: 100%; padding: 8px;">Continue Journey</button>
+                        <button onclick="window.location.href='player.html?course=${c._id}&content=first'" class="btn-primary" style="width: 100%; padding: 8px;">Continue Course</button>
                         <button onclick="checkAndTakeExam('${c._id}')" class="btn-primary" style="width: 100%; padding: 8px; background: var(--color-golden);">Take Assessment</button>
                     </div>
                 </div>
             </div>
         `).join('');
     } catch (err) {
-        UI.error('Failed to load your journey.');
+        UI.error('Failed to load your courses.');
     } finally {
         UI.hideLoader();
     }
@@ -734,10 +734,10 @@ async function loadMarketplace() {
                         <span style="font-size: 0.8rem; color: #777;"><i class="fas fa-video"></i> ${c.totalLessons || 0} Lessons</span>
                     </div>
                     ${isEnrolled ?
-                    `<button onclick="switchSection('journey')" class="btn-primary" style="width: 100%; padding: 10px; background: var(--color-success); border: none;"><i class="fas fa-check"></i> Enrolled</button>` :
+                    `<button onclick="switchSection('course')" class="btn-primary" style="width: 100%; padding: 10px; background: var(--color-success); border: none;"><i class="fas fa-check"></i> Enrolled</button>` :
                     c.status === 'Approved' ?
-                    `<button onclick="openNotifyModal('${c._id}', '${c.title.replace(/'/g, "\\'")}')" class="btn-secondary" style="width: 100%; padding: 10px; background: #F59E0B; color: white; border: none;"><i class="fas fa-bell"></i> Notify Me</button>` :
-                    `<button onclick="purchaseCourse('${c._id}', '${c.price}')" class="btn-primary" style="width: 100%; padding: 10px;"><i class="fas fa-cart-plus"></i> Enroll Now</button>`
+                        `<button onclick="openNotifyModal('${c._id}', '${c.title.replace(/'/g, "\\'")}')" class="btn-secondary" style="width: 100%; padding: 10px; background: #F59E0B; color: white; border: none;"><i class="fas fa-bell"></i> Notify Me</button>` :
+                        `<button onclick="purchaseCourse('${c._id}', '${c.price}')" class="btn-primary" style="width: 100%; padding: 10px;"><i class="fas fa-cart-plus"></i> Enroll Now</button>`
                 }
                 </div>
             </div>
@@ -773,10 +773,10 @@ async function purchaseCourse(courseID, amount) {
         const data = await res.json();
 
         if (res.ok) {
-            UI.success('Enrollment successful! May your journey be fruitful.');
+            UI.success('Enrollment successful! May your course be fruitful.');
             await loadEnrolledCourses();
             loadMarketplace();
-            setTimeout(() => switchSection('journey'), 1500);
+            setTimeout(() => switchSection('course'), 1500);
         } else {
             UI.error(data.message || 'Transaction failed.');
         }
@@ -1429,7 +1429,7 @@ window.closeViewTicketModal = closeViewTicketModal;
 function openNotifyModal(courseId, courseTitle) {
     window.currentNotifyCourseId = courseId;
     window.currentNotifyCourseTitle = courseTitle;
-    
+
     // Create modal if it doesn't exist
     if (!document.getElementById('notifyMeModal')) {
         const modalHTML = `
@@ -1473,15 +1473,15 @@ function openNotifyModal(courseId, courseTitle) {
             </div>
         `;
         document.body.insertAdjacentHTML('beforeend', modalHTML);
-        
+
         // Add form submit handler
         document.getElementById('notifyMeForm').addEventListener('submit', handleNotifySubmit);
     }
-    
+
     // Show modal and set course title
     document.getElementById('notifyCourseTitle').textContent = courseTitle;
     document.getElementById('notifyMeModal').style.display = 'block';
-    
+
     // Clear form
     document.getElementById('notifyMeForm').reset();
     document.getElementById('phoneValidationMsg').textContent = '';
@@ -1494,13 +1494,13 @@ function closeNotifyModal() {
 function validateNotifyPhone() {
     const phoneInput = document.getElementById('notifyPhone');
     const validationMsg = document.getElementById('phoneValidationMsg');
-    
+
     // Remove non-numeric characters
     phoneInput.value = phoneInput.value.replace(/\D/g, '');
-    
+
     const phone = phoneInput.value;
     const remaining = 10 - phone.length;
-    
+
     if (phone.length === 0) {
         validationMsg.textContent = '';
         validationMsg.style.color = '';
@@ -1515,21 +1515,21 @@ function validateNotifyPhone() {
 
 async function handleNotifySubmit(e) {
     e.preventDefault();
-    
+
     const name = document.getElementById('notifyName').value.trim();
     const email = document.getElementById('notifyEmail').value.trim();
     const phone = document.getElementById('notifyPhone').value.trim();
-    
+
     // Validate phone
     if (!/^[0-9]{10}$/.test(phone)) {
         UI.error('Please enter a valid 10-digit phone number');
         return;
     }
-    
+
     const submitBtn = document.getElementById('submitNotifyBtn');
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Subscribing...';
-    
+
     try {
         const res = await fetch(`${Auth.apiBase}/subscribers/subscribe`, {
             method: 'POST',
@@ -1541,9 +1541,9 @@ async function handleNotifySubmit(e) {
                 phone
             })
         });
-        
+
         const data = await res.json();
-        
+
         if (res.ok) {
             UI.success(data.message || 'Successfully subscribed! We will notify you when the course is available.');
             closeNotifyModal();
