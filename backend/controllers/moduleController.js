@@ -13,7 +13,7 @@ exports.createModule = catchAsync(async (req, res, next) => {
     console.log('User:', req.user);
     console.log('Body:', req.body);
 
-    const { courseId, title, description, content, contentType, fileUrl, fileMetadata } = req.body;
+    const { courseId, title, description, duration, content, contentType, fileUrl, fileMetadata } = req.body;
 
     // Validation
     if (!courseId || !title) {
@@ -63,6 +63,7 @@ exports.createModule = catchAsync(async (req, res, next) => {
         courseId,
         title,
         description,
+        duration: duration || 10, // Default 10 mins
         content: content || '',
         contentType: moduleContentType,
         fileUrl: fileUrl || null,
@@ -138,7 +139,7 @@ exports.getModule = catchAsync(async (req, res, next) => {
 // Update module
 exports.updateModule = catchAsync(async (req, res, next) => {
     const { id } = req.params;
-    const { title, description, content, isPublished, fileUrl, fileMetadata } = req.body;
+    const { title, description, duration, content, isPublished, fileUrl, fileMetadata } = req.body;
 
     console.log('📦 Updating module:', id);
 
@@ -158,6 +159,7 @@ exports.updateModule = catchAsync(async (req, res, next) => {
     // Update fields
     if (title) module.title = title;
     if (description !== undefined) module.description = description;
+    if (duration !== undefined) module.duration = duration;
 
     // Update content based on contentType
     if (module.contentType === 'rich-content') {

@@ -559,6 +559,7 @@ async function loadModuleData(id) {
         // Fill basic fields
         document.getElementById('moduleTitle').value = module.title;
         document.getElementById('moduleDescription').value = module.description || '';
+        document.getElementById('moduleDuration').value = module.duration || 10;
 
         // Set content type
         selectedContentType = module.contentType || 'rich-content';
@@ -644,6 +645,7 @@ async function loadModuleData(id) {
 async function saveModule() {
     const title = document.getElementById('moduleTitle').value.trim();
     const description = document.getElementById('moduleDescription').value.trim();
+    const duration = parseInt(document.getElementById('moduleDuration').value) || 10;
 
     // Validation
     if (!title) {
@@ -651,10 +653,16 @@ async function saveModule() {
         return;
     }
 
+    if (duration < 1) {
+        UI.error('Duration must be at least 1 minute');
+        return;
+    }
+
     // Build payload based on content type
     const payload = {
         title,
         description,
+        duration,
         contentType: selectedContentType
     };
 
