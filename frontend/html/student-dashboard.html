@@ -929,7 +929,7 @@
                         <div
                             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 2px solid #eee; padding-bottom: 10px;">
                             <h2 style="margin: 0; color: var(--color-primary);">Personal Details</h2>
-                            <button class="btn-primary" id="downloadIDBtn">
+                            <button class="btn-primary" id="downloadIDBtn" style="background: linear-gradient(135deg, var(--color-saffron), var(--color-golden)); color: white; border: none; box-shadow: 0 4px 15px rgba(255, 153, 51, 0.3);">
                                 <i class="fas fa-id-card"></i> Get ID Card
                             </button>
                         </div>
@@ -950,7 +950,7 @@
                                             onchange="console.log('File input changed'); if(typeof handleProfileUpload === 'function') { handleProfileUpload(this); } else { console.error('handleProfileUpload is not defined!', typeof handleProfileUpload); }">
                                         <button type="button" class="btn-primary"
                                             onclick="event.preventDefault(); event.stopPropagation(); console.log('Upload button clicked'); console.log('handleProfileUpload type:', typeof handleProfileUpload); document.getElementById('profilePhotoInput').click(); return false;"
-                                            style="margin-bottom: 10px;">
+                                            style="margin-bottom: 10px; background: linear-gradient(135deg, var(--color-saffron), var(--color-golden)); color: white; border: none; box-shadow: 0 4px 15px rgba(255, 153, 51, 0.3);">
                                             <i class="fas fa-camera"></i> Upload Photo
                                         </button>
                                         <div style="font-size: 0.85rem; color: #666;">
@@ -1195,7 +1195,7 @@
                     <input type="password" id="cp_new" class="form-control" required>
                 </div>
                 <div style="display: flex; gap: 10px; margin-top: 20px;">
-                    <button type="submit" class="btn-primary" style="flex: 1;">Update</button>
+                    <button type="submit" class="btn-primary" style="flex: 1; background: linear-gradient(135deg, var(--color-saffron), var(--color-golden)); color: white; border: none; box-shadow: 0 4px 15px rgba(255, 153, 51, 0.3);">Update Profile</button>
                     <button type="button" class="btn-primary" style="background: #ccc; flex: 1;"
                         onclick="document.getElementById('passwordModal').style.display='none'">Cancel</button>
                 </div>
@@ -1300,6 +1300,7 @@
 
     <script src="../js/utils.js"></script>
     <script src="../js/auth.js"></script>
+    <script src="../js/payment.js"></script>
     <script src="../js/student.js"></script>
     <script src="../js/chatbot.js"></script>
 </body>

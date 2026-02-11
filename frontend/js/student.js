@@ -99,6 +99,37 @@ function getThumbnail(url) {
     return url;
 }
 
+// Payment status helper functions
+function getPaymentStatusColor(status) {
+    const statusColors = {
+        'initiated': '#ffc107',
+        'pending': '#ffc107',
+        'authorized': '#17a2b8',
+        'captured': '#17a2b8',
+        'completed': 'var(--color-success)',
+        'Success': 'var(--color-success)', // Legacy compatibility
+        'failed': 'var(--color-error)',
+        'Failed': 'var(--color-error)', // Legacy compatibility
+        'refunded': '#dc3545'
+    };
+    return statusColors[status] || 'var(--color-text-secondary)';
+}
+
+function getPaymentStatusText(status) {
+    const statusTexts = {
+        'initiated': 'Initiated',
+        'pending': 'Pending',
+        'authorized': 'Authorized',
+        'captured': 'Captured',
+        'completed': 'Completed',
+        'Success': 'Completed', // Legacy compatibility
+        'failed': 'Failed',
+        'Failed': 'Failed', // Legacy compatibility
+        'refunded': 'Refunded'
+    };
+    return statusTexts[status] || status;
+}
+
 function switchSection(section) {
     // This was moved from HTML for cleanliness
     const navLinks = document.querySelectorAll('.nav-link');
@@ -475,8 +506,8 @@ async function loadPayments() {
                             <td style="padding: 15px;">${p.courseID?.title || 'Unknown'}</td>
                             <td style="padding: 15px;">₹${p.amount}</td>
                             <td style="padding: 15px;">
-                                <span style="color: ${p.status === 'Success' ? 'var(--color-success)' : 'var(--color-error)'}; font-weight: 600;">
-                                    ${p.status}
+                                <span style="color: ${getPaymentStatusColor(p.status)}; font-weight: 600;">
+                                    ${getPaymentStatusText(p.status)}
                                 </span>
                             </td>
                         </tr>
@@ -748,7 +779,7 @@ async function loadMarketplace() {
                     `<button onclick="switchSection('course')" class="btn-primary" style="width: 100%; padding: 10px; background: var(--color-success); border: none;"><i class="fas fa-check"></i> Enrolled</button>` :
                     c.status === 'Approved' ?
                         `<button onclick="openNotifyModal('${c._id}', '${c.title.replace(/'/g, "\\'")}')" class="btn-secondary" style="width: 100%; padding: 10px; background: #F59E0B; color: white; border: none;"><i class="fas fa-bell"></i> Notify Me</button>` :
-                        `<button onclick="purchaseCourse('${c._id}', '${c.price}')" class="btn-primary" style="width: 100%; padding: 10px;"><i class="fas fa-cart-plus"></i> Enroll Now</button>`
+                        `<button onclick="purchaseCourse('${c._id}', '${c.price}', event)" class="btn-primary" style="width: 100%; padding: 10px; background: linear-gradient(135deg, #FF9933, #FFC300); color: white; border: none; box-shadow: 0 4px 15px rgba(255, 153, 51, 0.3); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(255, 153, 51, 0.4)'; this.style.background='linear-gradient(135deg, #FFC300, #FF9933)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(255, 153, 51, 0.3)'; this.style.background='linear-gradient(135deg, #FF9933, #FFC300)'"><i class="fas fa-cart-plus"></i> Enroll Now</button>`
                 }
                 </div>
             </div>
@@ -761,41 +792,34 @@ async function loadMarketplace() {
     }
 }
 
-async function purchaseCourse(courseID, amount) {
+async function purchaseCourse(courseID, amount, event) {
+    // Check profile completion first
     if (!checkProfileCompletion()) {
         document.getElementById('profileRestrictionModal').style.display = 'flex';
         return;
     }
 
-    if (!confirm(`Do you wish to offer ₹${amount} for this sacred path?`)) return;
+    // Get course details for better UX
+    const courseCard = event?.target?.closest?.('.course-card');
+    const courseTitle = courseCard?.querySelector('h4')?.textContent || 'Course';
+
+    // Confirm purchase intent
+    if (!confirm(`Do you wish to enroll in "${courseTitle}" for ₹${amount}?`)) {
+        return;
+    }
 
     try {
-        UI.showLoader();
-        const res = await fetch(`${Auth.apiBase}/payments/create`, {
-            method: 'POST',
-            headers: Auth.getHeaders(),
-            body: JSON.stringify({
-                courseID,
-                amount,
-                paymentMethod: 'Manual'
-            })
-        });
-
-        const data = await res.json();
-
-        if (res.ok) {
-            UI.success('Enrollment successful! May your course be fruitful.');
-            await loadEnrolledCourses();
-            loadMarketplace();
-            setTimeout(() => switchSection('course'), 1500);
-        } else {
-            UI.error(data.message || 'Transaction failed.');
+        // Validate PaymentManager availability
+        if (!window.PaymentManager) {
+            throw new Error('Payment system not loaded. Please refresh the page.');
         }
 
+        // Use the new PaymentManager for Razorpay integration
+        await window.PaymentManager.initializePayment(courseID, amount, courseTitle);
+
     } catch (err) {
-        UI.error('Could not process enrollment.');
-    } finally {
-        UI.hideLoader();
+        console.error('Purchase error:', err);
+        UI.error(err.message || 'Failed to initiate payment. Please try again.');
     }
 }
 

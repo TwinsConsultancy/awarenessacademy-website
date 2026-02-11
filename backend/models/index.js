@@ -132,13 +132,50 @@ const attendanceSchema = new Schema({
 
 // 5. Payments Collection
 const paymentSchema = new Schema({
+    // Razorpay specific fields
+    razorpayOrderId: { type: String, unique: true, sparse: true },
+    razorpayPaymentId: { type: String, unique: true, sparse: true },
+    razorpaySignature: { type: String },
+    
+    // Internal transaction ID
     transactionID: { type: String, unique: true },
     studentID: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     courseID: { type: Schema.Types.ObjectId, ref: 'Course', required: true },
+    
+    // Payment details
     amount: { type: Number, required: true },
-    paymentMethod: { type: String, enum: ['UPI', 'Card', 'Manual'], required: true },
-    status: { type: String, enum: ['Pending', 'Success', 'Failed'], default: 'Pending' },
-    date: { type: Date, default: Date.now }
+    currency: { type: String, default: 'INR' },
+    paymentMethod: { 
+        type: String, 
+        enum: ['UPI', 'Card', 'NetBanking', 'Wallet', 'Manual'], 
+        required: true 
+    },
+    
+    // Status tracking with Razorpay specific statuses
+    status: { 
+        type: String, 
+        enum: ['initiated', 'pending', 'authorized', 'captured', 'completed', 'failed', 'refunded'], 
+        default: 'initiated' 
+    },
+    
+    // Timestamps
+    initiatedAt: { type: Date, default: Date.now },
+    completedAt: { type: Date },
+    date: { type: Date, default: Date.now },
+    
+    // Additional tracking
+    failureReason: { type: String },
+    receiptId: { type: String },
+    emailSent: { type: Boolean, default: false },
+    
+    // Audit trail
+    ipAddress: { type: String },
+    userAgent: { type: String },
+    
+    // Coupon information
+    couponCode: { type: String },
+    originalAmount: { type: Number },
+    discountAmount: { type: Number, default: 0 }
 });
 
 

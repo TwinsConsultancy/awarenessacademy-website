@@ -343,3 +343,273 @@ exports.sendMail = async ({ to, subject, html }) => {
         throw error;
     }
 };
+
+/**
+ * Send Payment Confirmation Email
+ */
+exports.sendPaymentConfirmationEmail = async (email, paymentData) => {
+    try {
+        const { 
+            studentName, 
+            studentId, 
+            courseName, 
+            amount, 
+            transactionId, 
+            paymentId, 
+            paymentMethod, 
+            date 
+        } = paymentData;
+
+        const formattedDate = new Date(date).toLocaleString('en-IN', {
+            dateStyle: 'full',
+            timeStyle: 'long',
+            timeZone: 'Asia/Kolkata'
+        });
+
+        await transporter.sendMail({
+            from: `"InnerSpark Academy" <${process.env.SMTP_USER}>`,
+            to: email,
+            subject: '✅ Payment Successful - Course Enrollment Confirmed',
+            html: `
+                <div style="font-family: 'Arial', sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                    <!-- Header -->
+                    <div style="background: rgba(255,255,255,0.1); padding: 30px; text-align: center; backdrop-filter: blur(10px);">
+                        <h1 style="margin: 0; font-size: 2rem; color: #FFD700;">InnerSpark Academy</h1>
+                        <p style="margin: 10px 0 0; font-size: 1.1rem; color: rgba(255,255,255,0.9);">Payment Confirmation</p>
+                    </div>
+
+                    <!-- Success Icon -->
+                    <div style="text-align: center; padding: 20px 0;">
+                        <div style="display: inline-block; background: #28a745; border-radius: 50%; width: 80px; height: 80px; line-height: 80px; font-size: 2rem;">
+                            ✓
+                        </div>
+                    </div>
+
+                    <!-- Content -->
+                    <div style="padding: 30px; background: white; color: #333; margin: 0 20px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+                        <h2 style="color: #667eea; margin-Bottom: 20px; text-align: center;">Payment Successful!</h2>
+                        
+                        <p style="font-size: 1.1rem; margin-bottom: 25px;">Dear <strong>${studentName}</strong>,</p>
+                        
+                        <p style="margin-bottom: 25px;">Your payment has been successfully processed and you are now enrolled in the course. Here are your payment details:</p>
+
+                        <!-- Payment Details Card -->
+                        <div style="background: #f8f9fa; padding: 25px; border-radius: 8px; margin: 25px 0; border-left: 5px solid #667eea;">
+                            <h3 style="color: #667eea; margin-top: 0; margin-bottom: 20px;">Payment Details</h3>
+                            
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <tr style="border-bottom: 1px solid #dee2e6;">
+                                    <td style="padding: 10px 15px 10px 0; font-weight: 600; color: #495057;">Student Name:</td>
+                                    <td style="padding: 10px 0; color: #212529;">${studentName}</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #dee2e6;">
+                                    <td style="padding: 10px 15px 10px 0; font-weight: 600; color: #495057;">Student ID:</td>
+                                    <td style="padding: 10px 0; color: #212529;">${studentId || 'N/A'}</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #dee2e6;">
+                                    <td style="padding: 10px 15px 10px 0; font-weight: 600; color: #495057;">Course Name:</td>
+                                    <td style="padding: 10px 0; color: #212529;">${courseName}</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #dee2e6;">
+                                    <td style="padding: 10px 15px 10px 0; font-weight: 600; color: #495057;">Amount Paid:</td>
+                                    <td style="padding: 10px 0; color: #28a745; font-weight: 700; font-size: 1.1rem;">₹${amount}</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #dee2e6;">
+                                    <td style="padding: 10px 15px 10px 0; font-weight: 600; color: #495057;">Transaction ID:</td>
+                                    <td style="padding: 10px 0; color: #212529; font-family: 'Courier New', monospace;">${transactionId}</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #dee2e6;">
+                                    <td style="padding: 10px 15px 10px 0; font-weight: 600; color: #495057;">Payment ID:</td>
+                                    <td style="padding: 10px 0; color: #212529; font-family: 'Courier New', monospace;">${paymentId}</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #dee2e6;">
+                                    <td style="padding: 10px 15px 10px 0; font-weight: 600; color: #495057;">Payment Method:</td>
+                                    <td style="padding: 10px 0; color: #212529;">${paymentMethod}</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #dee2e6;">
+                                    <td style="padding: 10px 15px 10px 0; font-weight: 600; color: #495057;">Status:</td>
+                                    <td style="padding: 10px 0; color: #28a745; font-weight: 600;">COMPLETED</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 10px 15px 10px 0; font-weight: 600; color: #495057;">Date & Time:</td>
+                                    <td style="padding: 10px 0; color: #212529;">${formattedDate}</td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <!-- Next Steps -->
+                        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; margin: 25px 0;">
+                            <h3 style="margin-top: 0; margin-bottom: 15px;">🎯 What's Next?</h3>
+                            <ul style="margin: 0; padding-left: 20px;">
+                                <li style="margin-bottom: 8px;">Log in to your student dashboard to access your course</li>
+                                <li style="margin-bottom: 8px;">Start your learning journey immediately</li>
+                                <li style="margin-bottom: 8px;">Track your progress and earn certificates</li>
+                                <li>Get support from our community and instructors</li>
+                            </ul>
+                        </div>
+
+                        <!-- CTA Button -->
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="${CLIENT_URL}/frontend/html/student-dashboard.html" 
+                               style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                                      color: white; 
+                                      text-decoration: none; 
+                                      padding: 15px 30px; 
+                                      border-radius: 25px; 
+                                      font-weight: 600; 
+                                      font-size: 1.1rem;
+                                      display: inline-block;
+                                      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
+                                🚀 Access Your Course Now
+                            </a>
+                        </div>
+
+                        <p style="margin-top: 30px; font-size: 0.9rem; color: #6c757d; text-align: center;">
+                            Need help? Contact us at <a href="mailto:${process.env.SMTP_USER}" style="color: #667eea;">${process.env.SMTP_USER}</a>
+                        </p>
+                    </div>
+
+                    <!-- Footer -->
+                    <div style="padding: 20px; text-align: center; color: rgba(255,255,255,0.8);">
+                        <p style="margin: 0; font-size: 0.9rem;">© 2026 InnerSpark Academy. Empowering minds, transforming lives.</p>
+                    </div>
+                </div>
+            `
+        });
+        
+        console.log(`✅ Payment confirmation email sent to ${email}`);
+    } catch (error) {
+        console.error('❌ Error sending payment confirmation email:', error);
+        throw error;
+    }
+};
+
+/**
+ * Send Payment Failure Email
+ */
+exports.sendPaymentFailureEmail = async (email, paymentData) => {
+    try {
+        const { 
+            studentName, 
+            courseName, 
+            amount, 
+            transactionId, 
+            failureReason, 
+            date 
+        } = paymentData;
+
+        const formattedDate = new Date(date).toLocaleString('en-IN', {
+            dateStyle: 'full',
+            timeStyle: 'long',
+            timeZone: 'Asia/Kolkata'
+        });
+
+        await transporter.sendMail({
+            from: `"InnerSpark Academy" <${process.env.SMTP_USER}>`,
+            to: email,
+            subject: '⚠️ Payment Failed - InnerSpark Academy',
+            html: `
+                <div style="font-family: 'Arial', sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #ff6b6b 0%, #ffdde1 100%); color: white;">
+                    <!-- Header -->
+                    <div style="background: rgba(255,255,255,0.1); padding: 30px; text-align: center; backdrop-filter: blur(10px);">
+                        <h1 style="margin: 0; font-size: 2rem; color: #FFD700;">InnerSpark Academy</h1>
+                        <p style="margin: 10px 0 0; font-size: 1.1rem; color: rgba(255,255,255,0.9);">Payment Failed</p>
+                    </div>
+
+                    <!-- Failure Icon -->
+                    <div style="text-align: center; padding: 20px 0;">
+                        <div style="display: inline-block; background: #dc3545; border-radius: 50%; width: 80px; height: 80px; line-height: 80px; font-size: 2rem;">
+                            ✕
+                        </div>
+                    </div>
+
+                    <!-- Content -->
+                    <div style="padding: 30px; background: white; color: #333; margin: 0 20px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+                        <h2 style="color: #dc3545; margin-bottom: 20px; text-align: center;">Payment Failed</h2>
+                        
+                        <p style="font-size: 1.1rem; margin-bottom: 25px;">Dear <strong>${studentName}</strong>,</p>
+                        
+                        <p style="margin-bottom: 25px;">Unfortunately, your payment could not be processed. Please find the details below:</p>
+
+                        <!-- Payment Details Card -->
+                        <div style="background: #f8f9fa; padding: 25px; border-radius: 8px; margin: 25px 0; border-left: 5px solid #dc3545;">
+                            <h3 style="color: #dc3545; margin-top: 0; margin-bottom: 20px;">Payment Details</h3>
+                            
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <tr style="border-bottom: 1px solid #dee2e6;">
+                                    <td style="padding: 10px 15px 10px 0; font-weight: 600; color: #495057;">Student Name:</td>
+                                    <td style="padding: 10px 0; color: #212529;">${studentName}</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #dee2e6;">
+                                    <td style="padding: 10px 15px 10px 0; font-weight: 600; color: #495057;">Course Name:</td>
+                                    <td style="padding: 10px 0; color: #212529;">${courseName}</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #dee2e6;">
+                                    <td style="padding: 10px 15px 10px 0; font-weight: 600; color: #495057;">Amount:</td>
+                                    <td style="padding: 10px 0; color: #212529; font-weight: 700; font-size: 1.1rem;">₹${amount}</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #dee2e6;">
+                                    <td style="padding: 10px 15px 10px 0; font-weight: 600; color: #495057;">Transaction ID:</td>
+                                    <td style="padding: 10px 0; color: #212529; font-family: 'Courier New', monospace;">${transactionId}</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #dee2e6;">
+                                    <td style="padding: 10px 15px 10px 0; font-weight: 600; color: #495057;">Status:</td>
+                                    <td style="padding: 10px 0; color: #dc3545; font-weight: 600;">FAILED</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #dee2e6;">
+                                    <td style="padding: 10px 15px 10px 0; font-weight: 600; color: #495057;">Reason:</td>
+                                    <td style="padding: 10px 0; color: #dc3545;">${failureReason}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 10px 15px 10px 0; font-weight: 600; color: #495057;">Date & Time:</td>
+                                    <td style="padding: 10px 0; color: #212529;">${formattedDate}</td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <!-- Next Steps -->
+                        <div style="background: #e3f2fd; color: #0d47a1; padding: 20px; border-radius: 8px; margin: 25px 0; border-left: 5px solid #2196f3;">
+                            <h3 style="margin-top: 0; margin-bottom: 15px; color: #0d47a1;">💡 What to do next?</h3>
+                            <ul style="margin: 0; padding-left: 20px;">
+                                <li style="margin-bottom: 8px;">Check your card/account balance and limits</li>
+                                <li style="margin-bottom: 8px;">Verify your payment details</li>
+                                <li style="margin-bottom: 8px;">Try a different payment method</li>
+                                <li>Contact your bank if the issue persists</li>
+                            </ul>
+                        </div>
+
+                        <!-- CTA Button -->
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="${CLIENT_URL}/frontend/html/student-dashboard.html" 
+                               style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                                      color: white; 
+                                      text-decoration: none; 
+                                      padding: 15px 30px; 
+                                      border-radius: 25px; 
+                                      font-weight: 600; 
+                                      font-size: 1.1rem;
+                                      display: inline-block;
+                                      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
+                                🔄 Try Payment Again
+                            </a>
+                        </div>
+
+                        <p style="margin-top: 30px; font-size: 0.9rem; color: #6c757d; text-align: center;">
+                            Need help? Contact us at <a href="mailto:${process.env.SMTP_USER}" style="color: #667eea;">${process.env.SMTP_USER}</a>
+                        </p>
+                    </div>
+
+                    <!-- Footer -->
+                    <div style="padding: 20px; text-align: center; color: rgba(255,255,255,0.8);">
+                        <p style="margin: 0; font-size: 0.9rem;">© 2026 InnerSpark Academy. We're here to help you succeed.</p>
+                    </div>
+                </div>
+            `
+        });
+        
+        console.log(`✅ Payment failure notification sent to ${email}`);
+    } catch (error) {
+        console.error('❌ Error sending payment failure email:', error);
+        throw error;
+    }
+};
