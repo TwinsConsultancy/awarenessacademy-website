@@ -186,7 +186,18 @@ const certificateSchema = new Schema({
 const progressSchema = new Schema({
     studentID: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     courseID: { type: Schema.Types.ObjectId, ref: 'Course', required: true },
+    // Legacy support: keep completedModules as simple array of IDs for backward compatibility if needed, 
+    // but primary logic will use moduleProgress
     completedModules: [{ type: Schema.Types.ObjectId, ref: 'Module' }],
+
+    // New granular progress tracking
+    moduleProgress: [{
+        moduleID: { type: Schema.Types.ObjectId, ref: 'Module' },
+        timeSpent: { type: Number, default: 0 }, // in seconds
+        completed: { type: Boolean, default: false },
+        lastUpdated: { type: Date, default: Date.now }
+    }],
+
     percentComplete: { type: Number, default: 0 },
     lastAccessed: { type: Date, default: Date.now }
 });
@@ -392,8 +403,8 @@ module.exports = {
     Gallery: (() => {
         const gallerySchema = new Schema({
             imageUrl: { type: String, required: true },
-            description: { 
-                type: String, 
+            description: {
+                type: String,
                 required: true,
                 minlength: 10,
                 maxlength: 100,

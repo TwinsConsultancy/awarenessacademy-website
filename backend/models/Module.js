@@ -41,6 +41,11 @@ const moduleSchema = new mongoose.Schema({
         duration: Number, // for videos, in seconds (optional)
         uploadedAt: Date
     },
+    duration: {
+        type: Number,
+        default: 10, // Default duration in minutes if not specified
+        min: [1, 'Duration must be at least 1 minute']
+    },
     order: {
         type: Number,
         required: true,
