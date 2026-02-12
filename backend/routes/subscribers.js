@@ -5,6 +5,7 @@ const authorize = require('../middleware/auth');
 
 // Public route - anyone can subscribe
 router.post('/subscribe', subscriberController.subscribe);
+router.post('/newsletter', subscriberController.subscribeNewsletter);
 
 // Admin routes - protected
 router.use(authorize(['Admin']));

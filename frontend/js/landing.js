@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /* --- 3. Newsletter Logic --- */
-    setupNewsletter();
+    // setupNewsletter(); // Moved to utils.js
 });
 
 function setupNewsletter() {
@@ -89,26 +89,38 @@ function setupNewsletter() {
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = form.querySelector('button');
-            const originalText = btn.textContent;
+            const originalHTML = btn.innerHTML; // Save icon
 
-            btn.textContent = 'Subscribing...';
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
             btn.disabled = true;
 
-            // Simulate API call or Real API call
             try {
                 const formData = new FormData(form);
                 const email = formData.get('email');
 
-                // Fire and forget for demo, or await fetch
-                await new Promise(r => setTimeout(r, 1000));
+                const response = await fetch(`${API_URL}/subscribers/newsletter`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email })
+                });
 
-                alert(`Welcome to the circle, ${email}!`);
-                form.reset();
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Show success toast or alert
+                    alert(data.message || 'Successfully subscribed!');
+                    form.reset();
+                } else {
+                    alert(data.message || 'Subscription failed.');
+                }
+
             } catch (err) {
                 console.error(err);
-                alert('Something went wrong.');
+                alert('Connection error. Please try again.');
             } finally {
-                btn.textContent = originalText;
+                btn.innerHTML = originalHTML;
                 btn.disabled = false;
             }
         });

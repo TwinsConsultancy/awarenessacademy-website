@@ -1,6 +1,47 @@
-const { CourseSubscriber, Course } = require('../models');
+const { CourseSubscriber, Newsletter, Course } = require('../models');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/AppError');
+
+// Subscribe to Newsletter
+exports.subscribeNewsletter = catchAsync(async (req, res, next) => {
+    const { email } = req.body;
+
+    if (!email) {
+        return next(new AppError('Email is required', 400));
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        return next(new AppError('Please provide a valid email address', 400));
+    }
+
+    // Normalize email (convert to lowercase and trim)
+    const normalizedEmail = email.toLowerCase().trim();
+
+    try {
+        // Check if already subscribed
+        const existing = await Newsletter.findOne({ email: normalizedEmail });
+        if (existing) {
+            return res.status(200).json({
+                status: 'success',
+                message: 'You are already subscribed to our newsletter! Thank you for your interest. 📧'
+            });
+        }
+
+        // Create new subscription
+        await Newsletter.create({ email: normalizedEmail });
+
+        res.status(201).json({
+            status: 'success',
+            message: 'Successfully subscribed to our newsletter! You will receive weekly wisdom directly to your inbox. 🎉'
+        });
+
+    } catch (error) {
+        console.error('Newsletter subscription error:', error);
+        return next(new AppError('Failed to subscribe to newsletter. Please try again later.', 500));
+    }
+});
 
 // Subscribe to upcoming course notifications
 exports.subscribe = catchAsync(async (req, res, next) => {

@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Join AWARENESS ACADEMY - Begin Your Journey</title>
-    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="../css/variables.css?v=2">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link
         href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;600&display=swap"
@@ -247,18 +247,27 @@
 </head>
 
 <body>
-    <nav class="nav" id="mainNav" style="background: rgba(255, 255, 255, 0.95); box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: fixed; top: 0; width: 100%; padding: 15px 50px; display: flex; justify-content: space-between; align-items: center; z-index: 1000;">
-        <a href="index.html" class="logo" style="font-size: 1.8rem; font-family: var(--font-heading); font-weight: 700; color: var(--color-text-primary); display: flex; align-items: center; gap: 10px; text-decoration: none;">
+    <nav class="nav" id="mainNav"
+        style="background: rgba(255, 255, 255, 0.95); box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: fixed; top: 0; width: 100%; padding: 15px 50px; display: flex; justify-content: space-between; align-items: center; z-index: 1000;">
+        <a href="index.html" class="logo"
+            style="font-size: 1.8rem; font-family: var(--font-heading); font-weight: 700; color: var(--color-text-primary); display: flex; align-items: center; gap: 10px; text-decoration: none;">
             <i class="fas fa-bolt" style="color: var(--color-golden);"></i> AWARENESS ACADEMY
         </a>
         <div class="nav-links">
-            <a href="index.html" style="color: var(--color-text-primary); text-decoration: none; margin-left: 30px; font-weight: 500;">Home</a>
-            <a href="about.html" style="color: var(--color-text-primary); text-decoration: none; margin-left: 30px; font-weight: 500;">About</a>
-            <a href="courses.html" style="color: var(--color-text-primary); text-decoration: none; margin-left: 30px; font-weight: 500;">Courses</a>
-            <a href="gallery.html" style="color: var(--color-text-primary); text-decoration: none; margin-left: 30px; font-weight: 500;">Gallery</a>
-            <a href="blog.html" style="color: var(--color-text-primary); text-decoration: none; margin-left: 30px; font-weight: 500;">Blog</a>
-            <a href="contact.html" style="color: var(--color-text-primary); text-decoration: none; margin-left: 30px; font-weight: 500;">Contact</a>
-            <a href="login.html" class="btn-primary" style="background: var(--color-saffron); color: white; padding: 12px 30px; border-radius: 30px; margin-left: 30px; text-decoration: none;">Login</a>
+            <a href="index.html"
+                style="color: var(--color-text-primary); text-decoration: none; margin-left: 30px; font-weight: 500;">Home</a>
+            <a href="about.html"
+                style="color: var(--color-text-primary); text-decoration: none; margin-left: 30px; font-weight: 500;">About</a>
+            <a href="courses.html"
+                style="color: var(--color-text-primary); text-decoration: none; margin-left: 30px; font-weight: 500;">Courses</a>
+            <a href="gallery.html"
+                style="color: var(--color-text-primary); text-decoration: none; margin-left: 30px; font-weight: 500;">Gallery</a>
+            <a href="blog.html"
+                style="color: var(--color-text-primary); text-decoration: none; margin-left: 30px; font-weight: 500;">Blog</a>
+            <a href="contact.html"
+                style="color: var(--color-text-primary); text-decoration: none; margin-left: 30px; font-weight: 500;">Contact</a>
+            <a href="login.html" class="btn-primary"
+                style="background: var(--color-saffron); color: white; padding: 12px 30px; border-radius: 30px; margin-left: 30px; text-decoration: none;">Login</a>
         </div>
     </nav>
     <div style="height: 80px;"></div> <!-- Spacer for fixed nav -->
@@ -271,9 +280,10 @@
                 </a>
                 <h2>Create Account</h2>
                 <p id="stepDescription">Join our sanctuary of wisdom.</p>
-                
+
                 <!-- Step Indicator -->
-                <div class="step-indicator" style="display: flex; justify-content: center; gap: 10px; margin-top: 20px;">
+                <div class="step-indicator"
+                    style="display: flex; justify-content: center; gap: 10px; margin-top: 20px;">
                     <div class="step active" data-step="1">
                         <div class="step-number">1</div>
                         <div class="step-label">Details</div>
@@ -298,18 +308,22 @@
                 <form id="step1Form">
                     <div class="form-group">
                         <label>Full Name</label>
-                        <input type="text" id="nameInput" class="form-control" placeholder="Enter your full name" required>
+                        <input type="text" id="nameInput" class="form-control" placeholder="Enter your full name"
+                            required>
                     </div>
 
                     <div class="form-group">
                         <label>Email Address</label>
-                        <input type="email" id="emailInput" class="form-control" placeholder="name@example.com" required>
+                        <input type="email" id="emailInput" class="form-control" placeholder="name@example.com"
+                            required>
                     </div>
 
                     <div class="form-group">
                         <label>Phone Number <span style="color: #DC2626;">*</span></label>
-                        <input type="tel" id="phoneInput" class="form-control" placeholder="10-digit mobile number" maxlength="10" pattern="[0-9]{10}" required oninput="validatePhoneInput(this)">
-                        <small id="phoneHelp" style="color: #6B7280; font-size: 0.85rem;">Enter 10-digit mobile number (numbers only)</small>
+                        <input type="tel" id="phoneInput" class="form-control" placeholder="10-digit mobile number"
+                            maxlength="10" pattern="[0-9]{10}" required oninput="validatePhoneInput(this)">
+                        <small id="phoneHelp" style="color: #6B7280; font-size: 0.85rem;">Enter 10-digit mobile number
+                            (numbers only)</small>
                     </div>
 
                     <div class="form-group">
@@ -327,13 +341,16 @@
             <div id="step2" class="registration-step" style="display: none;">
                 <div style="text-align: center; margin-bottom: 20px;">
                     <i class="fas fa-envelope-open-text" style="font-size: 48px; color: var(--color-golden);"></i>
-                    <p style="margin-top: 15px; color: #666;">We've sent a 6-digit code to<br><strong id="emailDisplay"></strong></p>
+                    <p style="margin-top: 15px; color: #666;">We've sent a 6-digit code to<br><strong
+                            id="emailDisplay"></strong></p>
                 </div>
 
                 <form id="step2Form">
                     <div class="form-group">
                         <label>Enter OTP</label>
-                        <input type="text" id="otpInput" class="form-control" placeholder="Enter 6-digit code" maxlength="6" pattern="[0-9]{6}" required style="text-align: center; font-size: 24px; letter-spacing: 8px;">
+                        <input type="text" id="otpInput" class="form-control" placeholder="Enter 6-digit code"
+                            maxlength="6" pattern="[0-9]{6}" required
+                            style="text-align: center; font-size: 24px; letter-spacing: 8px;">
                         <div style="margin-top: 10px; text-align: center;">
                             <span id="otpTimer" style="color: #DC2626; font-weight: 600;"></span>
                         </div>
@@ -344,12 +361,15 @@
                     </button>
 
                     <div style="text-align: center; margin-top: 15px;">
-                        <button type="button" id="resendOtpBtn" class="btn-link" style="background: none; border: none; color: var(--color-golden); cursor: pointer; text-decoration: underline;" disabled>
+                        <button type="button" id="resendOtpBtn" class="btn-link"
+                            style="background: none; border: none; color: var(--color-golden); cursor: pointer; text-decoration: underline;"
+                            disabled>
                             Resend OTP (<span id="resendTimer">60</span>s)
                         </button>
                     </div>
 
-                    <button type="button" id="backToStep1" class="btn-secondary" style="margin-top: 10px; width: 100%; background: #6B7280; color: white;">
+                    <button type="button" id="backToStep1" class="btn-secondary"
+                        style="margin-top: 10px; width: 100%; background: #6B7280; color: white;">
                         <i class="fas fa-arrow-left"></i> Back
                     </button>
                 </form>
@@ -366,13 +386,20 @@
                     <div class="form-group">
                         <label>Create Password</label>
                         <div class="password-wrapper">
-                            <input type="password" id="passwordInput" class="form-control" placeholder="Create a strong password" required oninput="validatePassword()" style="padding-right: 45px;">
-                            <i class="fas fa-eye password-toggle" id="togglePassword" onclick="togglePasswordVisibility('passwordInput', 'togglePassword')"></i>
+                            <input type="password" id="passwordInput" class="form-control"
+                                placeholder="Create a strong password" required oninput="validatePassword()"
+                                style="padding-right: 45px;">
+                            <i class="fas fa-eye password-toggle" id="togglePassword"
+                                onclick="togglePasswordVisibility('passwordInput', 'togglePassword')"></i>
                         </div>
-                        <div id="passwordConstraints" style="margin-top: 10px; font-size: 0.85rem; color: #666; display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
-                            <div id="ruleLength"><i class="fas fa-times-circle" style="color: #ccc;"></i> 8+ Characters</div>
-                            <div id="ruleUpper"><i class="fas fa-times-circle" style="color: #ccc;"></i> 1 Uppercase</div>
-                            <div id="ruleLower"><i class="fas fa-times-circle" style="color: #ccc;"></i> 1 Lowercase</div>
+                        <div id="passwordConstraints"
+                            style="margin-top: 10px; font-size: 0.85rem; color: #666; display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+                            <div id="ruleLength"><i class="fas fa-times-circle" style="color: #ccc;"></i> 8+ Characters
+                            </div>
+                            <div id="ruleUpper"><i class="fas fa-times-circle" style="color: #ccc;"></i> 1 Uppercase
+                            </div>
+                            <div id="ruleLower"><i class="fas fa-times-circle" style="color: #ccc;"></i> 1 Lowercase
+                            </div>
                             <div id="ruleNumber"><i class="fas fa-times-circle" style="color: #ccc;"></i> 1 Number</div>
                             <div id="ruleSymbol"><i class="fas fa-times-circle" style="color: #ccc;"></i> 1 Symbol</div>
                         </div>
@@ -381,16 +408,25 @@
                     <div class="form-group">
                         <label>Confirm Password</label>
                         <div class="password-wrapper">
-                            <input type="password" id="confirmPasswordInput" class="form-control" placeholder="Re-enter your password" required oninput="checkPasswordMatch()" style="padding-right: 45px;">
-                            <i class="fas fa-eye password-toggle" id="toggleConfirmPassword" onclick="togglePasswordVisibility('confirmPasswordInput', 'toggleConfirmPassword')"></i>
+                            <input type="password" id="confirmPasswordInput" class="form-control"
+                                placeholder="Re-enter your password" required oninput="checkPasswordMatch()"
+                                style="padding-right: 45px;">
+                            <i class="fas fa-eye password-toggle" id="toggleConfirmPassword"
+                                onclick="togglePasswordVisibility('confirmPasswordInput', 'toggleConfirmPassword')"></i>
                         </div>
                         <div id="passwordMatch" style="margin-top: 8px; font-size: 0.85rem;"></div>
                     </div>
 
                     <div class="form-group" style="margin: 20px 0;">
-                        <label style="display: flex; align-items: start; gap: 10px; cursor: pointer; font-size: 0.9rem; color: #555;">
-                            <input type="checkbox" id="termsCheckbox" required onchange="checkTermsAcceptance()" style="margin-top: 2px; width: 18px; height: 18px; cursor: pointer;">
-                            <span style="line-height: 1.6;">I agree to the <a href="terms.html" target="_blank" style="color: var(--color-saffron); text-decoration: none; font-weight: 600;">Terms & Conditions</a> and <a href="privacy.html" target="_blank" style="color: var(--color-saffron); text-decoration: none; font-weight: 600;">Privacy Policy</a></span>
+                        <label
+                            style="display: flex; align-items: start; gap: 10px; cursor: pointer; font-size: 0.9rem; color: #555;">
+                            <input type="checkbox" id="termsCheckbox" required onchange="checkTermsAcceptance()"
+                                style="margin-top: 2px; width: 18px; height: 18px; cursor: pointer;">
+                            <span style="line-height: 1.6;">I agree to the <a href="terms.html" target="_blank"
+                                    style="color: var(--color-saffron); text-decoration: none; font-weight: 600;">Terms
+                                    & Conditions</a> and <a href="privacy.html" target="_blank"
+                                    style="color: var(--color-saffron); text-decoration: none; font-weight: 600;">Privacy
+                                    Policy</a></span>
                         </label>
                     </div>
 
@@ -408,45 +444,65 @@
 
     <!-- Footer -->
     <footer class="footer" style="background: #111; color: white; padding: 80px 50px;">
-        <div class="footer-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 50px; max-width: 1200px; margin: 0 auto; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 50px;">
+        <div class="footer-grid"
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 50px; max-width: 1200px; margin: 0 auto; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 50px;">
             <div>
-                <a href="index.html" class="footer-logo" style="color: white; text-decoration: none; font-size: 1.5rem; font-family: var(--font-heading); font-weight: 700;">✨ AWARENESS ACADEMY</a>
-                <p style="opacity: 0.7; line-height: 1.8; margin-top: 15px;">A sacred space for those seeking to rediscover their internal light through ancient wisdom and modern mindfulness.</p>
+                <a href="index.html" class="footer-logo"
+                    style="color: white; text-decoration: none; font-size: 1.5rem; font-family: var(--font-heading); font-weight: 700;">✨
+                    AWARENESS ACADEMY</a>
+                <p style="opacity: 0.7; line-height: 1.8; margin-top: 15px;">A sacred space for those seeking to
+                    rediscover their internal light through ancient wisdom and modern mindfulness.</p>
                 <div class="social-icons" style="display: flex; gap: 15px; margin-top: 20px;">
-                    <a href="#" style="color: rgba(255,255,255,0.6); font-size: 1.2rem; transition: color 0.3s;"><i class="fab fa-instagram"></i></a>
-                    <a href="#" style="color: rgba(255,255,255,0.6); font-size: 1.2rem; transition: color 0.3s;"><i class="fab fa-twitter"></i></a>
-                    <a href="#" style="color: rgba(255,255,255,0.6); font-size: 1.2rem; transition: color 0.3s;"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" style="color: rgba(255,255,255,0.6); font-size: 1.2rem; transition: color 0.3s;"><i
+                            class="fab fa-instagram"></i></a>
+                    <a href="#" style="color: rgba(255,255,255,0.6); font-size: 1.2rem; transition: color 0.3s;"><i
+                            class="fab fa-twitter"></i></a>
+                    <a href="#" style="color: rgba(255,255,255,0.6); font-size: 1.2rem; transition: color 0.3s;"><i
+                            class="fab fa-facebook-f"></i></a>
                 </div>
             </div>
             <div>
                 <h4 style="color: var(--color-golden); margin-bottom: 20px;">Discover</h4>
                 <ul style="list-style: none; padding: 0;">
-                    <li style="margin-bottom: 15px;"><a href="about.html" style="color: #aaa; text-decoration: none;">Our Story</a></li>
-                    <li style="margin-bottom: 15px;"><a href="courses.html" style="color: #aaa; text-decoration: none;">All Courses</a></li>
-                    <li style="margin-bottom: 15px;"><a href="blog.html" style="color: #aaa; text-decoration: none;">Wisdom Blog</a></li>
-                    <li style="margin-bottom: 15px;"><a href="contact.html" style="color: #aaa; text-decoration: none;">Contact Us</a></li>
+                    <li style="margin-bottom: 15px;"><a href="about.html"
+                            style="color: #aaa; text-decoration: none;">Our Story</a></li>
+                    <li style="margin-bottom: 15px;"><a href="courses.html"
+                            style="color: #aaa; text-decoration: none;">All Courses</a></li>
+                    <li style="margin-bottom: 15px;"><a href="blog.html"
+                            style="color: #aaa; text-decoration: none;">Wisdom Blog</a></li>
+                    <li style="margin-bottom: 15px;"><a href="contact.html"
+                            style="color: #aaa; text-decoration: none;">Contact Us</a></li>
                 </ul>
             </div>
             <div>
                 <h4 style="color: var(--color-golden); margin-bottom: 20px;">Community</h4>
                 <ul style="list-style: none; padding: 0;">
-                    <li style="margin-bottom: 15px;"><a href="login.html" style="color: #aaa; text-decoration: none;">Login / Register</a></li>
-                    <li style="margin-bottom: 15px;"><a href="#" style="color: #aaa; text-decoration: none;">Events</a></li>
-                    <li style="margin-bottom: 15px;"><a href="#" style="color: #aaa; text-decoration: none;">Support</a></li>
-                    <li style="margin-bottom: 15px;"><a href="terms.html" style="color: #aaa; text-decoration: none;">Terms & Conditions</a></li>
-                    <li style="margin-bottom: 15px;"><a href="privacy.html" style="color: #aaa; text-decoration: none;">Privacy Policy</a></li>
+                    <li style="margin-bottom: 15px;"><a href="login.html"
+                            style="color: #aaa; text-decoration: none;">Login / Register</a></li>
+                    <li style="margin-bottom: 15px;"><a href="#" style="color: #aaa; text-decoration: none;">Events</a>
+                    </li>
+                    <li style="margin-bottom: 15px;"><a href="#" style="color: #aaa; text-decoration: none;">Support</a>
+                    </li>
+                    <li style="margin-bottom: 15px;"><a href="terms.html"
+                            style="color: #aaa; text-decoration: none;">Terms & Conditions</a></li>
+                    <li style="margin-bottom: 15px;"><a href="privacy.html"
+                            style="color: #aaa; text-decoration: none;">Privacy Policy</a></li>
                 </ul>
             </div>
             <div>
                 <h4 style="color: var(--color-golden); margin-bottom: 20px;">Newsletter</h4>
                 <p style="opacity: 0.7; margin-bottom: 15px; font-size: 0.9rem;">Receive weekly wisdom directly.</p>
                 <div style="position: relative;">
-                    <input type="email" placeholder="Email" style="width: 100%; padding: 10px; border-radius: 5px; border: none; outline: none;">
-                    <button style="position: absolute; right: 5px; top: 5px; background: var(--color-saffron); border: none; color: white; border-radius: 3px; padding: 5px 10px; cursor: pointer;"><i class="fas fa-arrow-right"></i></button>
+                    <input type="email" placeholder="Email"
+                        style="width: 100%; padding: 10px; border-radius: 5px; border: none; outline: none;">
+                    <button
+                        style="position: absolute; right: 5px; top: 5px; background: var(--color-saffron); border: none; color: white; border-radius: 3px; padding: 5px 10px; cursor: pointer;"><i
+                            class="fas fa-arrow-right"></i></button>
                 </div>
             </div>
         </div>
-        <div style="text-align: center; margin-top: 50px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); opacity: 0.5; font-size: 0.85rem;">
+        <div
+            style="text-align: center; margin-top: 50px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); opacity: 0.5; font-size: 0.85rem;">
             &copy; 2026 AWARENESS ACADEMY. All rights reserved.
         </div>
     </footer>
@@ -507,7 +563,7 @@
         function checkPasswordMatch() {
             if (!confirmPasswordInput || !passwordInput) return;
             const matchDiv = document.getElementById('passwordMatch');
-            
+
             if (confirmPasswordInput.value === '') {
                 matchDiv.innerHTML = '';
                 isPasswordMatching = false;
@@ -550,7 +606,7 @@
         function validatePhoneInput(input) {
             // Remove any non-numeric characters
             input.value = input.value.replace(/[^0-9]/g, '');
-            
+
             const phoneHelp = document.getElementById('phoneHelp');
             if (input.value.length > 0 && input.value.length < 10) {
                 phoneHelp.textContent = `${10 - input.value.length} more digit(s) required`;
@@ -577,10 +633,10 @@
         function setStep(step) {
             // Hide all steps
             document.querySelectorAll('.registration-step').forEach(s => s.style.display = 'none');
-            
+
             // Show current step
             document.getElementById(`step${step}`).style.display = 'block';
-            
+
             // Update step indicator
             document.querySelectorAll('.step').forEach(stepEl => {
                 const stepNum = parseInt(stepEl.dataset.step);
@@ -591,7 +647,7 @@
                     stepEl.classList.add('active');
                 }
             });
-            
+
             currentStep = step;
 
             // Update step description
@@ -605,7 +661,7 @@
 
         function startOTPTimer() {
             otpExpiryTime = Date.now() + (10 * 60 * 1000); // 10 minutes
-            
+
             otpTimer = setInterval(() => {
                 const remaining = otpExpiryTime - Date.now();
                 if (remaining <= 0) {
@@ -614,7 +670,7 @@
                     showMessage('OTP has expired. Please request a new one.', 'error');
                     return;
                 }
-                
+
                 const minutes = Math.floor(remaining / 60000);
                 const seconds = Math.floor((remaining % 60000) / 1000);
                 document.getElementById('otpTimer').textContent = `⏱ Expires in ${minutes}:${seconds.toString().padStart(2, '0')}`;
@@ -625,12 +681,12 @@
             let countdown = 60;
             const resendBtn = document.getElementById('resendOtpBtn');
             const resendTimerSpan = document.getElementById('resendTimer');
-            
+
             resendBtn.disabled = true;
             resendTimer = setInterval(() => {
                 countdown--;
                 resendTimerSpan.textContent = countdown;
-                
+
                 if (countdown <= 0) {
                     clearInterval(resendTimer);
                     resendBtn.disabled = false;
@@ -642,28 +698,28 @@
         // Step 1: Send OTP
         document.getElementById('step1Form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             const name = document.getElementById('nameInput').value.trim();
             const email = document.getElementById('emailInput').value.trim();
             const phone = document.getElementById('phoneInput').value.trim();
             const profilePicFile = document.getElementById('profilePicInput').files[0];
-            
+
             if (!name || !email) {
                 showMessage('Please fill in all required fields', 'error');
                 return;
             }
-            
+
             // Validate phone number
             if (!phone || phone.length !== 10 || !/^[0-9]{10}$/.test(phone)) {
                 showMessage('Please enter a valid 10-digit phone number', 'error');
                 return;
             }
-            
+
             // Store data
             registrationData.name = name;
             registrationData.email = email;
             registrationData.phone = phone;
-            
+
             // Convert profile pic to base64 if provided
             if (profilePicFile) {
                 const reader = new FileReader();
@@ -672,20 +728,20 @@
                 };
                 reader.readAsDataURL(profilePicFile);
             }
-            
+
             const sendBtn = document.getElementById('sendOtpBtn');
             sendBtn.disabled = true;
             sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
-            
+
             try {
                 const response = await fetch(`${API_BASE}/auth/send-registration-otp`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, name })
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (response.ok) {
                     showMessage(data.message, 'success');
                     document.getElementById('emailDisplay').textContent = email;
@@ -707,27 +763,27 @@
         // Step 2: Verify OTP
         document.getElementById('step2Form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             const otp = document.getElementById('otpInput').value.trim();
-            
+
             if (otp.length !== 6) {
                 showMessage('Please enter a valid 6-digit OTP', 'error');
                 return;
             }
-            
+
             const verifyBtn = document.getElementById('verifyOtpBtn');
             verifyBtn.disabled = true;
             verifyBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
-            
+
             try {
                 const response = await fetch(`${API_BASE}/auth/verify-registration-otp`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email: registrationData.email, otp })
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (response.ok) {
                     clearInterval(otpTimer);
                     clearInterval(resendTimer);
@@ -750,19 +806,19 @@
             const resendBtn = document.getElementById('resendOtpBtn');
             resendBtn.disabled = true;
             resendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
-            
+
             try {
                 const response = await fetch(`${API_BASE}/auth/send-registration-otp`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        email: registrationData.email, 
-                        name: registrationData.name 
+                    body: JSON.stringify({
+                        email: registrationData.email,
+                        name: registrationData.name
                     })
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (response.ok) {
                     showMessage('New OTP sent to your email', 'success');
                     document.getElementById('otpInput').value = '';
@@ -792,44 +848,44 @@
         // Step 3: Complete Registration
         document.getElementById('step3Form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             if (!isPasswordValid || !isPasswordMatching) {
                 showMessage('Please ensure password meets all requirements and matches', 'error');
                 return;
             }
-            
+
             const password = passwordInput.value;
-            
+
             const completeBtn = document.getElementById('completeRegistrationBtn');
             completeBtn.disabled = true;
             completeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Account...';
-            
+
             try {
                 const formData = new FormData();
                 formData.append('email', registrationData.email);
                 formData.append('password', password);
                 formData.append('phone', registrationData.phone);
-                
+
                 // Add profile pic if exists
                 if (registrationData.profilePic) {
                     // Convert base64 back to file
                     const blob = await fetch(registrationData.profilePic).then(r => r.blob());
                     formData.append('profilePic', blob, 'profile.jpg');
                 }
-                
+
                 const response = await fetch(`${API_BASE}/auth/complete-registration`, {
                     method: 'POST',
                     body: formData
                 });
-                
+
                 const data = await response.json();
                 console.log('Registration response:', response.status, data);
-                
+
                 if (response.ok) {
                     console.log('Registration successful! Student ID:', data.studentID);
                     // Hide the form
                     document.getElementById('step3').style.display = 'none';
-                    
+
                     // Show success message with animation
                     const successHTML = `
                         <div style="text-align: center; padding: 40px 20px; animation: fadeIn 0.5s;">
@@ -865,9 +921,9 @@
                             }
                         </style>
                     `;
-                    
+
                     document.querySelector('.auth-card').innerHTML = successHTML;
-                    
+
                     // Countdown timer
                     let countdown = 5;
                     const countdownInterval = setInterval(() => {
@@ -876,7 +932,7 @@
                         if (countdownEl) {
                             countdownEl.textContent = countdown;
                         }
-                        
+
                         if (countdown <= 0) {
                             clearInterval(countdownInterval);
                             window.location.href = 'login.html';
@@ -899,7 +955,7 @@
         passwordInput = document.getElementById('passwordInput');
         confirmPasswordInput = document.getElementById('confirmPasswordInput');
         completeBtn = document.getElementById('completeRegistrationBtn');
-        
+
         // Initialize
         setStep(1);
 

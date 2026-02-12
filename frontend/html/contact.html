@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contact AWARENESS ACADEMY - Get in Touch</title>
-    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="../css/variables.css?v=2">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link
         href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;600&display=swap"
@@ -98,7 +98,7 @@
         }
 
         .info-card {
-            background: white;
+            /* background managed by glass-card class */
             padding: 30px;
             border-radius: var(--border-radius-lg);
             margin-bottom: 20px;
@@ -128,12 +128,14 @@
 
         /* --- Form --- */
         .contact-form-wrapper {
-            background: white;
+            background: var(--color-bg-glass);
+            backdrop-filter: blur(10px);
             padding: 50px;
             border-radius: 30px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
             position: relative;
             overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.5);
         }
 
         .contact-form-wrapper::before {
@@ -330,7 +332,7 @@
             <p>Whether you have a question about our courses, need guidance on your path, or just want to say hello, we
                 are here for you.</p>
 
-            <div class="info-card">
+            <div class="info-card glass-card">
                 <div class="info-icon"><i class="fas fa-envelope"></i></div>
                 <div>
                     <h4>Email Us</h4>
@@ -338,7 +340,7 @@
                 </div>
             </div>
 
-            <div class="info-card">
+            <div class="info-card glass-card">
                 <div class="info-icon"><i class="fas fa-phone-alt"></i></div>
                 <div>
                     <h4>Call Us</h4>
@@ -346,7 +348,7 @@
                 </div>
             </div>
 
-            <div class="info-card">
+            <div class="info-card glass-card">
                 <div class="info-icon"><i class="fas fa-map-marker-alt"></i></div>
                 <div>
                     <h4>Visit Us</h4>
@@ -355,7 +357,7 @@
                 </div>
             </div>
 
-            <div class="info-card">
+            <div class="info-card glass-card">
                 <div class="info-icon"><i class="fas fa-comments"></i></div>
                 <div>
                     <h4>Community Chat</h4>
@@ -374,7 +376,8 @@
                 </div>
                 <div class="form-group">
                     <label>Email Address <span style="color: #ef4444;">*</span></label>
-                    <input type="email" id="contactEmail" class="form-control" placeholder="your.email@example.com" required>
+                    <input type="email" id="contactEmail" class="form-control" placeholder="your.email@example.com"
+                        required>
                 </div>
                 <div class="form-group">
                     <label>Subject <span style="color: #ef4444;">*</span></label>
@@ -462,13 +465,18 @@
             <div>
                 <h4>Newsletter</h4>
                 <p style="opacity: 0.7; margin-bottom: 15px; font-size: 0.9rem;">Receive weekly wisdom directly.</p>
-                <div style="position: relative;">
-                    <input type="email" placeholder="Email"
-                        style="width: 100%; padding: 10px; border-radius: 5px; border: none; outline: none;">
-                    <button
-                        style="position: absolute; right: 5px; top: 5px; background: var(--color-saffron); border: none; color: white; border-radius: 3px; padding: 5px 10px; cursor: pointer;"><i
-                            class="fas fa-arrow-right"></i></button>
-                </div>
+                <form id="newsletterForm" style="position: relative;">
+                    <input type="email" name="email" placeholder="Enter your email" required
+                        style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); outline: none; background: rgba(255,255,255,0.1); color: white; font-size: 0.9rem;"
+                        onkeypress="if(event.key==='Enter'){document.getElementById('newsletterSubmit').click();}">
+                    <button type="submit" id="newsletterSubmit"
+                        style="position: absolute; right: 8px; top: 8px; background: var(--color-saffron); border: none; color: white; border-radius: 6px; padding: 8px 12px; cursor: pointer; transition: all 0.3s; font-size: 0.9rem;"
+                        onmouseover="this.style.background='var(--color-golden)'" 
+                        onmouseout="this.style.background='var(--color-saffron)'">
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </form>
+                <div id="newsletterFeedback" style="margin-top: 8px; font-size: 0.8rem; color: #fff; opacity: 0; transition: all 0.3s;"></div>
             </div>
         </div>
         <div

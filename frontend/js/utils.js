@@ -170,17 +170,17 @@ const UI = {
      */
     fixContentUrls(htmlContent) {
         if (!htmlContent) return htmlContent;
-        
+
         // Get the backend base URL (without /api)
         // Handle case when CONFIG might not be loaded
         const backendUrl = (typeof CONFIG !== 'undefined' && CONFIG.CLIENT_URL) ? CONFIG.CLIENT_URL : 'http://localhost:5001';
-        
+
         // Replace relative /uploads/ paths with absolute backend URLs
         // This handles: <img src="/uploads/..."> and <video src="/uploads/...">
         const fixedContent = htmlContent
             .replace(/src=["']\/uploads\//g, `src="${backendUrl}/uploads/`)
             .replace(/href=["']\/uploads\//g, `href="${backendUrl}/uploads/`);
-        
+
         return fixedContent;
     }
 };
@@ -195,7 +195,7 @@ async function applyGlobalSettings() {
     try {
         // Check if Auth exists, otherwise use default API base
         const apiBase = (typeof Auth !== 'undefined' && Auth.apiBase) ? Auth.apiBase : 'http://localhost:5001/api';
-        
+
         const res = await fetch(`${apiBase}/settings/public`);
 
         if (!res.ok) {
@@ -258,3 +258,125 @@ function initScrollAnimations() {
     const elements = document.querySelectorAll('.scroll-reveal, .fade-in-up, .slide-in-left, .slide-in-right, .scale-up');
     elements.forEach(el => observer.observe(el));
 }
+
+/**
+ * Setup Newsletter Form Logic
+ */
+function setupNewsletter() {
+    const form = document.getElementById('newsletterForm');
+    const feedback = document.getElementById('newsletterFeedback');
+    
+    if (form) {
+        // Show feedback message
+        function showFeedback(message, isSuccess = false) {
+            if (feedback) {
+                feedback.textContent = message;
+                feedback.style.opacity = '1';
+                feedback.style.color = isSuccess ? '#4ade80' : '#f87171';
+                
+                // Auto-hide after 4 seconds
+                setTimeout(() => {
+                    feedback.style.opacity = '0';
+                }, 4000);
+            } else {
+                // Fallback to UI notifications or alert
+                if (window.UI) {
+                    isSuccess ? UI.success(message) : UI.error(message);
+                } else {
+                    alert(message);
+                }
+            }
+        }
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = form.querySelector('button');
+            const input = form.querySelector('input[name="email"]');
+            const originalHTML = btn.innerHTML; // Save icon
+
+            // Validate email client-side first
+            const email = input.value.trim();
+            if (!email) {
+                showFeedback('Please enter your email address', false);
+                input.focus();
+                return;
+            }
+            
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                showFeedback('Please enter a valid email address', false);
+                input.focus();
+                return;
+            }
+
+            // Show loading state
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            btn.disabled = true;
+            input.disabled = true;
+
+            // Determine API Base URL
+            let apiBase = 'http://localhost:5001/api';
+            if (typeof CONFIG !== 'undefined' && CONFIG.API_BASE_URL) apiBase = CONFIG.API_BASE_URL;
+            else if (typeof Auth !== 'undefined' && Auth.apiBase) apiBase = Auth.apiBase;
+
+            try {
+                const response = await fetch(`${apiBase}/subscribers/newsletter`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showFeedback(data.message || 'Successfully subscribed to our newsletter! 🎉', true);
+                    form.reset();
+                } else {
+                    showFeedback(data.message || 'Subscription failed. Please try again.', false);
+                }
+
+            } catch (err) {
+                console.error('Newsletter subscription error:', err);
+                showFeedback('Connection error. Please check your internet and try again.', false);
+            } finally {
+                // Restore button state
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+                input.disabled = false;
+            }
+        });
+        
+        // Add input validation feedback
+        const input = form.querySelector('input[name="email"]');
+        if (input) {
+            input.addEventListener('blur', () => {
+                const email = input.value.trim();
+                if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                    showFeedback('Please enter a valid email address', false);
+                }
+            });
+            
+            input.addEventListener('input', () => {
+                if (feedback && feedback.style.opacity === '1') {
+                    feedback.style.opacity = '0';
+                }
+            });
+        }
+    }
+}
+
+// Auto-init newsletter if not called elsewhere
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('Utils.js loaded - Setting up newsletter functionality...');
+    setupNewsletter();
+    
+    // Additional check to ensure newsletter form exists
+    const form = document.getElementById('newsletterForm');
+    if (form) {
+        console.log('Newsletter form found and initialized');
+    } else {
+        console.log('Newsletter form not found on this page');
+    }
+});

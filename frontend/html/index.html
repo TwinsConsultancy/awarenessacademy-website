@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AWARENESS ACADEMY - Digital Community for Spiritual Growth</title>
-    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="../css/variables.css?v=2">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link
         href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;600&display=swap"
@@ -92,7 +92,7 @@
             position: relative;
             z-index: 10;
             overflow: hidden;
-            background: linear-gradient(135deg, #FF9933 0%, #FFC300 50%, #FF9933 100%);
+            background: linear-gradient(135deg, var(--color-saffron) 0%, var(--color-golden) 50%, var(--color-saffron) 100%);
             background-size: 200% 200%;
             animation: gradientMove 15s ease infinite;
             color: white;
@@ -209,7 +209,10 @@
             text-align: center;
             padding: 50px 30px;
             border-radius: var(--border-radius-lg);
-            background: white;
+            background: var(--color-bg-glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
             box-shadow: var(--shadow-soft);
             transition: var(--transition-smooth);
             position: relative;
@@ -378,7 +381,10 @@
         }
 
         .mentor-card {
-            background: white;
+            background: var(--color-bg-glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
             border-radius: var(--border-radius-lg);
             overflow: hidden;
             box-shadow: var(--shadow-soft);
@@ -478,7 +484,8 @@
         }
 
         .cta-form {
-            background: white;
+            background: var(--color-bg-glass);
+            backdrop-filter: blur(10px);
             padding: 10px;
             border-radius: 50px;
             box-shadow: 0 15px 40px rgba(0, 0, 0, 0.05);
@@ -617,7 +624,9 @@
             <h1 class="fade-in-up" style="animation-delay: 0.2s;">Ignite Your Inner Light</h1>
             <p class="fade-in-up" style="animation-delay: 0.4s;">A journey of a thousand miles begins with a single
                 breath. Join our community of seekers.</p>
-            <a href="courses.html" class="btn-parallax fade-in-up" style="animation-delay: 0.6s;">Explore The Path</a>
+            <div class="fade-in-up" style="animation-delay: 0.6s;">
+                <a href="courses.html" class="btn-parallax">Explore The Path</a>
+            </div>
         </div>
     </section>
 
@@ -628,19 +637,19 @@
             <p>Ancestral wisdom tailored for the modern soul, guiding you towards balance and inner peace.</p>
         </div>
         <div class="philosophy-grid">
-            <div class="philosophy-card fade-in-up" style="animation-delay: 0.2s;">
+            <div class="philosophy-card glass-card fade-in-up" style="animation-delay: 0.2s;">
                 <div class="philosophy-icon"><i class="fas fa-seedling"></i></div>
                 <h3>Growth</h3>
                 <p>We believe that spiritual growth is a continuous course of self-discovery and expansion, nurturing
                     the seed of potential within.</p>
             </div>
-            <div class="philosophy-card fade-in-up" style="animation-delay: 0.4s;">
+            <div class="philosophy-card glass-card fade-in-up" style="animation-delay: 0.4s;">
                 <div class="philosophy-icon"><i class="fas fa-link"></i></div>
                 <h3>Connection</h3>
                 <p>Connect with a global community of like-minded seekers, fostering deep bonds and shared wisdom on
                     this sacred path.</p>
             </div>
-            <div class="philosophy-card fade-in-up" style="animation-delay: 0.6s;">
+            <div class="philosophy-card glass-card fade-in-up" style="animation-delay: 0.6s;">
                 <div class="philosophy-icon"><i class="fas fa-balance-scale"></i></div>
                 <h3>Balance</h3>
                 <p>Finding harmony between the material and spiritual worlds is key to a fulfilled life. We bridge the
@@ -657,8 +666,7 @@
                 <!-- Intro Card -->
                 <div class="h-card">
                     <div class="h-card-number">01</div>
-                    <img src="https://images.unsplash.com/photo-1545389336-cf090694435e?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
-                        alt="Meditation" class="h-card-img">
+                    <img src="../assets/images/home_meditation.jpg" alt="Meditation" class="h-card-img">
                     <div class="h-card-content">
                         <h2>Find Stillness</h2>
                         <p>In the chaos of modern life, silence is the ultimate luxury. Our guided meditation courses
@@ -671,8 +679,7 @@
                 <!-- Featured Course 1 -->
                 <div class="h-card">
                     <div class="h-card-number">02</div>
-                    <img src="https://images.unsplash.com/photo-1518199266791-5375a83190b7?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
-                        alt="Yoga" class="h-card-img">
+                    <img src="../assets/images/home_yoga.jpg" alt="Yoga" class="h-card-img">
                     <div class="h-card-content">
                         <h2>Ancient Wisdom</h2>
                         <p>Discover the timeless teachings of the ages. From the Bhagavad Gita to modern mindfulness, we
@@ -685,8 +692,7 @@
                 <!-- Featured Course 2 -->
                 <div class="h-card">
                     <div class="h-card-number">03</div>
-                    <img src="https://images.unsplash.com/photo-1599447421405-0e5a879d45bb?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
-                        alt="Nature" class="h-card-img">
+                    <img src="../assets/images/home_nature.jpg" alt="Nature" class="h-card-img">
                     <div class="h-card-content">
                         <h2>Connect with Nature</h2>
                         <p>Spirituality is not just about looking inward, but also connecting outward. Learn to see the
@@ -723,8 +729,7 @@
         <div class="mentor-grid">
             <div class="mentor-card scroll-reveal slide-in-left">
                 <div class="mentor-img-wrapper">
-                    <img src="https://images.unsplash.com/photo-1544717305-2782549b5136?ixlib=rb-1.2.1" alt="Mentor 1"
-                        class="mentor-img">
+                    <img src="../assets/images/mentor_swami.jpg" alt="Mentor 1" class="mentor-img">
                     <div class="mentor-social">
                         <a href="#"><i class="fab fa-instagram"></i></a>
                         <a href="#"><i class="fab fa-twitter"></i></a>
@@ -740,8 +745,7 @@
             </div>
             <div class="mentor-card scroll-reveal scale-up">
                 <div class="mentor-img-wrapper">
-                    <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-1.2.1"
-                        alt="Mentor 2" class="mentor-img">
+                    <img src="../assets/images/mentor_priya.jpg" alt="Mentor 2" class="mentor-img">
                     <div class="mentor-social">
                         <a href="#"><i class="fab fa-linkedin"></i></a>
                         <a href="#"><i class="fab fa-twitter"></i></a>
@@ -756,8 +760,7 @@
             </div>
             <div class="mentor-card scroll-reveal slide-in-right">
                 <div class="mentor-img-wrapper">
-                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1"
-                        alt="Mentor 3" class="mentor-img">
+                    <img src="../assets/images/mentor_ramesh.jpg" alt="Mentor 3" class="mentor-img">
                     <div class="mentor-social">
                         <a href="#"><i class="fab fa-youtube"></i></a>
                         <a href="#"><i class="fas fa-globe"></i></a>
@@ -785,17 +788,17 @@
             style="display: flex; gap: 30px; overflow-x: auto; padding: 20px 0; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; max-width: 1200px; margin: 0 auto;">
             <!-- Card 1 -->
             <div class="glass-card scroll-reveal slide-in-left"
-                style="min-width: 350px; padding: 40px; border-radius: 20px; background: white; margin: 10px;">
+                style="min-width: 350px; padding: 40px; border-radius: 20px; margin: 10px;">
                 <i class="fas fa-quote-left"
                     style="font-size: 2rem; color: var(--color-golden); margin-bottom: 20px;"></i>
                 <p style="font-style: italic; color: #555; margin-bottom: 20px; font-size: 1.1rem;">"AWARENESS ACADEMY
                     has
                     completely transformed my morning routine. The Vedic meditation course is a gem."</p>
                 <div style="display: flex; align-items: center; gap: 15px;">
-                    <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80"
+                    <img src="../assets/images/user_sarah.jpg"
                         style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
                     <div>
-                        <h4 style="margin: 0; color: var(--color-primary);">Sarah Jenkins</h4>
+                        <h4 style="margin: 0; color: var(--color-text-primary);">Sarah Jenkins</h4>
                         <small style="color: var(--color-saffron);">Yoga Instructor</small>
                     </div>
                 </div>
@@ -803,7 +806,7 @@
 
             <!-- Card 2 -->
             <div class="glass-card scroll-reveal scale-up"
-                style="min-width: 350px; padding: 40px; border-radius: 20px; background: white; margin: 10px; border-left: 5px solid var(--color-saffron);">
+                style="min-width: 350px; padding: 40px; border-radius: 20px; margin: 10px; border-left: 5px solid var(--color-saffron);">
                 <i class="fas fa-quote-left"
                     style="font-size: 2rem; color: var(--color-golden); margin-bottom: 20px;"></i>
                 <p style="font-style: italic; color: #555; margin-bottom: 20px; font-size: 1.1rem;">"I never understood
@@ -820,7 +823,7 @@
 
             <!-- Card 3 -->
             <div class="glass-card scroll-reveal slide-in-right"
-                style="min-width: 350px; padding: 40px; border-radius: 20px; background: white; margin: 10px;">
+                style="min-width: 350px; padding: 40px; border-radius: 20px; margin: 10px;">
                 <i class="fas fa-quote-left"
                     style="font-size: 2rem; color: var(--color-golden); margin-bottom: 20px;"></i>
                 <p style="font-style: italic; color: #555; margin-bottom: 20px; font-size: 1.1rem;">"The community here
@@ -938,13 +941,18 @@
             <div>
                 <h4>Newsletter</h4>
                 <p style="opacity: 0.7; margin-bottom: 15px; font-size: 0.9rem;">Receive weekly wisdom directly.</p>
-                <div style="position: relative;">
-                    <input type="email" placeholder="Email"
-                        style="width: 100%; padding: 10px; border-radius: 5px; border: none; outline: none;">
-                    <button
-                        style="position: absolute; right: 5px; top: 5px; background: var(--color-saffron); border: none; color: white; border-radius: 3px; padding: 5px 10px; cursor: pointer;"><i
-                            class="fas fa-arrow-right"></i></button>
-                </div>
+                <form id="newsletterForm" style="position: relative;">
+                    <input type="email" name="email" placeholder="Enter your email" required
+                        style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); outline: none; background: rgba(255,255,255,0.1); color: white; font-size: 0.9rem;"
+                        onkeypress="if(event.key==='Enter'){document.getElementById('newsletterSubmit').click();}">
+                    <button type="submit" id="newsletterSubmit"
+                        style="position: absolute; right: 8px; top: 8px; background: var(--color-saffron); border: none; color: white; border-radius: 6px; padding: 8px 12px; cursor: pointer; transition: all 0.3s; font-size: 0.9rem;"
+                        onmouseover="this.style.background='var(--color-golden)'" 
+                        onmouseout="this.style.background='var(--color-saffron)'">
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </form>
+                <div id="newsletterFeedback" style="margin-top: 8px; font-size: 0.8rem; color: #fff; opacity: 0; transition: all 0.3s;"></div>
             </div>
         </div>
         <div

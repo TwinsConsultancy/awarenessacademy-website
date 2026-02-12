@@ -250,7 +250,39 @@ exports.updateCourse = async (req, res) => {
 
                 const results = await Promise.allSettled(emailPromises);
                 const successCount = results.filter(r => r.status === 'fulfilled' && r.value.success).length;
-                console.log(`✅ Successfully notified ${successCount}/${subscribers.length} subscribers`);
+                console.log(`✅ Successfully notified ${successCount}/${subscribers.length} specific course waiters`);
+            }
+
+            // --- NOTIFY GENERAL NEWSLETTER SUBSCRIBERS ---
+            const { Newsletter } = require('../models/index');
+            const newsletterSubscribers = await Newsletter.find();
+
+            if (newsletterSubscribers.length > 0) {
+                console.log(`📧 Notifying ${newsletterSubscribers.length} newsletter subscribers about new course: ${course.title}`);
+
+                // Using the same email service but iterating over newsletter list
+                // Optimally this should be a bulk send or queue, but looping for now as per current pattern
+                const nlPromises = newsletterSubscribers.map(async (sub) => {
+                    try {
+                        await sendCoursePublishedNotification({
+                            subscriberName: 'Subscriber', // Generic name as we only have email
+                            subscriberEmail: sub.email,
+                            courseTitle: course.title,
+                            courseCategory: course.category,
+                            courseMentor: course.mentors?.map(m => m.name).join(', ') || 'InnerSpark Team',
+                            coursePrice: course.price
+                        });
+                        return { success: true };
+                    } catch (e) {
+                        console.error(`Failed to notify newsletter sub ${sub.email}`, e.message);
+                        return { success: false };
+                    }
+                });
+
+                // Fire and forget - don't await all if it takes too long, or await if critical? 
+                // Awaiting to be safe on serverless/instances execution context
+                await Promise.allSettled(nlPromises);
+                console.log(`✅ Newsletter notifications processing complete.`);
             }
         }
 

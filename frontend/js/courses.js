@@ -45,6 +45,55 @@ document.addEventListener('DOMContentLoaded', () => {
 
 let allCourses = [];
 
+// Function to determine which courses should show urgency message today
+function getUrgentCoursesToday(courses) {
+    if (!courses || courses.length === 0) return [];
+    
+    // Use current date to create a consistent selection for the entire day
+    const today = new Date();
+    const dateString = `${today.getFullYear()}-${String(today.getMonth()).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    
+    // Create a stable seed from the date
+    let seed = 0;
+    for (let i = 0; i < dateString.length; i++) {
+        seed = ((seed << 5) - seed + dateString.charCodeAt(i)) & 0xffffffff;
+    }
+    
+    // Filter and sort published courses by ID for consistent ordering
+    const publishedCourses = courses
+        .filter(c => c.status === 'Published')
+        .sort((a, b) => a._id.localeCompare(b._id)); // Consistent sort by ID
+    
+    if (publishedCourses.length === 0) return [];
+    
+    // Determine how many courses should show urgency (max 3, or all if less than 3)
+    const urgentCount = Math.min(3, publishedCourses.length);
+    const urgentCourses = [];
+    
+    // Create a deterministic selection using a simple seeded random
+    function seededRandom(s) {
+        s = Math.sin(s) * 10000;
+        return s - Math.floor(s);
+    }
+    
+    const usedIndices = new Set();
+    for (let i = 0; i < urgentCount; i++) {
+        let attempts = 0;
+        let selectedIndex;
+        
+        do {
+            const randomValue = seededRandom(seed + i * 1234 + attempts * 567);
+            selectedIndex = Math.floor(randomValue * publishedCourses.length);
+            attempts++;
+        } while (usedIndices.has(selectedIndex) && attempts < publishedCourses.length);
+        
+        usedIndices.add(selectedIndex);
+        urgentCourses.push(publishedCourses[selectedIndex]);
+    }
+    
+    return urgentCourses.map(c => c._id);
+}
+
 async function loadMarketplace() {
     try {
         UI.showLoader();
@@ -104,27 +153,81 @@ function renderCourses(courses) {
     const upcoming = courses.filter(c => c.status === 'Approved');
     const current = courses.filter(c => c.status === 'Published');
 
+    // Get today's urgent courses
+    const urgentCourseIds = getUrgentCoursesToday(courses);
+
     // Helper to generate Card HTML
-    const generateCard = (c, isUpcoming) => `
-        <div class="course-card glass-premium" ${!isUpcoming ? `onclick="window.location.href='course-intro.html?id=${c._id}'"` : ''} style="background: white; border-radius: var(--border-radius-lg); overflow: hidden; cursor: ${isUpcoming ? 'default' : 'pointer'}; transition: var(--transition-smooth); opacity: ${isUpcoming ? '0.9' : '1'};">
-            <div class="course-thumb" style="background-image: url('${getThumbnail(c.thumbnail)}'); background-size: cover; background-position: center; height: 200px; width: 100%; position: relative;">
+    const generateCard = (c, isUpcoming) => {
+        const isUrgent = !isUpcoming && urgentCourseIds.includes(c._id);
+        
+        return `
+        <div class="course-card glass-premium" ${!isUpcoming ? `onclick="window.location.href='course-intro.html?id=${c._id}'"` : ''} style="background: var(--color-bg-glass); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.4); border-radius: var(--border-radius-lg); overflow: hidden; cursor: ${isUpcoming ? 'default' : 'pointer'}; transition: var(--transition-smooth); opacity: ${isUpcoming ? '0.9' : '1'}; display: flex; flex-direction: column; height: 100%;">
+            <div class="course-thumb" style="background-image: url('${getThumbnail(c.thumbnail)}'); background-size: cover; background-position: center; height: 200px; width: 100%; position: relative; flex-shrink: 0;">
                 ${isUpcoming ? '<div style="position: absolute; top: 10px; right: 10px; background: var(--color-saffron); color: white; padding: 5px 10px; border-radius: 5px; font-weight: bold; font-size: 0.8rem;">Coming Soon</div>' : ''}
+                ${isUrgent ? `
+                <div style="position: absolute; top: 8px; left: 8px; background: linear-gradient(135deg, #ff5722, #ff9800); color: white; padding: 3px 6px; border-radius: 4px; font-weight: bold; font-size: 0.65rem; text-align: center; animation: fewLeftPulse 2s infinite ease-in-out; box-shadow: 0 2px 6px rgba(255, 87, 34, 0.4); line-height: 1; z-index: 5;">
+                    <i class="fas fa-fire" style="margin-right: 2px; font-size: 0.6rem; animation: fireFlicker 1.5s infinite alternate ease-in-out;"></i>
+                    Few left!
+                </div>
+                <style>
+                    @keyframes fewLeftPulse {
+                        0% { 
+                            opacity: 0.9; 
+                            transform: scale(1);
+                            box-shadow: 0 2px 6px rgba(255, 87, 34, 0.4);
+                        }
+                        50% { 
+                            opacity: 1; 
+                            transform: scale(1.05);
+                            box-shadow: 0 3px 12px rgba(255, 87, 34, 0.8);
+                        }
+                        100% { 
+                            opacity: 0.9; 
+                            transform: scale(1);
+                            box-shadow: 0 2px 6px rgba(255, 87, 34, 0.4);
+                        }
+                    }
+                    @keyframes fireFlicker {
+                        0% { 
+                            opacity: 1; 
+                            transform: rotate(-2deg);
+                        }
+                        25% { 
+                            opacity: 0.8; 
+                            transform: rotate(1deg);
+                        }
+                        50% { 
+                            opacity: 1; 
+                            transform: rotate(-1deg);
+                        }
+                        75% { 
+                            opacity: 0.9; 
+                            transform: rotate(2deg);
+                        }
+                        100% { 
+                            opacity: 1; 
+                            transform: rotate(-1deg);
+                        }
+                    }
+                </style>
+                ` : ''}
             </div>
-            <div style="padding: 20px;">
+            <div style="padding: 20px; flex: 1; display: flex; flex-direction: column;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                     <span style="font-size: 0.75rem; text-transform: uppercase; color: var(--color-saffron); font-weight: 700;">${c.category}</span>
                     <span style="font-weight: 700; color: var(--color-saffron); font-size: 1.1rem;">$${c.price}</span>
                 </div>
-                <h3 style="margin-bottom: 10px; font-family: var(--font-heading);">${c.title}</h3>
+                <h3 style="margin-bottom: 10px; font-family: var(--font-heading); flex: 1;">${c.title}</h3>
                 <p style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 15px;">By ${c.mentors && c.mentors[0] ? c.mentors[0].name : 'Mentor'}</p>
-                <div style="display: flex; align-items: center; gap: 15px; font-size: 0.8rem; color: #999;">
+                <div style="display: flex; align-items: center; gap: 15px; font-size: 0.8rem; color: #999; margin-bottom: 15px;">
                     <span><i class="fas fa-layer-group"></i> ${c.totalLessons || 0} Lessons</span>
                     ${isUpcoming ? '<span><i class="fas fa-clock"></i> Releases Soon</span>' : '<span><i class="fas fa-star" style="color: var(--color-golden);"></i> 4.9</span>'}
                 </div>
-                ${isUpcoming ? `<button onclick="openNotifyModal('${c._id}', '${c.title.replace(/'/g, "\\'")}')" class="btn-primary" style="width: 100%; margin-top: 15px; background: linear-gradient(135deg, #D97706 0%, #F59E0B 100%); cursor: pointer;"><i class="fas fa-bell"></i> Notify Me</button>` : `<button onclick="openExploreModal('${c._id}')" class="btn-primary" style="width: 100%; margin-top: 15px; background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-golden) 100%); cursor: pointer;"><i class="fas fa-compass"></i> Explore Course</button>`}
+                ${isUpcoming ? `<button onclick="openNotifyModal('${c._id}', '${c.title.replace(/'/g, "\\'")}')" class="btn-primary" style="width: 100%; margin-top: auto; background: linear-gradient(135deg, #D97706 0%, #F59E0B 100%); cursor: pointer;"><i class="fas fa-bell"></i> Notify Me</button>` : `<button onclick="openExploreModal('${c._id}')" class="btn-primary" style="width: 100%; margin-top: auto; background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-golden) 100%); cursor: pointer;"><i class="fas fa-compass"></i> Explore Course</button>`}
             </div>
         </div>
     `;
+    };
 
     // Render Upcoming
     if (upcoming.length > 0) {

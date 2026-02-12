@@ -11,31 +11,31 @@ async function checkAdminStatusDiagnostic() {
     const diagnosticPanel = document.getElementById('adminStatusDiagnostic');
     const statusEl = document.getElementById('diagnosticStatus');
     const detailsEl = document.getElementById('diagnosticDetails');
-    
+
     if (!currentUser || currentUser.role !== 'Admin') {
         if (diagnosticPanel) diagnosticPanel.style.display = 'none';
         return;
     }
-    
+
     // Show the diagnostic panel
     if (diagnosticPanel) diagnosticPanel.style.display = 'block';
-    
+
     // CRITICAL: Validate session against server
     try {
         const res = await fetch(`${Auth.apiBase}/auth/profile`, {
             headers: Auth.getHeaders()
         });
-        
+
         if (res.ok) {
             const data = await res.json();
             const serverUser = data.data;
-            
+
             // Compare localStorage with server data
             if (currentUser.isDefaultAdmin !== serverUser.isDefaultAdmin) {
                 console.warn('⚠️ SESSION MISMATCH DETECTED!');
                 console.warn('localStorage isDefaultAdmin:', currentUser.isDefaultAdmin);
                 console.warn('Server isDefaultAdmin:', serverUser.isDefaultAdmin);
-                
+
                 // Force logout with clear message
                 const shouldLogout = confirm(
                     '⚠️ SESSION DATA MISMATCH DETECTED!\n\n' +
@@ -43,7 +43,7 @@ async function checkAdminStatusDiagnostic() {
                     'You MUST log out and log back in for changes to take effect.\n\n' +
                     'Click OK to logout now.'
                 );
-                
+
                 if (shouldLogout) {
                     localStorage.clear();
                     window.location.href = 'login.html';
@@ -55,7 +55,7 @@ async function checkAdminStatusDiagnostic() {
                     return;
                 }
             }
-            
+
             // Update localStorage with fresh server data
             const mergedUser = {
                 ...currentUser,
@@ -66,13 +66,13 @@ async function checkAdminStatusDiagnostic() {
     } catch (error) {
         console.error('Failed to validate session:', error);
     }
-    
+
     // Check if isDefaultAdmin exists
     if (!currentUser.hasOwnProperty('isDefaultAdmin')) {
         statusEl.innerHTML = '<i class="fas fa-exclamation-triangle"></i> ⚠️ STALE SESSION DATA';
         detailsEl.innerHTML = 'Your session is missing privilege data. <strong>Please log out and log back in.</strong>';
         diagnosticPanel.style.background = 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)';
-        
+
         // Auto-show logout prompt after 2 seconds
         setTimeout(() => {
             const shouldLogout = confirm(
@@ -86,7 +86,7 @@ async function checkAdminStatusDiagnostic() {
         }, 2000);
         return;
     }
-    
+
     if (currentUser.isDefaultAdmin === true) {
         statusEl.innerHTML = '<i class="fas fa-shield-alt"></i> ⭐ DEFAULT ADMIN';
         detailsEl.textContent = 'You have full privileges to manage all admins, staff, and students.';
@@ -101,42 +101,42 @@ async function checkAdminStatusDiagnostic() {
 async function refreshAdminStatus() {
     const button = event.target.closest('button');
     const originalContent = button.innerHTML;
-    
+
     try {
         button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
         button.disabled = true;
-        
+
         // Fetch fresh user data from server
         const res = await fetch(`${Auth.apiBase}/auth/profile`, {
             headers: Auth.getHeaders()
         });
-        
+
         if (!res.ok) {
             throw new Error('Failed to fetch profile');
         }
-        
+
         const data = await res.json();
         const updatedUser = data.data;
-        
+
         // Update localStorage with fresh data
         const currentUser = JSON.parse(localStorage.getItem('user'));
         const mergedUser = {
             ...currentUser,
             isDefaultAdmin: updatedUser.isDefaultAdmin || false
         };
-        
+
         localStorage.setItem('user', JSON.stringify(mergedUser));
-        
+
         // Re-check diagnostic
         checkAdminStatusDiagnostic();
-        
+
         UI.success('Admin status refreshed! Page will reload in 2 seconds...');
-        
+
         // Reload page to update all UI elements
         setTimeout(() => {
             window.location.reload();
         }, 2000);
-        
+
     } catch (error) {
         console.error('Refresh failed:', error);
         UI.error('Failed to refresh status. Please log out and log back in.');
@@ -187,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 2. Load Dashboard Stats
     loadStats();
-    
+
     // 3. Check admin status and show diagnostic panel
     checkAdminStatusDiagnostic();
 
@@ -285,79 +285,83 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /* --- NAVIGATION --- */
 function switchSection(section) {
-    // Hide all sections
-    ['overview', 'analytics', 'users', 'courses', 'content', 'finance', 'tickets', 'messages', 'subscribers', 'gallery', 'settings'].forEach(s => {
-        const el = document.getElementById(s + 'Section');
-        if (el) el.style.display = 'none';
+    try {
+        // Hide all sections
+        ['overview', 'analytics', 'users', 'courses', 'content', 'finance', 'tickets', 'messages', 'subscribers', 'gallery', 'settings'].forEach(s => {
+            const el = document.getElementById(s + 'Section');
+            if (el) el.style.display = 'none';
 
-        // Remove active class from nav
-        const links = document.querySelectorAll(`.nav-link[onclick="switchSection('${s}')"]`);
-        links.forEach(l => l.classList.remove('active'));
-    });
-
-    // Show target section
-    const target = document.getElementById(section + 'Section');
-    if (target) {
-        // First, remove active-flex from all sections
-        ['usersSection', 'coursesSection'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) {
-                el.classList.remove('active-flex');
-                if (id !== section + 'Section') {
-                    el.style.display = 'none';
-                }
-            }
+            // Remove active class from nav
+            const links = document.querySelectorAll(`.nav-link[onclick="switchSection('${s}')"]`);
+            links.forEach(l => l.classList.remove('active'));
         });
 
-        // Reset specific class for users/courses section if leaving it, 
-        // OR add it if entering it.
-        if (section === 'users' || section === 'courses') {
-            target.classList.add('active-flex');
-            target.style.display = 'flex';
-        } else {
-            target.style.display = 'block';
-            target.classList.remove('active-flex');
+        // Show target section
+        const target = document.getElementById(section + 'Section');
+        if (target) {
+            // First, remove active-flex from all sections
+            ['usersSection', 'coursesSection'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.classList.remove('active-flex');
+                    if (id !== section + 'Section') {
+                        el.style.display = 'none';
+                    }
+                }
+            });
+
+            // Reset specific class for users/courses section if leaving it, 
+            // OR add it if entering it.
+            if (section === 'users' || section === 'courses') {
+                target.classList.add('active-flex');
+                target.style.display = 'flex';
+            } else {
+                target.style.display = 'block';
+                target.classList.remove('active-flex');
+            }
+            target.classList.add('fade-in');
         }
-        target.classList.add('fade-in');
-    }
 
-    // Activate nav link
-    const activeLink = document.querySelector(`.nav-link[onclick="switchSection('${section}')"]`);
-    if (activeLink) activeLink.classList.add('active');
+        // Activate nav link
+        const activeLink = document.querySelector(`.nav-link[onclick="switchSection('${section}')"]`);
+        if (activeLink) activeLink.classList.add('active');
 
-    // Update Page Title
-    const title = activeLink ? activeLink.getAttribute('title') : 'Overview';
-    document.getElementById('pageTitle').innerText = title;
+        // Update Page Title
+        const title = activeLink ? activeLink.getAttribute('title') : 'Overview';
+        const pageTitleEl = document.getElementById('pageTitle');
+        if (pageTitleEl) pageTitleEl.innerText = title;
 
-    // Load Data based on section
-    if (section === 'analytics') loadAnalytics();
-    if (section === 'finance') loadLedger();
-    if (section === 'users') loadUserManagement(currentUserRoleView);
-    if (section === 'courses') {
-        // Changed from 'queue' to 'manage' since tabs are removed
-        loadCourses();
-        // Logic for sub-section toggling is no longer needed as there's only one view
-        const manageSub = document.getElementById('courseManageSub');
-        if (manageSub) manageSub.style.display = 'flex';
-    }
-    if (section === 'content') {
-        showContentSubSection('banners');
-    }
-    if (section === 'tickets') {
-        loadTickets();
-        loadUnreadTicketCount();
-    }
-    if (section === 'messages') {
-        loadMessages();
-    }
-    if (section === 'subscribers') {
-        loadSubscribers();
-    }
-    if (section === 'gallery') {
-        initGallerySection();
-    }
-    if (section === 'settings') {
-        loadSettings();
+        // Load Data based on section
+        if (section === 'analytics') loadAnalytics();
+        if (section === 'finance') loadLedger();
+        if (section === 'users') loadUserManagement(currentUserRoleView);
+        if (section === 'courses') {
+            loadCourses();
+            const manageSub = document.getElementById('courseManageSub');
+            if (manageSub) manageSub.style.display = 'flex';
+        }
+        if (section === 'content') {
+            showContentSubSection('banners');
+        }
+        if (section === 'tickets') {
+            loadTickets();
+            loadUnreadTicketCount();
+        }
+        if (section === 'messages') {
+            loadMessages();
+        }
+        if (section === 'subscribers') {
+            loadSubscribers();
+        }
+        if (section === 'gallery') {
+            initGallerySection();
+        }
+        if (section === 'settings') {
+            loadSettings();
+        }
+    } catch (err) {
+        console.error('Error switching section:', err);
+        if (section !== 'overview') switchSection('overview');
     }
 }
 
@@ -393,27 +397,27 @@ async function loadQueue() {
     try {
         console.log('[LOAD] Loading pending queue...');
         const res = await fetch(`${Auth.apiBase}/admin/pending`, { headers: Auth.getHeaders() });
-        
+
         console.log('[FETCH] Response status:', res.status);
-        
+
         if (!res.ok) {
             const errorText = await res.text();
             console.error('[ERROR] Failed to fetch:', errorText);
             throw new Error('Failed to fetch pending items');
         }
-        
+
         const data = await res.json();
-        
+
         console.log('[DATA] Raw pending queue data:', data);
         console.log('[DATA] Content items:', data.content?.length || 0);
         console.log('[DATA] Exam items:', data.exams?.length || 0);
-        
+
         // Ensure data has the expected structure
         const queueData = {
             content: Array.isArray(data.content) ? data.content : [],
             exams: Array.isArray(data.exams) ? data.exams : []
         };
-        
+
         console.log('[SUCCESS] Processed queue data:', queueData);
 
         // Render for Overview only (pendingQueue element doesn't exist)
@@ -436,14 +440,14 @@ function renderQueueList(data, containerId, isOverview) {
         const courseId = exam.courseID?._id || exam.courseID;
         return !!courseId; // Only count exams with valid courseID
     });
-    
+
     // Calculate total pending items with valid data only
     const totalPending = (data.content?.length || 0) + validExams.length;
 
     console.log('[RENDER] Rendering to ' + containerId + ', isOverview: ' + isOverview);
     console.log('[RENDER] Total valid pending items: ' + totalPending + ' (content: ' + (data.content?.length || 0) + ', exams: ' + validExams.length + ')');
     console.log('[RENDER] Filtered out ' + ((data.exams?.length || 0) - validExams.length) + ' exams without courseID');
-    
+
     // Update badge count if in overview
     if (isOverview) {
         const badge = document.getElementById('pendingCountBadge');
@@ -475,7 +479,7 @@ function renderQueueList(data, containerId, isOverview) {
     // Limit for overview
     const contentLimit = isOverview ? data.content.slice(0, 3) : data.content;
     const examLimit = isOverview ? validExams.slice(0, 3) : validExams;
-    
+
     console.log(`📝 Rendering ${contentLimit.length} content items and ${examLimit.length} exam items`);
 
     contentLimit.forEach(item => {
@@ -534,20 +538,20 @@ function renderQueueList(data, containerId, isOverview) {
     });
 
     examLimit.forEach((exam, index) => {
-        console.log('[EXAM] Processing exam ' + (index + 1) + ':', { 
-            id: exam._id, 
-            title: exam.title, 
+        console.log('[EXAM] Processing exam ' + (index + 1) + ':', {
+            id: exam._id,
+            title: exam.title,
             courseID: exam.courseID,
             createdBy: exam.createdBy,
             approvalStatus: exam.approvalStatus,
             updatedAt: exam.updatedAt
         });
-        
+
         // Handle missing/undefined exam title and get better creator names
         const examTitle = exam.title && exam.title !== 'undefined' ? exam.title : `Assessment #${index + 1}`;
         const creatorName = exam.createdBy?.name || 'Course Staff';
         const courseName = exam.courseID?.title || 'Course Not Specified';
-        
+
         // Determine if this is a resubmitted assessment
         const createdDate = new Date(exam.createdAt);
         const updatedDate = new Date(exam.updatedAt || exam.createdAt);
@@ -556,11 +560,11 @@ function renderQueueList(data, containerId, isOverview) {
         const statusText = isResubmitted ? 'Resubmitted' : 'Created';
         const statusIcon = isResubmitted ? 'fas fa-redo' : 'fas fa-clock';
         const statusColor = isResubmitted ? '#e67e22' : '#999';
-        
+
         const courseId = exam.courseID?._id || exam.courseID;
         const reviewUrl = `course-preview.html?id=${courseId}&examId=${exam._id}`;
         console.log('[URL] Review URL for "' + examTitle + '":', reviewUrl);
-        
+
         html += `
             <div class="review-card glass-premium" style="background: white; border-radius: 12px; margin-bottom: 10px; padding: 15px; border-left: 4px solid var(--color-golden); cursor:pointer; transition:transform 0.2s; position: relative;"
                  onmouseover="this.style.transform='translateX(5px)'"
@@ -584,7 +588,7 @@ function renderQueueList(data, containerId, isOverview) {
             </div>
         `;
     });
-    
+
     console.log('[SUCCESS] Generated HTML for ' + examLimit.length + ' exams');
 
     // Add "View All" button if overview has more items
@@ -610,15 +614,15 @@ async function cleanupDuplicateAssessments() {
     if (!confirm('This will remove duplicate assessments from the database, keeping only the most recent version of each. Continue?')) {
         return;
     }
-    
+
     try {
         const res = await fetch(`${Auth.apiBase}/exams/cleanup-duplicates`, {
             method: 'POST',
             headers: Auth.getHeaders()
         });
-        
+
         const result = await res.json();
-        
+
         if (res.ok) {
             alert(`✓ Cleanup completed successfully!\n\nFound: ${result.duplicatesFound} duplicates\nRemoved: ${result.duplicatesRemoved} duplicates\n\nThe pending assessments list will now refresh.`);
             // Refresh the pending assessments
@@ -653,12 +657,12 @@ async function loadUserManagement(role) {
     // Get current user to check if they're default admin
     const currentUser = JSON.parse(localStorage.getItem('user'));
     const isCurrentUserDefaultAdmin = currentUser && currentUser.isDefaultAdmin === true;
-    
+
     console.log('🔍 DEBUG - Current User Object:', currentUser);
     console.log('🔍 DEBUG - isDefaultAdmin value:', currentUser?.isDefaultAdmin);
     console.log('🔍 DEBUG - Type of isDefaultAdmin:', typeof currentUser?.isDefaultAdmin);
     console.log('🔍 DEBUG - isCurrentUserDefaultAdmin result:', isCurrentUserDefaultAdmin);
-    
+
     // Alert user if localStorage might be stale
     if (currentUser && currentUser.role === 'Admin' && !currentUser.hasOwnProperty('isDefaultAdmin')) {
         console.warn('⚠️  WARNING: User object missing isDefaultAdmin field! You may need to log out and back in.');
@@ -700,23 +704,23 @@ async function loadUserManagement(role) {
                 </thead>
                 <tbody>
                     ${users.map((u, index) => {
-                        // Debug logging for each user
-                        if (u.role === 'Admin') {
-                            console.log(`👤 Admin User: ${u.name}`, {
-                                isDefaultAdmin: u.isDefaultAdmin,
-                                isCurrentUserDefaultAdmin: isCurrentUserDefaultAdmin,
-                                shouldShowActiveButtons: !(u.isDefaultAdmin || !isCurrentUserDefaultAdmin)
-                            });
-                        }
-                        return `
+            // Debug logging for each user
+            if (u.role === 'Admin') {
+                console.log(`👤 Admin User: ${u.name}`, {
+                    isDefaultAdmin: u.isDefaultAdmin,
+                    isCurrentUserDefaultAdmin: isCurrentUserDefaultAdmin,
+                    shouldShowActiveButtons: !(u.isDefaultAdmin || !isCurrentUserDefaultAdmin)
+                });
+            }
+            return `
                         <tr>
                             <td style="padding: 15px; color: #666;">${index + 1}</td>
                             <td style="padding: 15px;">
                                 <div style="width: 40px; height: 40px; border-radius: 50%; overflow: hidden; background: #eee; display: flex; align-items: center; justify-content: center;">
                                     ${u.profilePic ?
-                `<img src="${u.profilePic}" style="width: 100%; height: 100%; object-fit: cover;">` :
-                `<i class="fas fa-user" style="color: #ccc;"></i>`
-            }
+                    `<img src="${u.profilePic}" style="width: 100%; height: 100%; object-fit: cover;">` :
+                    `<i class="fas fa-user" style="color: #ccc;"></i>`
+                }
                                 </div>
                             </td>
                             <td style="padding: 15px;">
@@ -736,38 +740,39 @@ async function loadUserManagement(role) {
                                     <i class="fas fa-edit"></i> Edit
                                 </button>
                                 ${u.role === 'Admin' && u.isDefaultAdmin ?
-                                    `<button class="btn-primary" style="padding: 5px 10px; font-size: 0.7rem; background: #ccc; cursor: not-allowed; margin-right: 5px;" disabled title="Default admin cannot be disabled">
+                    `<button class="btn-primary" style="padding: 5px 10px; font-size: 0.7rem; background: #ccc; cursor: not-allowed; margin-right: 5px;" disabled title="Default admin cannot be disabled">
                                         <i class="fas fa-lock"></i>
                                     </button>` :
-                                    u.role === 'Admin' && !isCurrentUserDefaultAdmin ?
-                                    `<button class="btn-primary" style="padding: 5px 10px; font-size: 0.7rem; background: #ccc; cursor: not-allowed; margin-right: 5px;" disabled title="Only default admin can disable other admins">
+                    u.role === 'Admin' && !isCurrentUserDefaultAdmin ?
+                        `<button class="btn-primary" style="padding: 5px 10px; font-size: 0.7rem; background: #ccc; cursor: not-allowed; margin-right: 5px;" disabled title="Only default admin can disable other admins">
                                         <i class="fas fa-lock"></i>
                                     </button>` :
-                                    `<button class="btn-primary" style="padding: 5px 10px; font-size: 0.7rem; background: ${u.active ? '#f0ad4e' : '#5cb85c'}; margin-right: 5px;" onclick="requestToggleStatus('${u._id}', '${u.studentID || ''}', '${u.role}', ${u.active}, '${u.name}', ${u.isDefaultAdmin || false})">
+                        `<button class="btn-primary" style="padding: 5px 10px; font-size: 0.7rem; background: ${u.active ? '#f0ad4e' : '#5cb85c'}; margin-right: 5px;" onclick="requestToggleStatus('${u._id}', '${u.studentID || ''}', '${u.role}', ${u.active}, '${u.name}', ${u.isDefaultAdmin || false})">
                                         ${u.active ? 'Disable' : 'Enable'}
                                     </button>`}
-                                ${u.role === 'Admin' && !u.isDefaultAdmin && isCurrentUserDefaultAdmin ? 
-                                    `<button class="btn-primary" style="padding: 5px 10px; font-size: 0.7rem; background: #FF6B6B; margin-right: 5px;" onclick="setDefaultAdmin('${u._id}', '${u.name}')" title="Set as Default Admin">
+                                ${u.role === 'Admin' && !u.isDefaultAdmin && isCurrentUserDefaultAdmin ?
+                    `<button class="btn-primary" style="padding: 5px 10px; font-size: 0.7rem; background: #FF6B6B; margin-right: 5px;" onclick="setDefaultAdmin('${u._id}', '${u.name}')" title="Set as Default Admin">
                                         <i class="fas fa-shield-alt"></i>
-                                    </button>` : 
-                                    u.role === 'Admin' && !u.isDefaultAdmin && !isCurrentUserDefaultAdmin ?
-                                    `<button class="btn-primary" style="padding: 5px 10px; font-size: 0.7rem; background: #ccc; cursor: not-allowed; margin-right: 5px;" disabled title="Only default admin can change default admin">
+                                    </button>` :
+                    u.role === 'Admin' && !u.isDefaultAdmin && !isCurrentUserDefaultAdmin ?
+                        `<button class="btn-primary" style="padding: 5px 10px; font-size: 0.7rem; background: #ccc; cursor: not-allowed; margin-right: 5px;" disabled title="Only default admin can change default admin">
                                         <i class="fas fa-shield-alt" style="opacity: 0.5;"></i>
                                     </button>` : ''}
-                                ${u.role === 'Admin' && u.isDefaultAdmin ? 
-                                    `<button class="btn-primary" style="padding: 5px 10px; font-size: 0.7rem; background: #ccc; cursor: not-allowed;" disabled title="Default admin cannot be deleted">
+                                ${u.role === 'Admin' && u.isDefaultAdmin ?
+                    `<button class="btn-primary" style="padding: 5px 10px; font-size: 0.7rem; background: #ccc; cursor: not-allowed;" disabled title="Default admin cannot be deleted">
                                         <i class="fas fa-lock"></i>
                                     </button>` :
-                                    u.role === 'Admin' && !isCurrentUserDefaultAdmin ?
-                                    `<button class="btn-primary" style="padding: 5px 10px; font-size: 0.7rem; background: #ccc; cursor: not-allowed;" disabled title="Only default admin can delete other admins">
+                    u.role === 'Admin' && !isCurrentUserDefaultAdmin ?
+                        `<button class="btn-primary" style="padding: 5px 10px; font-size: 0.7rem; background: #ccc; cursor: not-allowed;" disabled title="Only default admin can delete other admins">
                                         <i class="fas fa-lock"></i>
                                     </button>` :
-                                    `<button class="btn-primary" style="padding: 5px 10px; font-size: 0.7rem; background: #d9534f;" onclick="requestDeleteUser('${u._id}', '${u.studentID || ''}', '${u.role}')">
+                        `<button class="btn-primary" style="padding: 5px 10px; font-size: 0.7rem; background: #d9534f;" onclick="requestDeleteUser('${u._id}', '${u.studentID || ''}', '${u.role}')">
                                         <i class="fas fa-trash"></i>
                                     </button>`}
                             </td>
                         </tr>
-                    `;}).join('')}
+                    `;
+        }).join('')}
                 </tbody>
             </table>
         `;
@@ -854,7 +859,7 @@ function updateUserStageDisplay() {
 
 function validateCurrentUserStage() {
     const form = document.getElementById('addUserForm');
-    
+
     if (currentUserStage === 1) {
         const role = document.getElementById('userRole').value;
         if (!role) {
@@ -874,30 +879,30 @@ function validateCurrentUserStage() {
     } else if (currentUserStage === 3) {
         const email = document.getElementById('userEmail').value.trim();
         const password = document.getElementById('userPassword').value;
-        
+
         if (!email) {
             UI.error('Please enter an email address');
             return false;
         }
-        
+
         // Email validation
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
             UI.error('Please enter a valid email address');
             return false;
         }
-        
+
         if (!password) {
             UI.error('Please enter a password');
             return false;
         }
-        
+
         if (password.length < 6) {
             UI.error('Password must be at least 6 characters long');
             return false;
         }
     }
-    
+
     return true;
 }
 
@@ -1018,27 +1023,27 @@ async function submitMultiStageUser() {
             body: JSON.stringify(data)
         });
         const result = await res.json();
-        
+
         if (res.ok) {
             // Show success stage
             document.getElementById('userStageSuccess').style.display = 'block';
             document.getElementById('userStage4').style.display = 'none';
-            
+
             // Display the generated ID
             document.getElementById('generatedUserId').textContent = result.studentID || 'ID-GENERATED';
-            
+
             // Update buttons for success stage
             document.getElementById('stageActions').style.display = 'flex';
             document.getElementById('btnPrevStage').style.display = 'none';
             document.getElementById('btnNextStage').style.display = 'none';
             document.getElementById('btnCreateUser').style.display = 'none';
             document.getElementById('btnCloseSuccess').style.display = 'block';
-            
+
             // Update progress to complete
             document.querySelectorAll('.progress-dot').forEach(dot => {
                 dot.style.background = '#27ae60';
             });
-            
+
             loadStats(); // Refresh dashboard stats
         } else {
             UI.error(result.message || 'Failed to create user');
@@ -1133,9 +1138,9 @@ async function confirmDeleteAction() {
                 UI.error(result.message || 'Deletion failed.');
             }
         }
-    } catch (err) { 
+    } catch (err) {
         console.error('Delete error:', err);
-        UI.error('Network error.'); 
+        UI.error('Network error.');
     }
     finally { UI.hideLoader(); }
 }
@@ -1257,7 +1262,7 @@ let targetDisableID = null;
 function requestToggleStatus(id, studentID, role, isActive, userName, isDefaultAdmin = false) {
     // Get current logged-in user
     const currentUser = JSON.parse(localStorage.getItem('user'));
-    
+
     // If active, we are DISABLING -> Show Prompt
     if (isActive) {
         // Check if trying to disable default admin
@@ -1265,13 +1270,13 @@ function requestToggleStatus(id, studentID, role, isActive, userName, isDefaultA
             UI.error('Cannot disable the default admin. Please set another admin as default first.');
             return;
         }
-        
+
         // Check if admin is trying to disable themselves
         if (currentUser && currentUser.id === id) {
             UI.error('You cannot disable your own account.');
             return;
         }
-        
+
         targetDisableID = id;
         document.getElementById('disableTargetID').textContent = studentID || 'NO-ID';
 
@@ -1332,7 +1337,7 @@ async function setDefaultAdmin(adminId, adminName) {
             currentUser.isDefaultAdmin = false;
             localStorage.setItem('user', JSON.stringify(currentUser));
             loadUserManagement(currentUserRoleView);
-            
+
             // Show info popup about privilege transfer
             setTimeout(() => {
                 UI.createPopup({
@@ -1533,18 +1538,18 @@ function switchAnalyticsCategory(category) {
     document.querySelectorAll('.analytics-category').forEach(cat => {
         cat.classList.remove('active');
     });
-    
+
     // Remove active from all tabs
     document.querySelectorAll('.analytics-tab').forEach(tab => {
         tab.classList.remove('active');
     });
-    
+
     // Show selected category
     const selectedCategory = document.querySelector(`[data-category="${category}"]`);
     if (selectedCategory) {
         selectedCategory.classList.add('active');
     }
-    
+
     // Activate corresponding tab
     const tabs = document.querySelectorAll('.analytics-tab');
     const categoryOrder = ['users', 'courses', 'revenue', 'content', 'attendance', 'engagement', 'support', 'system'];
@@ -1571,7 +1576,7 @@ async function loadAnalytics() {
         // Common chart options for interactivity
         const commonOptions = {
             responsive: true,
-            maintainAspectRatio: true,
+            maintainAspectRatio: false,
             interaction: {
                 mode: 'index',
                 intersect: false
@@ -1593,7 +1598,7 @@ async function loadAnalytics() {
         };
 
         // === 1. USER & GROWTH ANALYTICS ===
-        
+
         // KPI Cards
         document.getElementById('kpiStudents').textContent = data.userOverview.totalStudents;
         document.getElementById('kpiStaff').textContent = data.userOverview.totalStaff;
@@ -1602,6 +1607,8 @@ async function loadAnalytics() {
         document.getElementById('kpiInactive').textContent = data.userOverview.inactiveUsers;
 
         // Student Growth Chart
+        if (document.getElementById('analyticsSection').style.display === 'none') return; // Prevent rendering on hidden canvas
+
         const growthLabels = data.studentGrowth.map(d => new Date(d._id).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
         const growthData = data.studentGrowth.map(d => d.count);
         window.analyticsCharts.studentGrowth = new Chart(document.getElementById('studentGrowthChart'), {
@@ -1629,8 +1636,8 @@ async function loadAnalytics() {
                     legend: { display: true, position: 'top' }
                 },
                 scales: {
-                    y: { 
-                        beginAtZero: true, 
+                    y: {
+                        beginAtZero: true,
                         ticks: { stepSize: 1 },
                         grid: { color: 'rgba(0, 0, 0, 0.05)' }
                     },
@@ -1683,7 +1690,7 @@ async function loadAnalytics() {
                         tooltip: {
                             ...commonOptions.plugins.tooltip,
                             callbacks: {
-                                label: function(context) {
+                                label: function (context) {
                                     const label = context.label || '';
                                     const value = context.parsed || 0;
                                     const total = context.dataset.data.reduce((a, b) => a + b, 0);
@@ -1698,7 +1705,7 @@ async function loadAnalytics() {
         }
 
         // === 2. COURSE PERFORMANCE ANALYTICS ===
-        
+
         // Course Enrollment Chart
         const enrollmentLabels = data.courseEnrollments.map(c => c.courseTitle?.substring(0, 25) || 'Unknown');
         const enrollmentData = data.courseEnrollments.map(c => c.enrollmentCount);
@@ -1724,7 +1731,7 @@ async function loadAnalytics() {
                     legend: { display: false }
                 },
                 scales: {
-                    x: { 
+                    x: {
                         beginAtZero: true,
                         grid: { color: 'rgba(0, 0, 0, 0.05)' }
                     },
@@ -1758,8 +1765,8 @@ async function loadAnalytics() {
                     legend: { display: false }
                 },
                 scales: {
-                    x: { 
-                        beginAtZero: true, 
+                    x: {
+                        beginAtZero: true,
                         max: 100,
                         grid: { color: 'rgba(0, 0, 0, 0.05)' }
                     },
@@ -1791,7 +1798,7 @@ async function loadAnalytics() {
         });
 
         // === 3. REVENUE & PAYMENT ANALYTICS ===
-        
+
         // Total Revenue KPI
         document.getElementById('totalRevenueKPI').textContent = `₹${data.totalRevenue.toLocaleString()}`;
 
@@ -1830,7 +1837,7 @@ async function loadAnalytics() {
                     }
                 },
                 scales: {
-                    y: { 
+                    y: {
                         beginAtZero: true,
                         grid: { color: 'rgba(0, 0, 0, 0.05)' },
                         ticks: {
@@ -1895,7 +1902,7 @@ async function loadAnalytics() {
                     }
                 },
                 scales: {
-                    x: { 
+                    x: {
                         beginAtZero: true,
                         grid: { color: 'rgba(0, 0, 0, 0.05)' },
                         ticks: {
@@ -1908,7 +1915,7 @@ async function loadAnalytics() {
         });
 
         // === 4. CONTENT & STAFF ANALYTICS ===
-        
+
         // Content Status Chart
         window.analyticsCharts.contentStatus = new Chart(document.getElementById('contentStatusChart'), {
             type: 'doughnut',
@@ -1955,7 +1962,7 @@ async function loadAnalytics() {
                     legend: { display: false }
                 },
                 scales: {
-                    y: { 
+                    y: {
                         beginAtZero: true,
                         grid: { color: 'rgba(0, 0, 0, 0.05)' }
                     },
@@ -1988,7 +1995,7 @@ async function loadAnalytics() {
                     legend: { display: false }
                 },
                 scales: {
-                    y: { 
+                    y: {
                         beginAtZero: true,
                         grid: { color: 'rgba(0, 0, 0, 0.05)' }
                     },
@@ -1998,7 +2005,7 @@ async function loadAnalytics() {
         });
 
         // === 5. LIVE CLASS & ATTENDANCE ANALYTICS ===
-        
+
         // Attendance Rate Chart
         const attendanceLabels = data.attendanceRate.map(a => new Date(a.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
         const attendanceData = data.attendanceRate.map(a => a.attendanceRate);
@@ -2027,8 +2034,8 @@ async function loadAnalytics() {
                     legend: { display: true, position: 'top' }
                 },
                 scales: {
-                    y: { 
-                        beginAtZero: true, 
+                    y: {
+                        beginAtZero: true,
                         max: 100,
                         grid: { color: 'rgba(0, 0, 0, 0.05)' },
                         ticks: {
@@ -2041,7 +2048,7 @@ async function loadAnalytics() {
         });
 
         // === 6. STUDENT ENGAGEMENT ANALYTICS ===
-        
+
         // Video Completion Chart
         const completionRanges = ['0-25%', '25-50%', '50-75%', '75-100%'];
         const completionCounts = data.videoCompletion.map(v => v.count || 0);
@@ -2070,7 +2077,7 @@ async function loadAnalytics() {
                     legend: { display: false }
                 },
                 scales: {
-                    y: { 
+                    y: {
                         beginAtZero: true,
                         grid: { color: 'rgba(0, 0, 0, 0.05)' }
                     },
@@ -2083,7 +2090,7 @@ async function loadAnalytics() {
         document.getElementById('avgEngagementKPI').textContent = `${data.avgEngagement.toFixed(1)}%`;
 
         // === 7. SUPPORT & FEEDBACK ANALYTICS ===
-        
+
         // Support Requests Chart
         const supportLabels = data.supportRequests.map(s => new Date(s._id).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
         const supportData = data.supportRequests.map(s => s.count);
@@ -2112,7 +2119,7 @@ async function loadAnalytics() {
                     legend: { display: true, position: 'top' }
                 },
                 scales: {
-                    y: { 
+                    y: {
                         beginAtZero: true,
                         grid: { color: 'rgba(0, 0, 0, 0.05)' }
                     },
@@ -2144,7 +2151,7 @@ async function loadAnalytics() {
         });
 
         // === 8. SYSTEM HEALTH & SECURITY ===
-        
+
         // Login Activity Chart
         const loginLabels = data.loginActivity.map(l => new Date(l._id).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
         const loginData = data.loginActivity.map(l => l.logins);
@@ -2173,7 +2180,7 @@ async function loadAnalytics() {
                     legend: { display: true, position: 'top' }
                 },
                 scales: {
-                    y: { 
+                    y: {
                         beginAtZero: true,
                         grid: { color: 'rgba(0, 0, 0, 0.05)' }
                     },
@@ -2206,7 +2213,7 @@ async function loadAnalytics() {
 
         UI.hideLoader();
         UI.success('Analytics loaded successfully');
-    } catch (e) { 
+    } catch (e) {
         console.error('Analytics loading error:', e);
         UI.hideLoader();
         UI.error('Failed to load analytics data');
@@ -4229,7 +4236,7 @@ function setupGalleryUploadHandlers() {
 
     // Drag and drop handlers
     dropZone.addEventListener('click', () => fileInput.click());
-    
+
     dropZone.addEventListener('dragover', (e) => {
         e.preventDefault();
         dropZone.style.borderColor = 'var(--color-golden)';
@@ -4245,7 +4252,7 @@ function setupGalleryUploadHandlers() {
         e.preventDefault();
         dropZone.style.borderColor = 'rgba(199, 151, 47, 0.3)';
         dropZone.style.background = 'rgba(199, 151, 47, 0.05)';
-        
+
         if (e.dataTransfer.files.length > 0) {
             handleGalleryFileSelect(e.dataTransfer.files[0]);
         }
@@ -4320,7 +4327,7 @@ function updateGalleryUploadButton() {
 // Search gallery images
 function searchGalleryImages() {
     const searchTerm = document.getElementById('gallerySearchInput').value.toLowerCase();
-    const filteredImages = allGalleryImages.filter(img => 
+    const filteredImages = allGalleryImages.filter(img =>
         img.description.toLowerCase().includes(searchTerm)
     );
     displayGalleryImages(filteredImages);
@@ -4330,13 +4337,13 @@ function searchGalleryImages() {
 function filterGalleryImages() {
     const filter = document.getElementById('galleryFilterSelect').value;
     let filteredImages = [...allGalleryImages];
-    
+
     if (filter === 'recent') {
         filteredImages.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     } else if (filter === 'popular') {
         filteredImages.sort((a, b) => (b.likes || 0) - (a.likes || 0));
     }
-    
+
     displayGalleryImages(filteredImages);
 }
 
@@ -4372,7 +4379,7 @@ async function uploadGalleryImage() {
             UI.success('✓ Image uploaded successfully!');
             closeGalleryUploadModal();
             loadGalleryImages();
-            
+
             // Show success confirmation
             setTimeout(() => {
                 UI.success('Your image is now live in the gallery!');
@@ -4429,7 +4436,7 @@ function displayGalleryImages(images) {
     }
 
     emptyState.style.display = 'none';
-    
+
     grid.innerHTML = images.map(img => `
         <div class="gallery-card" draggable="true" data-id="${img._id}" style="background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,0.08); transition: all 0.3s; position: relative; cursor: move;">
             <!-- Drag Handle -->
@@ -4495,16 +4502,16 @@ function displayGalleryImages(images) {
     // Add hover effect and drag & drop handlers
     const cards = document.querySelectorAll('.gallery-card');
     let draggedElement = null;
-    
+
     cards.forEach(card => {
         // Hover effects
-        card.addEventListener('mouseenter', function() {
+        card.addEventListener('mouseenter', function () {
             if (!this.classList.contains('dragging')) {
                 this.style.transform = 'translateY(-8px)';
                 this.style.boxShadow = '0 12px 35px rgba(0,0,0,0.15)';
             }
         });
-        card.addEventListener('mouseleave', function() {
+        card.addEventListener('mouseleave', function () {
             if (!this.classList.contains('dragging')) {
                 this.style.transform = 'translateY(0)';
                 this.style.boxShadow = '0 5px 20px rgba(0,0,0,0.08)';
@@ -4512,7 +4519,7 @@ function displayGalleryImages(images) {
         });
 
         // Drag & Drop events
-        card.addEventListener('dragstart', function(e) {
+        card.addEventListener('dragstart', function (e) {
             draggedElement = this;
             this.classList.add('dragging');
             this.style.opacity = '0.5';
@@ -4520,22 +4527,22 @@ function displayGalleryImages(images) {
             e.dataTransfer.setData('text/html', this.innerHTML);
         });
 
-        card.addEventListener('dragend', function() {
+        card.addEventListener('dragend', function () {
             this.classList.remove('dragging');
             this.style.opacity = '1';
             this.style.transform = 'translateY(0)';
             draggedElement = null;
-            
+
             // Show save button
             document.getElementById('galleryDragInfo').style.display = 'flex';
         });
 
-        card.addEventListener('dragover', function(e) {
+        card.addEventListener('dragover', function (e) {
             e.preventDefault();
             if (draggedElement && draggedElement !== this) {
                 const rect = this.getBoundingClientRect();
                 const midpoint = rect.left + rect.width / 2;
-                
+
                 if (e.clientX < midpoint) {
                     this.parentNode.insertBefore(draggedElement, this);
                 } else {
@@ -4544,7 +4551,7 @@ function displayGalleryImages(images) {
             }
         });
 
-        card.addEventListener('drop', function(e) {
+        card.addEventListener('drop', function (e) {
             e.preventDefault();
             e.stopPropagation();
         });
@@ -4556,10 +4563,10 @@ function toggleGalleryMenu(event, imageId) {
     event.stopPropagation();
     const menu = document.getElementById(`menu-${imageId}`);
     const isVisible = menu.style.display === 'block';
-    
+
     // Close all menus
     document.querySelectorAll('.gallery-dropdown').forEach(m => m.style.display = 'none');
-    
+
     // Toggle current menu
     menu.style.display = isVisible ? 'none' : 'block';
 }
@@ -4571,9 +4578,9 @@ document.addEventListener('click', () => {
 
 async function editGalleryImage(imageId, currentDescription) {
     const newDescription = prompt('Enter new description (10-100 characters):', currentDescription);
-    
+
     if (newDescription === null) return; // Cancelled
-    
+
     if (newDescription.trim().length < 10 || newDescription.trim().length > 100) {
         UI.error('Description must be between 10 and 100 characters');
         return;

@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>About AWARENESS ACADEMY - Our Story</title>
-    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="../css/variables.css?v=2">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link
         href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;600&display=swap"
@@ -79,6 +79,7 @@
             text-align: center;
             background: radial-gradient(circle at top right, rgba(255, 153, 51, 0.1), transparent 50%),
                 radial-gradient(circle at bottom left, rgba(255, 195, 0, 0.1), transparent 50%);
+            /* Using rgba for transparency, keeping as is for now as it matches theme, but could use variables if defined as colors */
         }
 
         .about-hero h1 {
@@ -147,7 +148,8 @@
 
         .mission-card:hover {
             transform: translateY(-10px);
-            background: white;
+            background: var(--color-bg-glass);
+            border: 1px solid rgba(255, 255, 255, 0.5);
             box-shadow: var(--shadow-soft);
         }
 
@@ -183,7 +185,7 @@
             border-radius: var(--border-radius-lg);
             overflow: hidden;
             box-shadow: var(--shadow-soft);
-            background: white;
+            /* background managed by glass-card class */
         }
 
         .team-img {
@@ -262,14 +264,14 @@
     </header>
 
     <section class="story-section">
-        <img src="https://images.unsplash.com/photo-1599447292180-45fd84092ef0?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
-            alt="Meditation Group" class="story-img fade-in-up">
+        <img src="../assets/images/about_story.jpg" alt="Meditation Group" class="story-img fade-in-up">
         <div class="story-content fade-in-up" style="animation-delay: 0.2s;">
             <h2>Born from Silence</h2>
             <p>In 2024, our founders met at a retreat in the Himalayas. Surrounded by silence and guided by ancient
                 traditions, they realized a profound truth: the modern world is starving for connection—not just with
                 others, but with the Self.</p>
-            <p>AWARENESS ACADEMY was birthed from that realization. We set out to create a digital sanctuary where timeless
+            <p>AWARENESS ACADEMY was birthed from that realization. We set out to create a digital sanctuary where
+                timeless
                 wisdom could meet the digital age, making spiritual growth accessible, engaging, and community-driven.
             </p>
         </div>
@@ -301,33 +303,29 @@
         <p style="color: var(--color-text-secondary); margin-bottom: 40px;">The voices guiding you on this path.</p>
 
         <div class="team-grid">
-            <div class="team-member fade-in-up">
-                <img src="https://images.unsplash.com/photo-1544717305-2782549b5136?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80"
-                    class="team-img">
+            <div class="team-member glass-card fade-in-up">
+                <img src="../assets/images/mentor_swami.jpg" class="team-img">
                 <div class="team-info">
                     <h3>Swami Dayananda</h3>
                     <p style="color: var(--color-saffron); font-weight: 600;">Head of Meditation</p>
                 </div>
             </div>
-            <div class="team-member fade-in-up" style="animation-delay: 0.2s;">
-                <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80"
-                    class="team-img">
+            <div class="team-member glass-card fade-in-up" style="animation-delay: 0.2s;">
+                <img src="../assets/images/mentor_priya.jpg" class="team-img">
                 <div class="team-info">
                     <h3>Dr. Priya Sharma</h3>
                     <p style="color: var(--color-saffron); font-weight: 600;">Head of Philosophy</p>
                 </div>
             </div>
-            <div class="team-member fade-in-up" style="animation-delay: 0.4s;">
-                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80"
-                    class="team-img">
+            <div class="team-member glass-card fade-in-up" style="animation-delay: 0.4s;">
+                <img src="../assets/images/mentor_ramesh.jpg" class="team-img">
                 <div class="team-info">
                     <h3>Yogi Ramesh</h3>
                     <p style="color: var(--color-saffron); font-weight: 600;">Head of Yoga</p>
                 </div>
             </div>
-            <div class="team-member fade-in-up" style="animation-delay: 0.6s;">
-                <img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80"
-                    class="team-img">
+            <div class="team-member glass-card fade-in-up" style="animation-delay: 0.6s;">
+                <img src="../assets/images/user_sarah_about.jpg" class="team-img">
                 <div class="team-info">
                     <h3>Sarah Jenkins</h3>
                     <p style="color: var(--color-saffron); font-weight: 600;">Mindfulness Coach</p>
@@ -393,13 +391,18 @@
             <div>
                 <h4>Newsletter</h4>
                 <p style="opacity: 0.7; margin-bottom: 15px; font-size: 0.9rem;">Receive weekly wisdom directly.</p>
-                <div style="position: relative;">
-                    <input type="email" placeholder="Email"
-                        style="width: 100%; padding: 10px; border-radius: 5px; border: none; outline: none;">
-                    <button
-                        style="position: absolute; right: 5px; top: 5px; background: var(--color-saffron); border: none; color: white; border-radius: 3px; padding: 5px 10px; cursor: pointer;"><i
-                            class="fas fa-arrow-right"></i></button>
-                </div>
+                <form id="newsletterForm" style="position: relative;">
+                    <input type="email" name="email" placeholder="Enter your email" required
+                        style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); outline: none; background: rgba(255,255,255,0.1); color: white; font-size: 0.9rem;"
+                        onkeypress="if(event.key==='Enter'){document.getElementById('newsletterSubmit').click();}">
+                    <button type="submit" id="newsletterSubmit"
+                        style="position: absolute; right: 8px; top: 8px; background: var(--color-saffron); border: none; color: white; border-radius: 6px; padding: 8px 12px; cursor: pointer; transition: all 0.3s; font-size: 0.9rem;"
+                        onmouseover="this.style.background='var(--color-golden)'" 
+                        onmouseout="this.style.background='var(--color-saffron)'">
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </form>
+                <div id="newsletterFeedback" style="margin-top: 8px; font-size: 0.8rem; color: #fff; opacity: 0; transition: all 0.3s;"></div>
             </div>
         </div>
         <div
