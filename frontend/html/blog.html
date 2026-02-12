@@ -11,11 +11,15 @@
         href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;600&display=swap"
         rel="stylesheet">
     <style>
+        html, body {
+            overflow-x: hidden;
+            width: 100%;
+        }
+
         body {
             font-family: var(--font-body);
             background-color: var(--color-warm-white);
             color: var(--color-text-primary);
-            overflow-x: hidden;
             margin: 0;
             padding: 0;
         }
@@ -172,33 +176,364 @@
             margin-bottom: 25px;
             font-size: 1.1rem;
         }
+
+        /* Logo Styles */
+        .logo {
+            font-size: 1.4rem;
+            font-family: var(--font-heading);
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--color-text-primary);
+            text-decoration: none;
+        }
+
+        .logo img {
+            height: 40px;
+        }
+
+        .nav-links a.active {
+            color: var(--color-saffron);
+        }
+
+        .nav-links .btn-primary {
+            background: linear-gradient(135deg, var(--color-saffron), var(--color-golden));
+            color: white;
+            padding: 12px 30px;
+            border-radius: 30px;
+            text-decoration: none;
+        }
+
+        /* Footer Styles */
+        .footer {
+            background: #111;
+            color: white;
+            padding: 80px 50px 40px;
+            width: 100%;
+            box-sizing: border-box;
+            overflow-x: hidden;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1.5fr;
+            gap: 50px;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .footer-brand p {
+            opacity: 0.7;
+            line-height: 1.8;
+            margin: 20px 0;
+        }
+
+        .footer-brand .logo {
+            color: white;
+        }
+
+        .footer h4 {
+            color: var(--color-golden);
+            margin-bottom: 25px;
+            font-size: 1.1rem;
+        }
+
+        .footer ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .footer li {
+            margin-bottom: 12px;
+        }
+
+        .footer a {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            transition: var(--transition-smooth);
+        }
+
+        .footer a:hover {
+            color: var(--color-saffron);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            opacity: 0.5;
+            font-size: 0.9rem;
+        }
+
+        /* Social Icons */
+        .social-icons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .social-icons a {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            color: white;
+            transition: var(--transition-smooth);
+        }
+
+        .social-icons a:hover {
+            background: var(--color-saffron);
+            transform: translateY(-3px);
+        }
+
+        /* Mobile Menu Button */
+        .mobile-menu-btn {
+            display: none;
+            flex-direction: column;
+            justify-content: space-between;
+            width: 30px;
+            height: 21px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            z-index: 1001;
+        }
+
+        .mobile-menu-btn span {
+            display: block;
+            width: 100%;
+            height: 3px;
+            background: var(--color-text-primary);
+            border-radius: 3px;
+            transition: var(--transition-smooth);
+        }
+
+        .mobile-menu-btn.active span:nth-child(1) {
+            transform: rotate(45deg) translate(5px, 5px);
+        }
+
+        .mobile-menu-btn.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .mobile-menu-btn.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(7px, -6px);
+        }
+
+        /* Mobile Navigation Overlay */
+        .mobile-nav-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition-smooth);
+            z-index: 998;
+        }
+
+        .mobile-nav-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Mobile Navigation Panel */
+        .mobile-nav {
+            position: fixed;
+            top: 0;
+            right: -300px;
+            width: 300px;
+            height: 100vh;
+            background: white;
+            box-shadow: -5px 0 30px rgba(0, 0, 0, 0.1);
+            transition: var(--transition-smooth);
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .mobile-nav.active {
+            right: 0;
+        }
+
+        .mobile-nav-header {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .mobile-nav-header .logo {
+            font-size: 1.2rem;
+        }
+
+        .mobile-nav-header .logo img {
+            height: 35px;
+        }
+
+        .mobile-nav-links {
+            padding: 20px;
+            flex: 1;
+        }
+
+        .mobile-nav-links a {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            color: var(--color-text-primary);
+            text-decoration: none;
+            border-radius: 10px;
+            transition: var(--transition-smooth);
+        }
+
+        .mobile-nav-links a:hover,
+        .mobile-nav-links a.active {
+            background: rgba(255, 153, 51, 0.1);
+            color: var(--color-saffron);
+        }
+
+        .mobile-nav-links a i {
+            width: 20px;
+            text-align: center;
+            color: var(--color-saffron);
+        }
+
+        .mobile-nav-contact {
+            padding: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .mobile-nav-contact p {
+            font-size: 0.85rem;
+            color: #999;
+            margin-bottom: 5px;
+        }
+
+        .mobile-nav-contact a {
+            color: var(--color-saffron);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .mobile-nav-footer {
+            padding: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .mobile-nav-footer .social-icons a {
+            background: rgba(255, 153, 51, 0.1);
+            color: var(--color-saffron);
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 900px) {
+            .nav-links {
+                display: none;
+            }
+
+            .mobile-menu-btn {
+                display: flex;
+            }
+
+            .nav {
+                padding: 15px 20px;
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr 1fr;
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .footer {
+                padding: 50px 20px 30px;
+                width: 100%;
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr;
+                gap: 30px;
+                width: 100%;
+            }
+
+            .blog-header {
+                padding: 140px 20px 80px;
+            }
+
+            .blog-header h1 {
+                font-size: 2rem !important;
+            }
+
+            .blog-content {
+                padding: 30px 20px;
+                margin: -40px 10px 60px;
+            }
+        }
     </style>
 </head>
 
 <body>
-    <nav class="nav" id="mainNav"
-        style="background: rgba(255, 255, 255, 0.95); box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: fixed; top: 0; width: 100%; padding: 15px 50px; display: flex; justify-content: space-between; align-items: center; z-index: 1000;">
-        <a href="index.html" class="logo"
-            style="font-size: 1.8rem; font-family: var(--font-heading); font-weight: 700; color: var(--color-text-primary); display: flex; align-items: center; gap: 10px; text-decoration: none;">
-            <i class="fas fa-bolt" style="color: var(--color-golden);"></i> AWARENESS ACADEMY
+    <nav class="nav" id="mainNav">
+        <a href="index.html" class="logo">
+            <img src="../assets/logo.png" alt="AWARENESS ACADEMY"> AWARENESS ACADEMY
         </a>
         <div class="nav-links">
-            <a href="index.html"
-                style="color: var(--color-text-primary); text-decoration: none; margin-left: 30px; font-weight: 500;">Home</a>
-            <a href="about.html"
-                style="color: var(--color-text-primary); text-decoration: none; margin-left: 30px; font-weight: 500;">About</a>
-            <a href="courses.html"
-                style="color: var(--color-text-primary); text-decoration: none; margin-left: 30px; font-weight: 500;">Courses</a>
-            <a href="gallery.html"
-                style="color: var(--color-text-primary); text-decoration: none; margin-left: 30px; font-weight: 500;">Gallery</a>
-            <a href="blog.html"
-                style="color: var(--color-golden); text-decoration: none; margin-left: 30px; font-weight: 500;">Blog</a>
-            <a href="contact.html"
-                style="color: var(--color-text-primary); text-decoration: none; margin-left: 30px; font-weight: 500;">Contact</a>
-            <a href="login.html" class="btn-primary"
-                style="background: var(--color-saffron); color: white; padding: 12px 30px; border-radius: 30px; margin-left: 30px; text-decoration: none;">Login</a>
+            <a href="index.html">Home</a>
+            <a href="about.html">About</a>
+            <a href="courses.html">Courses</a>
+            <a href="gallery.html">Gallery</a>
+            <a href="blog.html" class="active">Blog</a>
+            <a href="contact.html">Contact</a>
+            <a href="login.html" class="btn-primary">Login</a>
         </div>
+        <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
     </nav>
+
+    <!-- Mobile Navigation Overlay -->
+    <div class="mobile-nav-overlay" id="mobileNavOverlay" onclick="toggleMobileMenu()"></div>
+
+    <!-- Mobile Navigation -->
+    <div class="mobile-nav" id="mobileNav">
+        <div class="mobile-nav-header">
+            <a href="index.html" class="logo">
+                <img src="../assets/logo.png" alt="Logo"> AWARENESS ACADEMY
+            </a>
+        </div>
+        <div class="mobile-nav-links">
+            <a href="index.html"><i class="fas fa-home"></i> Home</a>
+            <a href="about.html"><i class="fas fa-info-circle"></i> About</a>
+            <a href="courses.html"><i class="fas fa-graduation-cap"></i> Courses</a>
+            <a href="gallery.html"><i class="fas fa-images"></i> Gallery</a>
+            <a href="blog.html" class="active"><i class="fas fa-blog"></i> Blog</a>
+            <a href="contact.html"><i class="fas fa-envelope"></i> Contact</a>
+            <a href="login.html"><i class="fas fa-sign-in-alt"></i> Login</a>
+        </div>
+        <div class="mobile-nav-contact">
+            <p>Get in touch</p>
+            <a href="tel:+919843341742">+91 98433 41742</a>
+        </div>
+        <div class="mobile-nav-footer">
+            <div class="social-icons">
+                <a href="https://www.instagram.com/awarenessacademy_abishek" target="_blank"><i class="fab fa-instagram"></i></a>
+                <a href="https://www.youtube.com/@awarenessacademy4396" target="_blank"><i class="fab fa-youtube"></i></a>
+                <a href="https://www.facebook.com/Awarenessacademy-103831264982368/" target="_blank"><i class="fab fa-facebook-f"></i></a>
+                <a href="https://wa.me/919843341742" target="_blank"><i class="fab fa-whatsapp"></i></a>
+            </div>
+        </div>
+    </div>
 
     <!-- Dynamic Header -->
     <header class="blog-header" id="blogHeader">
@@ -221,72 +556,49 @@
 
     </main>
 
-    <!-- Footer -->
-    <footer class="footer" style="background: #111; color: white; padding: 80px 50px;">
-        <div class="footer-grid"
-            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 50px; max-width: 1200px; margin: 0 auto; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 50px;">
-            <div>
-                <a href="index.html" class="footer-logo"
-                    style="color: white; text-decoration: none; font-size: 1.5rem; font-family: var(--font-heading); font-weight: 700;">✨
-                    AWARENESS ACADEMY</a>
-                <p style="opacity: 0.7; line-height: 1.8; margin-top: 15px;">A sacred space for those seeking to
-                    rediscover their internal light through ancient wisdom and modern mindfulness.</p>
-                <div class="social-icons" style="display: flex; gap: 15px; margin-top: 20px;">
-                    <a href="#" style="color: rgba(255,255,255,0.6); font-size: 1.2rem; transition: color 0.3s;"><i
-                            class="fab fa-instagram"></i></a>
-                    <a href="#" style="color: rgba(255,255,255,0.6); font-size: 1.2rem; transition: color 0.3s;"><i
-                            class="fab fa-twitter"></i></a>
-                    <a href="#" style="color: rgba(255,255,255,0.6); font-size: 1.2rem; transition: color 0.3s;"><i
-                            class="fab fa-facebook-f"></i></a>
+    <footer class="footer">
+        <div class="footer-grid">
+            <div class="footer-brand">
+                <a href="index.html" class="logo">
+                    <img src="../assets/logo.png" alt="AWARENESS ACADEMY"> AWARENESS ACADEMY
+                </a>
+                <p>A sanctuary for transformation, empowering individuals to live with clarity, purpose, and harmony through ancient wisdom and modern practices.</p>
+                <div class="social-icons">
+                    <a href="https://www.instagram.com/awarenessacademy_abishek" target="_blank"><i class="fab fa-instagram"></i></a>
+                    <a href="https://www.youtube.com/@awarenessacademy4396" target="_blank"><i class="fab fa-youtube"></i></a>
+                    <a href="https://www.facebook.com/Awarenessacademy-103831264982368/" target="_blank"><i class="fab fa-facebook-f"></i></a>
+                    <a href="https://wa.me/919843341742" target="_blank"><i class="fab fa-whatsapp"></i></a>
                 </div>
             </div>
             <div>
-                <h4 style="color: var(--color-golden); margin-bottom: 20px;">Discover</h4>
-                <ul style="list-style: none; padding: 0;">
-                    <li style="margin-bottom: 15px;"><a href="about.html"
-                            style="color: #aaa; text-decoration: none;">Our Story</a></li>
-                    <li style="margin-bottom: 15px;"><a href="courses.html"
-                            style="color: #aaa; text-decoration: none;">All Courses</a></li>
-                    <li style="margin-bottom: 15px;"><a href="blog.html"
-                            style="color: #aaa; text-decoration: none;">Wisdom Blog</a></li>
-                    <li style="margin-bottom: 15px;"><a href="contact.html"
-                            style="color: #aaa; text-decoration: none;">Contact Us</a></li>
+                <h4>Quick Links</h4>
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="about.html">About Us</a></li>
+                    <li><a href="courses.html">Courses</a></li>
+                    <li><a href="gallery.html">Gallery</a></li>
+                    <li><a href="contact.html">Contact</a></li>
                 </ul>
             </div>
             <div>
-                <h4 style="color: var(--color-golden); margin-bottom: 20px;">Community</h4>
-                <ul style="list-style: none; padding: 0;">
-                    <li style="margin-bottom: 15px;"><a href="login.html"
-                            style="color: #aaa; text-decoration: none;">Login / Register</a></li>
-                    <li style="margin-bottom: 15px;"><a href="#" style="color: #aaa; text-decoration: none;">Events</a>
-                    </li>
-                    <li style="margin-bottom: 15px;"><a href="#" style="color: #aaa; text-decoration: none;">Support</a>
-                    </li>
-                    <li style="margin-bottom: 15px;"><a href="terms.html"
-                            style="color: #aaa; text-decoration: none;">Terms & Conditions</a></li>
-                    <li style="margin-bottom: 15px;"><a href="privacy.html"
-                            style="color: #aaa; text-decoration: none;">Privacy Policy</a></li>
+                <h4>Legal</h4>
+                <ul>
+                    <li><a href="terms.html">Terms & Conditions</a></li>
+                    <li><a href="privacy.html">Privacy Policy</a></li>
+                    <li><a href="login.html">Login / Register</a></li>
                 </ul>
             </div>
             <div>
-                <h4 style="color: var(--color-golden); margin-bottom: 20px;">Newsletter</h4>
-                <p style="opacity: 0.7; margin-bottom: 15px; font-size: 0.9rem;">Receive weekly wisdom directly.</p>
-                <form id="newsletterForm" style="position: relative;">
-                    <input type="email" name="email" placeholder="Enter your email" required
-                        style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); outline: none; background: rgba(255,255,255,0.1); color: white; font-size: 0.9rem;"
-                        onkeypress="if(event.key==='Enter'){document.getElementById('newsletterSubmit').click();}">
-                    <button type="submit" id="newsletterSubmit"
-                        style="position: absolute; right: 8px; top: 8px; background: var(--color-saffron); border: none; color: white; border-radius: 6px; padding: 8px 12px; cursor: pointer; transition: all 0.3s; font-size: 0.9rem;"
-                        onmouseover="this.style.background='var(--color-golden)'" 
-                        onmouseout="this.style.background='var(--color-saffron)'">
-                        <i class="fas fa-arrow-right"></i>
-                    </button>
-                </form>
-                <div id="newsletterFeedback" style="margin-top: 8px; font-size: 0.8rem; color: #fff; opacity: 0; transition: all 0.3s;"></div>
+                <h4>Contact Info</h4>
+                <ul style="opacity: 0.7;">
+                    <li style="margin-bottom: 15px;"><i class="fas fa-envelope" style="margin-right: 10px; color: var(--color-saffron);"></i> awarenessacademy26@gmail.com</li>
+                    <li style="margin-bottom: 15px;"><i class="fas fa-phone" style="margin-right: 10px; color: var(--color-saffron);"></i> +91 98433 41742</li>
+                    <li style="margin-bottom: 15px;"><i class="fas fa-phone" style="margin-right: 10px; color: var(--color-saffron);"></i> +91 87541 23775</li>
+                    <li><i class="fas fa-map-marker-alt" style="margin-right: 10px; color: var(--color-saffron);"></i> Thammampatty, Salem District, Tamil Nadu, India</li>
+                </ul>
             </div>
         </div>
-        <div
-            style="text-align: center; margin-top: 50px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); opacity: 0.5; font-size: 0.85rem;">
+        <div class="footer-bottom">
             &copy; 2026 AWARENESS ACADEMY. All rights reserved.
         </div>
     </footer>
@@ -301,7 +613,7 @@
                 title: "The Art of Doing Nothing",
                 category: "Mindfulness",
                 date: "October 12, 2025",
-                author: "Swami Dayananda",
+                author: "Abhishek Rajan",
                 image: "../assets/images/blog_mindfulness.jpg",
                 content: `
                     <p class="drop-cap">In our hyper-connected world, silence has become the ultimate luxury. We are constantly bombarded with notifications, deadlines, and the endless scroll of information. Yet, the ancient sages taught that true wisdom arises not from accumulation, but from stillness.</p>
@@ -316,7 +628,7 @@
                 title: "Eating for Prana: A Vedic Guide",
                 category: "Wellness",
                 date: "November 05, 2025",
-                author: "Dr. Priya Sharma",
+                author: "Abhishek Rajan",
                 image: "../assets/images/blog_diet.jpg",
                 content: `
                     <p>In Ayurveda, food is not just calories; it is information. It is Prana (life force). What we eat vibrates at a certain frequency, and this vibration directly impacts our consciousness.</p>
@@ -418,6 +730,28 @@
 
             // Init animations
             initScrollAnimations();
+        });
+
+        // Mobile menu toggle
+        function toggleMobileMenu() {
+            const mobileNav = document.getElementById('mobileNav');
+            const mobileNavOverlay = document.getElementById('mobileNavOverlay');
+            const menuBtn = document.querySelector('.mobile-menu-btn');
+            
+            mobileNav.classList.toggle('active');
+            mobileNavOverlay.classList.toggle('active');
+            menuBtn.classList.toggle('active');
+            document.body.style.overflow = mobileNav.classList.contains('active') ? 'hidden' : '';
+        }
+
+        // Close mobile menu when clicking a link
+        document.querySelectorAll('.mobile-nav-links a').forEach(link => {
+            link.addEventListener('click', () => {
+                document.getElementById('mobileNav').classList.remove('active');
+                document.getElementById('mobileNavOverlay').classList.remove('active');
+                document.querySelector('.mobile-menu-btn').classList.remove('active');
+                document.body.style.overflow = '';
+            });
         });
     </script>
 </body>

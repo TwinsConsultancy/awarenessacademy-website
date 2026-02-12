@@ -11,6 +11,11 @@
         href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;600&display=swap"
         rel="stylesheet">
     <style>
+        html, body {
+            overflow-x: hidden;
+            width: 100%;
+        }
+
         body {
             font-family: var(--font-body);
             background-color: var(--color-warm-white);
@@ -107,6 +112,9 @@
             padding: 80px 50px;
             position: relative;
             z-index: 10;
+            width: 100%;
+            box-sizing: border-box;
+            overflow-x: hidden;
         }
 
         .footer-grid {
@@ -117,6 +125,7 @@
             margin: 0 auto;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             padding-bottom: 50px;
+            width: 100%;
         }
 
         .footer-logo {
@@ -408,6 +417,24 @@
             .nav-links {
                 gap: 15px;
             }
+
+            .footer-grid {
+                grid-template-columns: 1fr 1fr;
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .footer {
+                padding: 50px 20px 30px;
+                width: 100%;
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr;
+                gap: 30px;
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -415,8 +442,8 @@
 <body>
     <!-- Navbar -->
     <nav class="nav" id="mainNav">
-        <a href="index.html" class="logo">
-            <i class="fas fa-bolt" style="color: var(--color-golden);"></i> AWARENESS ACADEMY
+        <a href="index.html" class="logo" style="display: flex; align-items: center; gap: 10px;">
+            <img src="../assets/logo.png" alt="AWARENESS ACADEMY" style="height: 40px;"> AWARENESS ACADEMY
         </a>
         <div class="nav-links">
             <a href="index.html">Home</a>
@@ -842,13 +869,14 @@
     <footer class="footer">
         <div class="footer-grid">
             <div>
-                <a href="#" class="footer-logo">✨ AWARENESS ACADEMY</a>
+                <a href="#" class="footer-logo" style="display: flex; align-items: center; gap: 10px;"><img src="../assets/logo.png" alt="AWARENESS ACADEMY" style="height: 50px;"> AWARENESS ACADEMY</a>
                 <p style="opacity: 0.7; line-height: 1.8;">A sacred space for those seeking to rediscover their internal
                     light through ancient wisdom and modern mindfulness.</p>
                 <div class="social-icons">
-                    <a href="#"><i class="fab fa-instagram"></i></a>
-                    <a href="#"><i class="fab fa-twitter"></i></a>
-                    <a href="#"><i class="fab fa-facebook-f"></i></a>
+                    <a href="https://www.instagram.com/awarenessacademy_abishek" target="_blank"><i class="fab fa-instagram"></i></a>
+                    <a href="https://www.youtube.com/@awarenessacademy4396" target="_blank"><i class="fab fa-youtube"></i></a>
+                    <a href="https://www.facebook.com/Awarenessacademy-103831264982368/" target="_blank"><i class="fab fa-facebook-f"></i></a>
+                    <a href="https://wa.me/919843341742" target="_blank"><i class="fab fa-whatsapp"></i></a>
                 </div>
             </div>
             <div>

@@ -1605,8 +1605,8 @@
         </button>
         <div class="sidebar-overlay" onclick="toggleMobileSidebar()"></div>
         <aside class="sidebar" id="sidebar">
-            <div class="brand">
-                <span class="brand-text">AWARENESS ACADEMY</span>
+            <div class="brand" style="display: flex; align-items: center; gap: 10px;">
+                <img src="../assets/logo.png" alt="AWARENESS ACADEMY" class="brand-text" style="height: 40px;"> <span class="brand-text">AWARENESS ACADEMY</span>
             </div>
 
             <ul class="nav-menu">
@@ -1676,10 +1676,9 @@
         <main class="main-content">
             <!-- Top Header Bar -->
             <div class="top-header">
-                <div class="top-header-brand" style="opacity: 0; pointer-events: none;">
+                <div class="top-header-brand" style="opacity: 0; pointer-events: none; display: flex; align-items: center; gap: 10px;">
                     <!-- Hidden brand on header for desktop -->
-                    <i class="fas fa-bolt"></i>
-                    <span>AWARENESS ACADEMY</span>
+                    <img src="../assets/logo.png" alt="AWARENESS ACADEMY" style="height: 40px;"> <span style="font-family: var(--font-heading); font-weight: bold;">AWARENESS ACADEMY</span>
                 </div>
                 <div class="top-header-right">
                     <div class="user-profile">
@@ -2756,7 +2755,7 @@
                                                     Email</label>
                                                 <div style="display: flex; gap: 15px;">
                                                     <input type="email" id="supportEmailInput" class="form-control"
-                                                        placeholder="support@awarenessacademy.com"
+                                                        placeholder="awarenessacademy26@gmail.com"
                                                         style="flex: 1; padding: 12px 15px; border-radius: 10px;">
                                                     <button class="btn-primary"
                                                         onclick="updatePlatformInfo()">Save</button>
