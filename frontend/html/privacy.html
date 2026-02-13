@@ -4,7 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Privacy Policy - AWARENESS ACADEMY</title>
+    <title>Privacy Policy | Awareness Academy India</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Awareness Academy Privacy Policy. Learn how we collect, use, and protect your personal information when you use our spiritual education services.">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://awarenessacademy.in/privacy.html">
+    
     <link rel="stylesheet" href="../css/variables.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -57,15 +63,16 @@
         .nav-links {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
 
         .nav-links a {
-            margin-left: 30px;
             color: var(--color-text-primary);
             text-decoration: none;
             font-weight: 500;
             transition: color 0.3s;
+            padding: 8px 16px;
+            white-space: nowrap;
         }
 
         .nav-links a:hover {
@@ -294,22 +301,29 @@
         }
 
         .mobile-nav-contact {
-            padding: 20px;
-            background: rgba(255, 153, 51, 0.05);
-            border-top: 1px solid #eee;
+            padding: 8px 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .mobile-nav-contact p {
-            font-size: 0.85rem;
-            color: #666;
-            margin-bottom: 5px;
+        .mobile-nav-contact-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.7);
         }
 
-        .mobile-nav-contact a {
+        .mobile-nav-contact-item i {
             color: var(--color-saffron);
+            font-size: 0.85rem;
+        }
+
+        .mobile-nav-contact-item a {
+            color: white;
             text-decoration: none;
             font-weight: 600;
-            font-size: 1.1rem;
+            font-size: 0.85rem;
         }
 
         .mobile-nav-footer {
@@ -484,6 +498,44 @@
             color: white;
         }
 
+        @media (max-width: 1200px) {
+            .nav {
+                padding: 20px 30px;
+            }
+
+            .nav-links {
+                gap: 4px;
+            }
+
+            .nav-links a {
+                padding: 8px 12px;
+                font-size: 0.95rem;
+            }
+
+            .logo {
+                font-size: 1.3rem;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .nav {
+                padding: 18px 25px;
+            }
+
+            .nav-links a {
+                padding: 8px 10px;
+                font-size: 0.9rem;
+            }
+
+            .logo {
+                font-size: 1.2rem;
+            }
+
+            .logo img {
+                height: 36px;
+            }
+        }
+
         @media (max-width: 900px) {
             .nav-links {
                 display: none;
@@ -552,7 +604,7 @@
             <a href="about.html">About</a>
             <a href="courses.html">Courses</a>
             <a href="gallery.html">Gallery</a>
-            <a href="blog.html">Blog</a>
+            <a href="faq.html">FAQ</a>
             <a href="contact.html">Contact</a>
             <a href="login.html" class="btn-primary">Login</a>
         </div>
@@ -578,13 +630,15 @@
             <a href="about.html"><i class="fas fa-info-circle"></i> About</a>
             <a href="courses.html"><i class="fas fa-graduation-cap"></i> Courses</a>
             <a href="gallery.html"><i class="fas fa-images"></i> Gallery</a>
-            <a href="blog.html"><i class="fas fa-blog"></i> Blog</a>
+            <a href="faq.html"><i class="fas fa-question-circle"></i> FAQ</a>
             <a href="contact.html"><i class="fas fa-envelope"></i> Contact</a>
             <a href="login.html"><i class="fas fa-sign-in-alt"></i> Login</a>
         </div>
         <div class="mobile-nav-contact">
-            <p>Get in touch</p>
-            <a href="tel:+919843341742">+91 98433 41742</a>
+            <div class="mobile-nav-contact-item">
+                <i class="fas fa-phone"></i>
+                <a href="tel:+919843341742">+91 98433 41742</a>
+            </div>
         </div>
         <div class="mobile-nav-footer">
             <div class="social-icons">

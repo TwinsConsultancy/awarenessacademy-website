@@ -4,7 +4,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Join AWARENESS ACADEMY - Begin Your Journey</title>
+    <title>Join Awareness Academy | Begin Your Spiritual Journey</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Create your account at Awareness Academy. Join thousands of seekers on the path to spiritual growth, meditation mastery, and holistic wellness.">
+    <meta name="keywords" content="join awareness academy, spiritual academy registration, meditation course enrollment India">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://awarenessacademy.in/register.html">
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Join Awareness Academy | Start Your Journey">
+    <meta property="og:description" content="Begin your transformation. Create your account and explore spiritual courses.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://awarenessacademy.in/register.html">
+    <meta property="og:site_name" content="Awareness Academy">
+    
     <link rel="stylesheet" href="../css/variables.css?v=2">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link
@@ -28,25 +42,69 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 40px 20px;
+            padding: 50px 20px;
+            position: relative;
+            z-index: 1;
         }
 
         .auth-card {
             width: 100%;
-            max-width: 500px;
-            padding: 40px;
+            max-width: 550px;
+            padding: 50px 45px;
             margin: auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 28px;
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(255, 153, 51, 0.15);
+            animation: scaleIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            overflow: visible;
+        }
+
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .auth-card::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(135deg, var(--color-saffron), var(--color-golden), var(--color-saffron));
+            border-radius: 28px;
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+
+        .auth-card:hover::before {
+            opacity: 0.3;
         }
 
         .auth-header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 35px;
         }
 
         .auth-header h2 {
-            font-size: 2.2rem;
-            color: var(--color-saffron);
-            margin-bottom: 10px;
+            font-size: 2.6rem;
+            background: linear-gradient(135deg, var(--color-saffron), var(--color-golden));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+            font-weight: 800;
+            letter-spacing: -1px;
         }
 
         .form-group {
@@ -157,57 +215,77 @@
             color: #721c24;
         }
 
-        /* Step Indicator Styles */
         .step-indicator {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 15px;
-            margin: 25px 0;
+            gap: 12px;
+            margin: 30px 0 35px;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(255, 153, 51, 0.08), rgba(255, 195, 0, 0.08));
+            border-radius: 16px;
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.05);
         }
 
         .step {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
+            position: relative;
         }
 
         .step-number {
-            width: 40px;
-            height: 40px;
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
-            background: #E5E7EB;
+            background: white;
             color: #9CA3AF;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 700;
-            font-size: 16px;
-            transition: all 0.3s ease;
+            font-size: 18px;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border: 3px solid #E5E7EB;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            position: relative;
+            z-index: 2;
         }
 
         .step.active .step-number {
-            background: var(--color-golden);
+            background: linear-gradient(135deg, var(--color-golden), #F59E0B);
             color: white;
-            box-shadow: 0 0 0 4px rgba(217, 119, 6, 0.2);
+            border-color: var(--color-golden);
+            box-shadow: 0 8px 20px rgba(217, 119, 6, 0.4), 0 0 0 6px rgba(217, 119, 6, 0.15);
+            transform: scale(1.15);
         }
 
         .step.completed .step-number {
-            background: #10B981;
+            background: linear-gradient(135deg, #10B981, #059669);
             color: white;
+            border-color: #10B981;
+            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3);
+            animation: completePulse 0.6s ease-out;
+        }
+
+        @keyframes completePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
         }
 
         .step-label {
-            font-size: 12px;
+            font-size: 13px;
             color: #9CA3AF;
-            font-weight: 500;
+            font-weight: 600;
             transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .step.active .step-label {
             color: var(--color-golden);
-            font-weight: 600;
+            font-weight: 700;
         }
 
         .step.completed .step-label {
@@ -215,10 +293,29 @@
         }
 
         .step-line {
-            width: 60px;
-            height: 2px;
-            background: #E5E7EB;
-            margin-bottom: 30px;
+            width: 70px;
+            height: 3px;
+            background: linear-gradient(to right, #E5E7EB, #D1D5DB);
+            margin-bottom: 40px;
+            border-radius: 2px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .step.completed + .step-line::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to right, #10B981, #059669);
+            animation: progressLine 0.5s ease-out;
+        }
+
+        @keyframes progressLine {
+            from { width: 0; }
+            to { width: 100%; }
         }
 
         .btn-link {
@@ -284,7 +381,7 @@
         .nav-links {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
 
         .nav-links a {
@@ -294,6 +391,7 @@
             padding: 8px 16px;
             border-radius: 8px;
             transition: all 0.3s ease;
+            white-space: nowrap;
         }
 
         .nav-links a:hover {
@@ -574,23 +672,70 @@
         }
 
         .mobile-nav-contact {
-            padding: 15px 30px;
-            text-align: center;
+            padding: 8px 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .mobile-nav-contact p {
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 0.85rem;
-            margin-bottom: 8px;
+        .mobile-nav-contact-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.7);
         }
 
-        .mobile-nav-contact a {
+        .mobile-nav-contact-item i {
             color: var(--color-saffron);
+            font-size: 0.85rem;
+        }
+
+        .mobile-nav-contact-item a {
+            color: white;
             text-decoration: none;
-            font-size: 0.9rem;
+            font-weight: 600;
+            font-size: 0.85rem;
         }
 
         /* --- Responsive --- */
+        @media (max-width: 1200px) {
+            .nav {
+                padding: 20px 30px;
+            }
+
+            .nav-links {
+                gap: 4px;
+            }
+
+            .nav-links a {
+                padding: 8px 12px;
+                font-size: 0.95rem;
+            }
+
+            .logo {
+                font-size: 1.3rem;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .nav {
+                padding: 18px 25px;
+            }
+
+            .nav-links a {
+                padding: 8px 10px;
+                font-size: 0.9rem;
+            }
+
+            .logo {
+                font-size: 1.2rem;
+            }
+
+            .logo img {
+                height: 36px;
+            }
+        }
+
         @media (max-width: 900px) {
             .nav-links {
                 display: none;
@@ -671,7 +816,7 @@
             <a href="about.html">About</a>
             <a href="courses.html">Courses</a>
             <a href="gallery.html">Gallery</a>
-            <a href="blog.html">Blog</a>
+            <a href="faq.html">FAQ</a>
             <a href="contact.html">Contact</a>
             <a href="login.html" class="btn-primary">Login</a>
         </div>
@@ -697,13 +842,15 @@
             <a href="about.html"><i class="fas fa-info-circle"></i> About</a>
             <a href="courses.html"><i class="fas fa-graduation-cap"></i> Courses</a>
             <a href="gallery.html"><i class="fas fa-images"></i> Gallery</a>
-            <a href="blog.html"><i class="fas fa-blog"></i> Blog</a>
+            <a href="faq.html"><i class="fas fa-question-circle"></i> FAQ</a>
             <a href="contact.html"><i class="fas fa-envelope"></i> Contact</a>
             <a href="login.html"><i class="fas fa-sign-in-alt"></i> Login</a>
         </div>
         <div class="mobile-nav-contact">
-            <p>Get in touch</p>
-            <a href="tel:+919843341742">+91 98433 41742</a>
+            <div class="mobile-nav-contact-item">
+                <i class="fas fa-phone"></i>
+                <a href="tel:+919843341742">+91 98433 41742</a>
+            </div>
         </div>
         <div class="mobile-nav-footer">
             <div class="social-icons">

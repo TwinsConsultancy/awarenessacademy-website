@@ -4,7 +4,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>All Courses - AWARENESS ACADEMY</title>
+    <title>Spiritual & Meditation Courses | Reiki, Yoga Training | Tamil Nadu</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Explore certified courses in meditation, Reiki healing, yoga, mudras & personal development. Online & offline programs at Awareness Academy, Tamil Nadu, India.">
+    <meta name="keywords" content="meditation courses India, Reiki training Tamil Nadu, yoga certification Salem, spiritual development courses, holistic healing training, mudra therapy course, online meditation classes">
+    <meta name="author" content="Abhishek Rajan - Awareness Academy">
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+    <link rel="canonical" href="https://awarenessacademy.in/courses.html">
+    
+    <!-- Geographic Meta Tags -->
+    <meta name="geo.region" content="IN-TN">
+    <meta name="geo.placename" content="Thammampatty, Salem, Tamil Nadu">
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Spiritual & Meditation Courses | Awareness Academy">
+    <meta property="og:description" content="Certified courses in meditation, Reiki, yoga & personal development. Transform your life with our holistic programs.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://awarenessacademy.in/courses.html">
+    <meta property="og:image" content="https://awarenessacademy.in/assets/og-courses.jpg">
+    <meta property="og:site_name" content="Awareness Academy">
+    <meta property="og:locale" content="en_IN">
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Courses | Awareness Academy India">
+    <meta name="twitter:description" content="Meditation, Reiki, Yoga & holistic healing courses. Online & offline programs available.">
+    <meta name="twitter:image" content="https://awarenessacademy.in/assets/og-courses.jpg">
+    
+    <!-- Schema.org Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        "name": "Awareness Academy Courses",
+        "description": "Explore our transformative spiritual and personal development courses",
+        "url": "https://awarenessacademy.in/courses.html",
+        "numberOfItems": 10,
+        "itemListElement": [
+            {
+                "@type": "Course",
+                "position": 1,
+                "name": "Meditation Training Program",
+                "description": "Comprehensive meditation training for beginners to advanced practitioners",
+                "provider": {
+                    "@type": "Organization",
+                    "name": "Awareness Academy"
+                }
+            },
+            {
+                "@type": "Course",
+                "position": 2,
+                "name": "Reiki Healing Certification",
+                "description": "Learn Reiki healing techniques and become a certified practitioner",
+                "provider": {
+                    "@type": "Organization",
+                    "name": "Awareness Academy"
+                }
+            },
+            {
+                "@type": "Course",
+                "position": 3,
+                "name": "Yoga Teacher Training",
+                "description": "Traditional yoga practices with modern teaching methodology",
+                "provider": {
+                    "@type": "Organization",
+                    "name": "Awareness Academy"
+                }
+            }
+        ]
+    }
+    </script>
+    
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "https://awarenessacademy.in/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Courses",
+                "item": "https://awarenessacademy.in/courses.html"
+            }
+        ]
+    }
+    </script>
+    
     <link rel="stylesheet" href="../css/variables.css?v=2">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link
@@ -57,12 +149,22 @@
             color: var(--color-text-primary);
         }
 
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
         .nav a {
             text-decoration: none;
             font-weight: 500;
-            margin-left: 30px;
             transition: var(--transition-smooth);
             position: relative;
+            white-space: nowrap;
+        }
+
+        .nav-links a {
+            padding: 8px 16px;
         }
 
         .nav-links a:not(.btn-primary)::after {
@@ -91,68 +193,148 @@
 
         /* --- Header --- */
         .marketplace-header {
-            padding: 180px 20px 80px;
-            background: radial-gradient(circle at top, rgba(255, 153, 51, 0.1), transparent 70%);
+            padding: 180px 20px 90px;
+            background: linear-gradient(180deg, rgba(255, 179, 102, 0.15) 0%, rgba(255, 212, 163, 0.1) 50%, transparent 100%);
             text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .marketplace-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(255, 153, 51, 0.12), transparent);
+            border-radius: 50%;
+            animation: pulse 8s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; transform: translateX(-50%) scale(1); }
+            50% { opacity: 0.6; transform: translateX(-50%) scale(1.1); }
         }
 
         .marketplace-header h1 {
-            font-size: 3.5rem;
-            margin-bottom: 20px;
-            color: var(--color-saffron-dark);
+            font-size: 4rem;
+            margin-bottom: 25px;
+            background: linear-gradient(135deg, var(--color-saffron-dark), var(--color-saffron), var(--color-golden));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 800;
+            letter-spacing: -2px;
+            position: relative;
+            animation: slideDown 0.8s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .marketplace-header p {
-            color: var(--color-text-secondary);
-            font-size: 1.2rem;
-            max-width: 600px;
-            margin: 0 auto 50px;
+            color: #666;
+            font-size: 1.3rem;
+            max-width: 650px;
+            margin: 0 auto 60px;
+            line-height: 1.8;
+            position: relative;
+            animation: slideDown 0.8s ease-out 0.1s backwards;
         }
 
         /* --- TABS --- */
         .category-tabs {
             display: flex;
             justify-content: center;
-            gap: 15px;
-            margin-bottom: 50px;
+            gap: 18px;
+            margin-bottom: 60px;
             flex-wrap: wrap;
+            animation: fadeInUp 1s ease-out 0.3s backwards;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .tab {
-            padding: 12px 30px;
-            border-radius: 30px;
+            padding: 14px 32px;
+            border-radius: 50px;
             background: white;
-            border: 1px solid rgba(0, 0, 0, 0.05);
+            border: 2px solid rgba(255, 153, 51, 0.15);
             cursor: pointer;
-            transition: var(--transition-smooth);
-            font-weight: 600;
-            box-shadow: var(--shadow-soft);
-            color: var(--color-text-secondary);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 700;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+            color: #555;
+            font-size: 0.95rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tab::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 153, 51, 0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .tab:hover::before {
+            left: 100%;
         }
 
         .tab:hover {
-            transform: translateY(-3px);
-            box-shadow: var(--shadow-hover);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(255, 153, 51, 0.2);
+            border-color: rgba(255, 153, 51, 0.3);
         }
 
         .tab.active {
-            background: var(--color-saffron);
+            background: linear-gradient(135deg, var(--color-saffron), var(--color-golden));
             color: white;
-            border-color: var(--color-saffron);
-            box-shadow: 0 10px 20px rgba(255, 153, 51, 0.3);
+            border-color: transparent;
+            box-shadow: 0 12px 28px rgba(255, 153, 51, 0.35);
+            transform: translateY(-2px);
+        }
+
+        .tab.active::before {
+            display: none;
         }
 
         /* --- FILTERS --- */
         .filter-bar {
-            max-width: 900px;
-            margin: 0 auto;
+            max-width: 950px;
+            margin: 0 auto 70px;
             display: flex;
-            gap: 20px;
-            padding: 15px;
-            background: white;
+            gap: 25px;
+            padding: 20px 25px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
             border-radius: 50px;
-            box-shadow: var(--shadow-soft);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
             align-items: center;
+            border: 1px solid rgba(255, 153, 51, 0.1);
+            animation: fadeInUp 1s ease-out 0.4s backwards;
         }
 
         .search-wrapper {
@@ -162,32 +344,50 @@
 
         .search-wrapper input {
             width: 100%;
-            padding: 15px 20px 15px 50px;
+            padding: 16px 20px 16px 55px;
             border-radius: 30px;
-            border: none;
+            border: 2px solid rgba(0, 0, 0, 0.06);
             background: #fafafa;
             font-family: var(--font-body);
             outline: none;
-            transition: var(--transition-smooth);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             font-size: 1rem;
+        }
+
+        .search-wrapper input:hover {
+            border-color: rgba(255, 153, 51, 0.2);
+            background: #f5f5f5;
         }
 
         .search-wrapper input:focus {
             background: white;
-            box-shadow: inset 0 0 0 2px var(--color-saffron);
+            border-color: var(--color-saffron);
+            box-shadow: 0 4px 16px rgba(255, 153, 51, 0.15), 0 0 0 4px rgba(255, 153, 51, 0.08);
         }
 
         .sort-wrapper select {
-            padding: 15px 40px 15px 20px;
+            padding: 16px 45px 16px 22px;
             border-radius: 30px;
-            border: 1px solid #eee;
+            border: 2px solid rgba(0, 0, 0, 0.08);
             font-family: var(--font-body);
             outline: none;
             appearance: none;
-            background: white;
+            background: white url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="6" viewBox="0 0 12 6"><path fill="%23666" d="M0 0l6 6 6-6z"/></svg>') no-repeat right 18px center;
             cursor: pointer;
             font-size: 0.95rem;
-            color: var(--color-text-secondary);
+            color: #555;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .sort-wrapper select:hover {
+            border-color: rgba(255, 153, 51, 0.3);
+            background-color: #f9f9f9;
+        }
+
+        .sort-wrapper select:focus {
+            border-color: var(--color-saffron);
+            box-shadow: 0 0 0 4px rgba(255, 153, 51, 0.08);
         }
 
         /* --- GRID CONTAINER --- */
@@ -203,14 +403,63 @@
 
         /* Style generated cards */
         .course-card {
-            /* Styles inherited from inline JS or global CSS, verifying consistency */
-            transition: var(--transition-smooth);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(255, 153, 51, 0.08);
+            position: relative;
+            animation: cardFadeIn 0.6s ease-out backwards;
+        }
+
+        @keyframes cardFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .course-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, var(--color-saffron), var(--color-golden));
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .course-card:hover::before {
+            transform: scaleX(1);
         }
 
         .course-card:hover {
-            transform: translateY(-10px);
-            box-shadow: var(--shadow-hover) !important;
+            transform: translateY(-12px) scale(1.02);
+            box-shadow: 0 20px 45px rgba(255, 153, 51, 0.25), 0 8px 20px rgba(0, 0, 0, 0.12) !important;
+            border-color: rgba(255, 153, 51, 0.2);
         }
+
+        .course-card:active {
+            transform: translateY(-8px) scale(1.01);
+        }
+
+        /* Staggered card animation */
+        .course-card:nth-child(1) { animation-delay: 0s; }
+        .course-card:nth-child(2) { animation-delay: 0.1s; }
+        .course-card:nth-child(3) { animation-delay: 0.2s; }
+        .course-card:nth-child(4) { animation-delay: 0.3s; }
+        .course-card:nth-child(5) { animation-delay: 0.4s; }
+        .course-card:nth-child(6) { animation-delay: 0.5s; }
+        .course-card:nth-child(n+7) { animation-delay: 0.6s; }
 
         /* Modal Styles */
         .modal {
@@ -259,6 +508,59 @@
         }
 
         @media (max-width: 900px) {
+            .marketplace-header {
+                padding: 150px 20px 60px;
+            }
+
+            .marketplace-header h1 {
+                font-size: 2.8rem;
+                letter-spacing: -1px;
+            }
+
+            .marketplace-header p {
+                font-size: 1.1rem;
+                margin-bottom: 40px;
+            }
+
+            .category-tabs {
+                gap: 12px;
+                margin-bottom: 40px;
+            }
+
+            .tab {
+                padding: 12px 24px;
+                font-size: 0.9rem;
+            }
+
+            .filter-bar {
+                flex-direction: column;
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(10px);
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+                padding: 18px;
+                border-radius: 24px;
+                gap: 18px;
+            }
+
+            .search-wrapper,
+            .sort-wrapper {
+                width: 100%;
+            }
+
+            .search-wrapper input,
+            .sort-wrapper select {
+                padding: 14px 20px 14px 50px;
+                font-size: 0.95rem;
+            }
+
+            .sort-wrapper select {
+                padding-left: 18px;
+            }
+
+            .course-card:hover {
+                transform: translateY(-6px) scale(1.01);
+            }
+
             .course-modal-content {
                 grid-template-columns: 1fr;
             }
@@ -270,21 +572,33 @@
             .modal-right {
                 padding: 30px;
             }
+        }
+
+        @media (max-width: 600px) {
+            .marketplace-header {
+                padding: 130px 15px 50px;
+            }
+
+            .marketplace-header h1 {
+                font-size: 2.2rem;
+            }
+
+            .marketplace-header p {
+                font-size: 1rem;
+            }
+
+            .tab {
+                padding: 10px 20px;
+                font-size: 0.85rem;
+            }
 
             .filter-bar {
-                flex-direction: column;
-                background: transparent;
-                box-shadow: none;
-                padding: 0;
+                gap: 15px;
+                padding: 15px;
             }
 
-            .search-wrapper,
-            .sort-wrapper {
-                width: 100%;
-            }
-
-            .search-wrapper input {
-                box-shadow: var(--shadow-soft);
+            .course-card:hover {
+                transform: translateY(-4px) scale(1);
             }
         }
 
@@ -594,20 +908,67 @@
         }
 
         .mobile-nav-contact {
-            padding: 15px 30px;
-            text-align: center;
+            padding: 8px 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .mobile-nav-contact p {
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 0.85rem;
-            margin-bottom: 8px;
+        .mobile-nav-contact-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.7);
         }
 
-        .mobile-nav-contact a {
+        .mobile-nav-contact-item i {
             color: var(--color-saffron);
+            font-size: 0.85rem;
+        }
+
+        .mobile-nav-contact-item a {
+            color: white;
             text-decoration: none;
-            font-size: 0.9rem;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 1200px) {
+            .nav {
+                padding: 20px 30px;
+            }
+
+            .nav-links {
+                gap: 4px;
+            }
+
+            .nav-links a {
+                padding: 8px 12px;
+                font-size: 0.95rem;
+            }
+
+            .logo {
+                font-size: 1.3rem;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .nav {
+                padding: 18px 25px;
+            }
+
+            .nav-links a {
+                padding: 8px 10px;
+                font-size: 0.9rem;
+            }
+
+            .logo {
+                font-size: 1.2rem;
+            }
+
+            .logo img {
+                height: 36px;
+            }
         }
 
         @media (max-width: 900px) {
@@ -676,7 +1037,7 @@
             <a href="about.html">About</a>
             <a href="courses.html" class="active">Courses</a>
             <a href="gallery.html">Gallery</a>
-            <a href="blog.html">Blog</a>
+            <a href="faq.html">FAQ</a>
             <a href="contact.html">Contact</a>
             <a href="login.html" class="btn-primary">Login</a>
         </div>
@@ -702,13 +1063,15 @@
             <a href="about.html"><i class="fas fa-info-circle"></i> About</a>
             <a href="courses.html" class="active"><i class="fas fa-graduation-cap"></i> Courses</a>
             <a href="gallery.html"><i class="fas fa-images"></i> Gallery</a>
-            <a href="blog.html"><i class="fas fa-blog"></i> Blog</a>
+            <a href="faq.html"><i class="fas fa-question-circle"></i> FAQ</a>
             <a href="contact.html"><i class="fas fa-envelope"></i> Contact</a>
             <a href="login.html"><i class="fas fa-sign-in-alt"></i> Login</a>
         </div>
         <div class="mobile-nav-contact">
-            <p>Get in touch</p>
-            <a href="tel:+919843341742">+91 98433 41742</a>
+            <div class="mobile-nav-contact-item">
+                <i class="fas fa-phone"></i>
+                <a href="tel:+919843341742">+91 98433 41742</a>
+            </div>
         </div>
         <div class="mobile-nav-footer">
             <div class="social-icons">

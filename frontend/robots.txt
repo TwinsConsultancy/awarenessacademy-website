@@ -1,0 +1,57 @@
+# Robots.txt for Awareness Academy
+# https://awarenessacademy.in/
+
+# Allow all search engines
+User-agent: *
+
+# Allow crawling of main content
+Allow: /
+Allow: /html/
+Allow: /css/
+Allow: /js/
+Allow: /assets/
+
+# Disallow admin and user-specific pages
+Disallow: /html/admin-dashboard.html
+Disallow: /html/admin-gallery.html
+Disallow: /html/student-dashboard.html
+Disallow: /html/staff-dashboard.html
+Disallow: /html/module-editor.html
+Disallow: /html/module-manager.html
+Disallow: /html/module-viewer.html
+Disallow: /html/player.html
+Disallow: /html/checkout.html
+Disallow: /html/exam.html
+Disallow: /html/forgot-password.html
+Disallow: /html/reset-password.html
+
+# Disallow backend and uploads
+Disallow: /backend/
+Disallow: /database/
+Disallow: /node_modules/
+Disallow: /uploads/
+
+# Disallow API endpoints (if exposed)
+Disallow: /api/
+
+# Crawl delay for polite crawling
+Crawl-delay: 1
+
+# Sitemap location
+Sitemap: https://awarenessacademy.in/sitemap.xml
+
+# Google-specific rules
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 0
+
+# Bing-specific rules
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
+
+# Google Image bot - allow images
+User-agent: Googlebot-Image
+Allow: /assets/
+Allow: /uploads/gallery/
+Allow: /uploads/thumbnails/

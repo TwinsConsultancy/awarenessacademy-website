@@ -287,7 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function switchSection(section) {
     try {
         // Hide all sections
-        ['overview', 'analytics', 'users', 'courses', 'content', 'finance', 'tickets', 'messages', 'subscribers', 'gallery', 'settings'].forEach(s => {
+        ['overview', 'analytics', 'users', 'courses', 'content', 'finance', 'tickets', 'messages', 'subscribers', 'gallery', 'bannerManagement', 'settings'].forEach(s => {
             const el = document.getElementById(s + 'Section');
             if (el) el.style.display = 'none';
 
@@ -356,9 +356,22 @@ function switchSection(section) {
         if (section === 'gallery') {
             initGallerySection();
         }
+        if (section === 'bannerManagement') {
+            if (window.loadBannersList) window.loadBannersList();
+            if (window.initBannerUploadHandlers) window.initBannerUploadHandlers();
+        }
         if (section === 'settings') {
             loadSettings();
         }
+
+        // Auto-close sidebar after clicking a tab (both desktop and mobile)
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.querySelector('.sidebar-overlay');
+
+        setTimeout(() => {
+            if (sidebar) sidebar.classList.remove('active');
+            if (overlay) overlay.classList.remove('active');
+        }, window.innerWidth <= 768 ? 2000 : 500); // 2s on mobile, 0.5s on desktop
     } catch (err) {
         console.error('Error switching section:', err);
         if (section !== 'overview') switchSection('overview');
@@ -642,11 +655,62 @@ window.cleanupDuplicateAssessments = cleanupDuplicateAssessments;
 /* --- USER MANAGEMENT --- */
 function switchUserTab(role) {
     currentUserRoleView = role;
-    document.querySelectorAll('#usersSection .tab-btn').forEach(b => {
+
+    // Update active tab button (both desktop and mobile)
+    document.querySelectorAll('#usersSection .tab-btn, .mobile-tab-btn').forEach(b => {
         b.classList.remove('active');
-        if (b.innerText.includes(role)) b.classList.add('active'); // loose check
+        if (b.innerText.includes(role)) b.classList.add('active');
     });
-    loadUserManagement(role);
+
+    // Get all necessary elements
+    const usersSection = document.getElementById('usersSection');
+    const userContainer = document.getElementById('userListContainer');
+    const addUserFab = document.getElementById('addUserFab');
+
+    // Find search controls more reliably
+    const searchControls = usersSection?.querySelector('.glass-card');
+
+    // Special handling for Subscriber tab
+    if (role === 'Subscriber') {
+        // Hide user management UI
+        if (userContainer) userContainer.style.display = 'none';
+        if (searchControls) searchControls.style.display = 'none';
+        if (addUserFab) addUserFab.style.display = 'none';
+
+        // Show or create subscribers content
+        let subscribersContent = document.getElementById('subscribersContentInUsers');
+        if (!subscribersContent) {
+            const subscribersSection = document.getElementById('subscribersSection');
+            if (subscribersSection && usersSection) {
+                subscribersContent = document.createElement('div');
+                subscribersContent.id = 'subscribersContentInUsers';
+                subscribersContent.style.flex = '1';
+                subscribersContent.style.overflow = 'auto';
+                subscribersContent.innerHTML = subscribersSection.innerHTML;
+                usersSection.appendChild(subscribersContent);
+            }
+        }
+
+        if (subscribersContent) {
+            subscribersContent.style.display = 'block';
+            // Load subscribers data
+            if (typeof loadSubscribers === 'function') {
+                setTimeout(() => loadSubscribers(), 100);
+            }
+        }
+    } else {
+        // Show user management UI for Student, Staff, Admin tabs
+        if (userContainer) userContainer.style.display = 'block';
+        if (searchControls) searchControls.style.display = 'flex';
+        if (addUserFab) addUserFab.style.display = 'flex';
+
+        // Hide subscribers content
+        const subscribersContent = document.getElementById('subscribersContentInUsers');
+        if (subscribersContent) subscribersContent.style.display = 'none';
+
+        // Load user management data
+        loadUserManagement(role);
+    }
 }
 
 async function loadUserManagement(role) {
@@ -3791,13 +3855,35 @@ function renderMessagesTable(messages) {
 
 // Global function for Settings Tab Switching
 window.switchSettingsTab = function (element, tabId) {
-    // 1. Update Sidebar Active State
+    // 1. Update Sidebar Active State (desktop)
     document.querySelectorAll('.settings-nav-item').forEach(item => {
         item.classList.remove('active');
     });
-    element.classList.add('active');
+    if (element && element.classList && element.classList.contains('settings-nav-item')) {
+        element.classList.add('active');
+    }
 
-    // 2. Update Content Panel
+    // 2. Update Mobile Bottom Tabs Active State
+    document.querySelectorAll('.settings-mobile-tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    // Find the corresponding mobile tab and activate it
+    document.querySelectorAll('.settings-mobile-tab-btn').forEach(btn => {
+        if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(tabId)) {
+            btn.classList.add('active');
+        }
+    });
+
+    // 3. Update desktop sidebar if triggered from mobile
+    if (element && element.classList && element.classList.contains('settings-mobile-tab-btn')) {
+        document.querySelectorAll('.settings-nav-item').forEach(item => {
+            if (item.getAttribute('onclick') && item.getAttribute('onclick').includes(tabId)) {
+                item.classList.add('active');
+            }
+        });
+    }
+
+    // 4. Update Content Panel
     document.querySelectorAll('.settings-content-panel').forEach(panel => {
         panel.classList.remove('active');
     });
@@ -4082,8 +4168,8 @@ async function loadSubscribers() {
                 : '-';
 
             const statusBadge = sub.notified
-                ? '<span style="background: var(--color-success); color: white; padding: 4px 12px; border-radius: 12px; font-size: 0.8rem;"><i class="fas fa-check"></i> Notified</span>'
-                : '<span style="background: #F59E0B; color: white; padding: 4px 12px; border-radius: 12px; font-size: 0.8rem;"><i class="fas fa-clock"></i> Pending</span>';
+                ? '<i class="fas fa-check-circle" style="color: #10B981; font-size: 1.3rem;" title="Notified"></i>'
+                : '<i class="fas fa-clock" style="color: #F59E0B; font-size: 1.3rem;" title="Pending"></i>';
 
             const courseTitle = sub.courseID?.title || 'Unknown Course';
             const courseStatus = sub.courseID?.status || '-';

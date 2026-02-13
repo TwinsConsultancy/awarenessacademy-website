@@ -4,7 +4,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contact AWARENESS ACADEMY - Get in Touch</title>
+    <title>Contact Awareness Academy | Salem, Tamil Nadu | +91 98433 41742</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Reach Awareness Academy at Thammampatty, Salem District, Tamil Nadu. Call +91 98433 41742 or email for spiritual course inquiries, enrollment & visit scheduling.">
+    <meta name="keywords" content="contact awareness academy, spiritual academy Salem, meditation center Tamil Nadu contact, Thammampatty academy, course enrollment India">
+    <meta name="author" content="Abhishek Rajan - Awareness Academy">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://awarenessacademy.in/contact.html">
+    
+    <!-- Geographic Meta Tags -->
+    <meta name="geo.region" content="IN-TN">
+    <meta name="geo.placename" content="Thammampatty, Salem, Tamil Nadu">
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Contact Awareness Academy | Tamil Nadu, India">
+    <meta property="og:description" content="Get in touch with us. Visit our academy in Thammampatty or contact us for course inquiries.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://awarenessacademy.in/contact.html">
+    <meta property="og:image" content="https://awarenessacademy.in/assets/og-contact.jpg">
+    <meta property="og:site_name" content="Awareness Academy">
+    <meta property="og:locale" content="en_IN">
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Contact Awareness Academy">
+    <meta name="twitter:description" content="Reach us at Thammampatty, Salem. Phone: +91 98433 41742">
+    <meta name="twitter:image" content="https://awarenessacademy.in/assets/og-contact.jpg">
+    
+    <!-- Schema.org Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "ContactPage",
+        "name": "Contact Awareness Academy",
+        "description": "Get in touch with Awareness Academy for course inquiries and enrollment",
+        "url": "https://awarenessacademy.in/contact.html",
+        "mainEntity": {
+            "@type": "LocalBusiness",
+            "name": "Awareness Academy",
+            "telephone": "+91-98433-41742",
+            "email": "awarenessacademy26@gmail.com",
+            "address": {
+                "@type": "PostalAddress",
+                "streetAddress": "Thammampatty",
+                "addressLocality": "Salem",
+                "addressRegion": "Tamil Nadu",
+                "postalCode": "636001",
+                "addressCountry": "IN"
+            }
+        }
+    }
+    </script>
+    
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "https://awarenessacademy.in/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Contact",
+                "item": "https://awarenessacademy.in/contact.html"
+            }
+        ]
+    }
+    </script>
+    
     <link rel="stylesheet" href="../css/variables.css?v=2">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link
@@ -48,9 +121,9 @@
         .nav a {
             text-decoration: none;
             font-weight: 500;
-            margin-left: 30px;
             transition: var(--transition-smooth);
             position: relative;
+            white-space: nowrap;
         }
 
         .nav-links a:not(.btn-primary)::after {
@@ -87,7 +160,7 @@
         .nav-links {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
 
         .nav-links a {
@@ -97,6 +170,7 @@
             padding: 8px 16px;
             border-radius: 8px;
             transition: all 0.3s ease;
+            white-space: nowrap;
         }
 
         .nav-links a:hover {
@@ -119,74 +193,140 @@
         /* --- Contact Layout --- */
         .contact-page {
             padding: 150px 50px 100px;
-            max-width: 1200px;
+            max-width: 1300px;
             margin: 0 auto;
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 80px;
+            grid-template-columns: 1.1fr 1fr;
+            gap: 100px;
             box-sizing: border-box;
             width: 100%;
+            position: relative;
         }
 
         .contact-info h1 {
-            font-size: 4rem;
-            color: var(--color-saffron-dark);
-            margin-bottom: 20px;
+            font-size: 4.5rem;
+            background: linear-gradient(135deg, var(--color-saffron-dark), var(--color-saffron));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 25px;
             line-height: 1.1;
+            font-weight: 800;
+            letter-spacing: -2px;
+            animation: slideFromLeft 0.8s ease-out;
+        }
+
+        @keyframes slideFromLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
         }
 
         .contact-info p {
-            font-size: 1.2rem;
-            color: var(--color-text-secondary);
+            font-size: 1.25rem;
+            color: #666;
             margin-bottom: 50px;
             line-height: 1.8;
+            animation: slideFromLeft 0.8s ease-out 0.1s backwards;
         }
 
         .info-card {
-            /* background managed by glass-card class */
-            padding: 30px;
-            border-radius: var(--border-radius-lg);
-            margin-bottom: 20px;
+            padding: 32px;
+            border-radius: 20px;
+            margin-bottom: 22px;
             display: flex;
             align-items: center;
-            gap: 20px;
-            box-shadow: var(--shadow-soft);
-            transition: var(--transition-smooth);
+            gap: 24px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 153, 51, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             box-sizing: border-box;
             width: 100%;
             max-width: 100%;
+            position: relative;
+            overflow: hidden;
+            animation: slideFromLeft 0.8s ease-out backwards;
+        }
+
+        .info-card:nth-child(3) { animation-delay: 0.2s; }
+        .info-card:nth-child(4) { animation-delay: 0.3s; }
+        .info-card:nth-child(5) { animation-delay: 0.4s; }
+
+        .info-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 153, 51, 0.1), transparent);
+            transition: left 0.6s;
+        }
+
+        .info-card:hover::before {
+            left: 100%;
         }
 
         .info-card:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--shadow-hover);
+            transform: translateY(-8px) translateX(5px);
+            box-shadow: 0 20px 45px rgba(255, 153, 51, 0.25);
+            border-color: rgba(255, 153, 51, 0.3);
         }
 
         .info-icon {
-            width: 60px;
-            height: 60px;
-            background: rgba(255, 153, 51, 0.1);
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, rgba(255, 153, 51, 0.15), rgba(255, 195, 0, 0.15));
             color: var(--color-saffron);
-            font-size: 1.5rem;
-            border-radius: 50%;
+            font-size: 1.8rem;
+            border-radius: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 4px 12px rgba(255, 153, 51, 0.2);
+        }
+
+        .info-card:hover .info-icon {
+            transform: scale(1.15) rotate(5deg);
+            background: linear-gradient(135deg, var(--color-saffron), var(--color-golden));
+            color: white;
+            box-shadow: 0 8px 20px rgba(255, 153, 51, 0.4);
         }
 
         /* --- Form --- */
         .contact-form-wrapper {
-            background: var(--color-bg-glass);
-            backdrop-filter: blur(10px);
-            padding: 50px;
-            border-radius: 30px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 55px;
+            border-radius: 32px;
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.12);
             position: relative;
             overflow: hidden;
             box-sizing: border-box;
             width: 100%;
             max-width: 100%;
-            border: 1px solid rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(255, 153, 51, 0.15);
+            animation: slideFromRight 0.8s ease-out;
+        }
+
+        @keyframes slideFromRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
         }
 
         .contact-form-wrapper::before {
@@ -195,35 +335,77 @@
             top: 0;
             left: 0;
             width: 100%;
-            height: 8px;
-            background: linear-gradient(90deg, var(--color-saffron), var(--color-golden));
+            height: 6px;
+            background: linear-gradient(90deg, var(--color-saffron), var(--color-golden), var(--color-saffron));
+            background-size: 200% 100%;
+            animation: gradient-shift 3s ease-in-out infinite;
+        }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
         }
 
         .form-group {
-            margin-bottom: 25px;
+            margin-bottom: 28px;
+            animation: fadeIn 0.6s ease-out backwards;
+        }
+
+        .form-group:nth-child(1) { animation-delay: 0.1s; }
+        .form-group:nth-child(2) { animation-delay: 0.2s; }
+        .form-group:nth-child(3) { animation-delay: 0.3s; }
+        .form-group:nth-child(4) { animation-delay: 0.4s; }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .form-group label {
             display: block;
-            margin-bottom: 10px;
-            font-weight: 500;
+            margin-bottom: 12px;
+            font-weight: 600;
             color: var(--color-text-primary);
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .form-group label i {
+            color: var(--color-saffron);
+            font-size: 0.9rem;
         }
 
         .form-control {
             width: 100%;
-            padding: 15px;
-            border: 2px solid #eee;
-            border-radius: 12px;
+            padding: 16px 18px;
+            border: 2px solid rgba(0, 0, 0, 0.08);
+            border-radius: 14px;
             font-family: var(--font-body);
             font-size: 1rem;
-            transition: var(--transition-smooth);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             outline: none;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .form-control:hover {
+            border-color: rgba(255, 153, 51, 0.3);
+            box-shadow: 0 4px 12px rgba(255, 153, 51, 0.08);
         }
 
         .form-control:focus {
             border-color: var(--color-saffron);
             background: #FFF9F0;
+            box-shadow: 0 4px 16px rgba(255, 153, 51, 0.2), 0 0 0 4px rgba(255, 153, 51, 0.1);
+            transform: translateY(-1px);
         }
 
         textarea.form-control {
@@ -233,20 +415,42 @@
         .submit-btn {
             width: 100%;
             padding: 18px;
-            background: var(--color-saffron);
+            background: linear-gradient(135deg, var(--color-saffron), var(--color-golden));
             color: white;
-            font-weight: bold;
+            font-weight: 700;
             border: none;
-            border-radius: 12px;
+            border-radius: 14px;
             cursor: pointer;
             font-size: 1.1rem;
-            transition: var(--transition-smooth);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 8px 20px rgba(255, 153, 51, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .submit-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .submit-btn:hover::before {
+            left: 100%;
         }
 
         .submit-btn:hover {
-            background: var(--color-saffron-dark);
             transform: translateY(-3px);
-            box-shadow: 0 10px 20px rgba(255, 153, 51, 0.3);
+            box-shadow: 0 12px 30px rgba(255, 153, 51, 0.4);
+        }
+
+        .submit-btn:active {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(255, 153, 51, 0.3);
         }
 
         .submit-btn:disabled {
@@ -604,6 +808,44 @@
             font-size: 0.9rem;
         }
 
+        @media (max-width: 1200px) {
+            .nav {
+                padding: 20px 30px;
+            }
+
+            .nav-links {
+                gap: 4px;
+            }
+
+            .nav-links a {
+                padding: 8px 12px;
+                font-size: 0.95rem;
+            }
+
+            .logo {
+                font-size: 1.3rem;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .nav {
+                padding: 18px 25px;
+            }
+
+            .nav-links a {
+                padding: 8px 10px;
+                font-size: 0.9rem;
+            }
+
+            .logo {
+                font-size: 1.2rem;
+            }
+
+            .logo img {
+                height: 36px;
+            }
+        }
+
         @media (max-width: 900px) {
             .nav-links {
                 display: none;
@@ -715,7 +957,7 @@
             <a href="about.html">About</a>
             <a href="courses.html">Courses</a>
             <a href="gallery.html">Gallery</a>
-            <a href="blog.html">Blog</a>
+            <a href="faq.html">FAQ</a>
             <a href="contact.html" class="active">Contact</a>
             <a href="login.html" class="btn-primary">Login</a>
         </div>
@@ -741,13 +983,15 @@
             <a href="about.html"><i class="fas fa-info-circle"></i> About</a>
             <a href="courses.html"><i class="fas fa-graduation-cap"></i> Courses</a>
             <a href="gallery.html"><i class="fas fa-images"></i> Gallery</a>
-            <a href="blog.html"><i class="fas fa-blog"></i> Blog</a>
+            <a href="faq.html"><i class="fas fa-question-circle"></i> FAQ</a>
             <a href="contact.html" class="active"><i class="fas fa-envelope"></i> Contact</a>
             <a href="login.html"><i class="fas fa-sign-in-alt"></i> Login</a>
         </div>
         <div class="mobile-nav-contact">
-            <p>Get in touch</p>
-            <a href="tel:+919843341742">+91 98433 41742</a>
+            <div class="mobile-nav-contact-item">
+                <i class="fas fa-phone"></i>
+                <a href="tel:+919843341742">+91 98433 41742</a>
+            </div>
         </div>
         <div class="mobile-nav-footer">
             <div class="social-icons">

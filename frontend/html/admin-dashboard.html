@@ -10,10 +10,11 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
     <style>
         :root {
-            --sidebar-width: 80px;
-            --sidebar-expanded: 280px;
+            --sidebar-width: 70px;
+            --sidebar-expanded: 220px;
 
             /* Saffron & Gold Theme Gradients */
             --primary-gradient: linear-gradient(135deg, var(--color-saffron) 0%, var(--color-golden) 100%);
@@ -640,9 +641,17 @@
 
             .scrollable-content {
                 padding: 0 24px 24px 24px;
+                color: #999;
             }
         }
 
+        /* === MOBILE TABS - HIDE ON DESKTOP === */
+        .mobile-bottom-tabs,
+        .settings-mobile-bottom-tabs {
+            display: none !important;
+        }
+
+        /* === MOBILE RESPONSIVE === */
         @media (max-width: 768px) {
             .sidebar {
                 width: 0;
@@ -1209,6 +1218,59 @@
         }
 
         /* Toast Animations */
+        @media (max-width: 768px) {
+
+            /* Sidebar positioning */
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s;
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            /* Branding - fix visibility on mobile */
+            .header-section {
+                padding: 10px 15px;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .branding {
+                flex: 1;
+                min-width: 0;
+                /* Allow flex shrink */
+            }
+
+            .branding h1 {
+                font-size: 1.1rem !important;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .user-profile {
+                flex-shrink: 0;
+                margin-left: 10px;
+            }
+
+            .user-profile span {
+                display: none;
+                /* Hide user name on mobile */
+            }
+
+            .user-profile .avatar {
+                width: 36px !important;
+                height: 36px !important;
+                font-size: 0.9rem !important;
+            }
+
+            .main-content {
+                padding-left: 0;
+            }
+        }
+
         @keyframes slideInRight {
             from {
                 transform: translateX(400px);
@@ -1563,18 +1625,15 @@
 
             /* Adjust main content for mobile toggler */
             .header-section {
-                padding: 60px 20px 10px 20px;
-                /* More top padding for toggler */
+                padding: 60px 15px 10px 15px;
             }
 
             .header-section h1 {
-                font-size: 2rem;
-                /* Smaller heading */
+                font-size: 1.8rem;
             }
 
             .dashboard-container {
                 display: block;
-                /* Stack layout if needed, but flex usually works. Let's keep flex but rely on sidebar fixed */
             }
 
             /* Overlay for mobile sidebar */
@@ -1593,6 +1652,536 @@
             .sidebar-overlay.active {
                 display: block;
             }
+
+            /* Main content padding */
+            .main-content {
+                padding: 10px;
+                overflow-x: hidden;
+            }
+
+            .scrollable-content {
+                padding: 10px;
+            }
+
+            /* Stats row - stack cards */
+            .stats-row {
+                grid-template-columns: 1fr !important;
+                gap: 10px;
+            }
+
+            .stat-card {
+                padding: 15px;
+            }
+
+            /* Glass cards padding */
+            .glass-card,
+            .glass-ultra {
+                padding: 15px !important;
+                margin: 10px 0;
+            }
+
+            /* Data tables - horizontal scroll */
+            .data-table {
+                display: table !important;
+                width: 100%;
+                min-width: 800px;
+                /* Ensure table doesn't shrink too much */
+            }
+
+            /* Ensure table containers allow horizontal scroll */
+            #userListContainer,
+            #courseListContainer,
+            .table-wrapper {
+                overflow-x: auto !important;
+                overflow-y: visible !important;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .data-table thead,
+            .data-table tbody,
+            .data-table tr {
+                display: table-row-group !important;
+            }
+
+            .data-table tr {
+                display: table-row !important;
+            }
+
+            .data-table th,
+            .data-table td {
+                display: table-cell !important;
+                min-width: 80px;
+                padding: 10px 8px;
+                font-size: 0.85rem;
+                white-space: nowrap;
+            }
+
+            /* Profile images in table */
+            .data-table td div[style*="width: 40px"] {
+                min-width: 40px !important;
+            }
+
+            /* User header compact */
+            .user-header-compact {
+                flex-direction: column;
+                align-items: flex-start !important;
+                gap: 15px;
+            }
+
+            .tabs {
+                width: 100%;
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                gap: 6px;
+            }
+
+            .tab-btn {
+                white-space: nowrap;
+                font-size: 0.85rem;
+                padding: 8px 12px;
+            }
+
+            /* Modals */
+            .modal .glass-card {
+                width: 95vw !important;
+                max-width: 95vw !important;
+                max-height: 90vh;
+                overflow-y: auto;
+                margin: 5vh auto;
+            }
+
+            /* Forms */
+            .form-grid {
+                grid-template-columns: 1fr !important;
+            }
+
+            .form-control,
+            .form-select,
+            select {
+                font-size: 16px !important;
+                /* Prevent zoom on iOS */
+            }
+
+            /* Buttons */
+            .btn-group,
+            .action-buttons {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .btn-primary,
+            .btn-secondary,
+            .btn-danger {
+                width: 100%;
+                padding: 10px 15px;
+                font-size: 0.9rem;
+            }
+
+            /* Floating action button */
+            .floating-add-btn {
+                bottom: 20px;
+                right: 15px;
+                padding: 12px 16px;
+                font-size: 0.9rem;
+            }
+
+            /* Top header */
+            .top-header {
+                padding: 10px 15px;
+            }
+
+            .user-profile {
+                gap: 8px;
+            }
+
+            .user-name {
+                display: none;
+                /* Hide on very small screens */
+            }
+
+            /* KPI cards */
+            .chart-card.kpi-card {
+                height: 140px;
+                padding: 12px;
+            }
+
+            .kpi-value {
+                font-size: 1.4rem !important;
+            }
+
+            .kpi-label {
+                font-size: 0.8rem;
+            }
+
+            /* Course grid */
+            .course-grid {
+                grid-template-columns: 1fr !important;
+            }
+
+            /* Ensure no horizontal overflow */
+            body,
+            html {
+                overflow-x: hidden;
+                max-width: 100vw;
+            }
+
+            * {
+                max-width: 100%;
+            }
+
+            /* Text sizing */
+            h2 {
+                font-size: 1.5rem;
+            }
+
+            h3 {
+                font-size: 1.2rem;
+            }
+
+            h4 {
+                font-size: 1rem;
+            }
+
+            p {
+                font-size: 0.9rem;
+            }
+
+            /* --- ACTION BUTTONS - ICON ONLY --- */
+            /* Hide button text, show only icons */
+            .data-table button span:not(.fas):not(.fa),
+            button[onclick*="deleteUser"] span,
+            button[onclick*="editUser"] span,
+            button[onclick*="toggleUserStatus"] span,
+            button[onclick*="deleteCourse"] span,
+            button[onclick*="editCourse"] span {
+                display: none !important;
+            }
+
+            /* Make action buttons compact */
+            .data-table td button,
+            .btn-icon-danger,
+            button[class*="btn-icon"] {
+                min-width: 32px !important;
+                width: 32px !important;
+                height: 32px !important;
+                padding: 6px !important;
+                font-size: 0.9rem !important;
+                border-radius: 6px !important;
+            }
+
+            /* Actions column narrower */
+            .data-table th:last-child,
+            .data-table td:last-child {
+                min-width: 110px !important;
+                text-align: center !important;
+            }
+
+            /* Action button containers */
+            .data-table td div[style*="gap"] {
+                gap: 4px !important;
+            }
+
+            /* --- SEARCH & FILTER BARS - STACK VERTICALLY --- */
+            /* Users, Courses, Tickets search controls */
+            .glass-card[style*="display: flex"][style*="gap"] {
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 10px !important;
+            }
+
+            .glass-card>div[style*="flex"] {
+                width: 100% !important;
+                flex: none !important;
+            }
+
+            .glass-card input[type="text"],
+            .glass-card select {
+                width: 100% !important;
+                box-sizing: border-box !important;
+            }
+
+            /* Tickets specific filter bar */
+            #ticketsSection .glass-card>div[style*="grid"] {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 10px !important;
+            }
+
+            #ticketsSection .glass-card>div>div {
+                margin: 0 !important;
+                width: 100% !important;
+            }
+
+            #ticketsSection .glass-card button {
+                width: 100% !important;
+            }
+
+            /* --- TABLE COLUMN ADJUSTMENTS --- */
+            /* Better column widths for mobile */
+            .data-table th,
+            .data-table td {
+                min-width: 65px !important;
+                padding: 10px 6px !important;
+            }
+
+            /* Name/Title columns wider */
+            .data-table th:nth-child(3),
+            .data-table td:nth-child(3) {
+                min-width: 130px !important;
+            }
+
+            /* Profile image column */
+            .data-table th:nth-child(2),
+            .data-table td:nth-child(2) {
+                min-width: 50px !important;
+            }
+
+            /* --- MOBILE BOTTOM TAB NAVIGATION --- */
+            /* Hide top tabs for users section */
+            #usersSection .user-header-compact .tabs {
+                display: none !important;
+            }
+
+            /* Show mobile bottom tabs */
+            .mobile-bottom-tabs {
+                display: flex !important;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background: white;
+                box-shadow: 0 -2px 15px rgba(0, 0, 0, 0.15);
+                z-index: 1000;
+                padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+                gap: 6px;
+                border-top: 1px solid #e5e7eb;
+            }
+
+            .mobile-tab-btn {
+                flex: 1;
+                display: flex !important;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 4px;
+                padding: 10px 6px;
+                border: none;
+                background: #f3f4f6;
+                color: #6b7280;
+                font-size: 0.7rem;
+                font-weight: 500;
+                border-radius: 10px;
+                transition: all 0.3s;
+                cursor: pointer;
+                min-height: 60px;
+            }
+
+            .mobile-tab-btn i {
+                font-size: 1.3rem;
+                transition: all 0.3s;
+                color: #6b7280;
+            }
+
+            .mobile-tab-btn span {
+                display: block !important;
+                line-height: 1.2;
+            }
+
+            /* Active state with proper gradient and white icons */
+            .mobile-tab-btn.active {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+                color: white !important;
+                box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            }
+
+            .mobile-tab-btn.active i {
+                color: white !important;
+                transform: scale(1.15);
+            }
+
+            .mobile-tab-btn.active span {
+                color: white !important;
+                font-weight: 600;
+            }
+
+            /* Add bottom padding to users section to prevent content overlap */
+            #usersSection {
+                padding-bottom: 85px !important;
+            }
+
+            /* User header compact spacing */
+            #usersSection .user-header-compact {
+                margin-bottom: 15px !important;
+            }
+
+            /* --- FAB AND CHAT ICON - MOBILE POSITIONING --- */
+            /* Make FAB smaller and position to left side */
+            .floating-add-btn {
+                position: fixed !important;
+                bottom: 90px !important;
+                /* Above bottom tabs */
+                right: auto !important;
+                left: 15px !important;
+                width: 48px !important;
+                height: 48px !important;
+                padding: 0 !important;
+                border-radius: 50% !important;
+                font-size: 1.2rem !important;
+                z-index: 999 !important;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+            }
+
+            .floating-add-btn span {
+                display: none !important;
+                /* Hide text, icon only */
+            }
+
+            .floating-add-btn i {
+                margin: 0 !important;
+            }
+
+            /* Chat icon - position to right side */
+            .notification-btn {
+                position: fixed !important;
+                bottom: 90px !important;
+                left: auto !important;
+                right: 15px !important;
+                width: 48px !important;
+                height: 48px !important;
+                padding: 0 !important;
+                border-radius: 50% !important;
+                z-index: 999 !important;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+            }
+
+            /* Settings page bottom tabs */
+            #settingsSection .settings-sidebar {
+                display: none !important;
+            }
+
+            .settings-mobile-bottom-tabs {
+                display: flex !important;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background: white;
+                box-shadow: 0 -2px 15px rgba(0, 0, 0, 0.15);
+                z-index: 1000;
+                padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+                gap: 6px;
+                border-top: 1px solid #e5e7eb;
+            }
+
+            .settings-mobile-tab-btn {
+                flex: 1;
+                display: flex !important;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 4px;
+                padding: 10px 6px;
+                border: none;
+                background: #f3f4f6;
+                color: #6b7280;
+                font-size: 0.7rem;
+                font-weight: 500;
+                border-radius: 10px;
+                transition: all 0.3s;
+                cursor: pointer;
+                min-height: 60px;
+            }
+
+            .settings-mobile-tab-btn i {
+                font-size: 1.3rem;
+                transition: all 0.3s;
+                color: #6b7280;
+            }
+
+            .settings-mobile-tab-btn span {
+                display: block !important;
+                line-height: 1.2;
+            }
+
+            .settings-mobile-tab-btn.active {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+                color: white !important;
+                box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            }
+
+            .settings-mobile-tab-btn.active i {
+                color: white !important;
+                transform: scale(1.15);
+            }
+
+            .settings-mobile-tab-btn.active span {
+                color: white !important;
+                font-weight: 600;
+            }
+
+            /* Settings section bottom padding */
+            #settingsSection {
+                padding-bottom: 85px !important;
+            }
+        }
+
+        /* Extra small devices (max-width: 480px) */
+        @media (max-width: 480px) {
+            .mobile-menu-toggle {
+                top: 10px;
+                left: 10px;
+                padding: 8px;
+            }
+
+            .header-section {
+                padding: 50px 10px 10px 10px;
+            }
+
+            .header-section h1 {
+                font-size: 1.5rem;
+            }
+
+            .stats-row {
+                gap: 8px;
+            }
+
+            .stat-card {
+                padding: 12px;
+            }
+
+            .stat-card h3 {
+                font-size: 1.3rem;
+            }
+
+            .data-table th,
+            .data-table td {
+                min-width: 80px;
+                padding: 8px 5px;
+                font-size: 0.8rem;
+            }
+
+            .tab-btn {
+                font-size: 0.8rem;
+                padding: 6px 10px;
+            }
+
+            .glass-card,
+            .glass-ultra {
+                padding: 12px !important;
+            }
+
+            .floating-add-btn {
+                bottom: 15px;
+                right: 10px;
+                padding: 10px 12px;
+                font-size: 0.85rem;
+            }
+
+            /* Make sidebar narrower on very small screens */
+            .sidebar {
+                width: 260px;
+                max-width: 85vw;
+            }
         }
     </style>
 </head>
@@ -1606,7 +2195,8 @@
         <div class="sidebar-overlay" onclick="toggleMobileSidebar()"></div>
         <aside class="sidebar" id="sidebar">
             <div class="brand" style="display: flex; align-items: center; gap: 10px;">
-                <img src="../assets/logo.png" alt="AWARENESS ACADEMY" class="brand-text" style="height: 40px;"> <span class="brand-text">AWARENESS ACADEMY</span>
+                <img src="../assets/logo.png" alt="AWARENESS ACADEMY" class="brand-text" style="height: 40px;"> <span
+                    class="brand-text">AWARENESS ACADEMY</span>
             </div>
 
             <ul class="nav-menu">
@@ -1649,14 +2239,15 @@
                             style="display: none; margin-left: 8px; background: var(--color-saffron); color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.7rem;"></span>
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link" onclick="switchSection('subscribers')" title="Course Subscribers">
-                        <i class="fas fa-bell"></i> <span class="link-text">Subscribers</span>
-                    </a>
-                </li>
+
                 <li class="nav-item">
                     <a href="#" class="nav-link" onclick="switchSection('gallery')" title="Gallery Management">
                         <i class="fas fa-images"></i> <span class="link-text">Gallery</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="switchSection('bannerManagement')" title="Banner Management">
+                        <i class="fas fa-scroll"></i> <span class="link-text">Banners</span>
                     </a>
                 </li>
                 <li class="nav-item">
@@ -1676,9 +2267,11 @@
         <main class="main-content">
             <!-- Top Header Bar -->
             <div class="top-header">
-                <div class="top-header-brand" style="opacity: 0; pointer-events: none; display: flex; align-items: center; gap: 10px;">
+                <div class="top-header-brand"
+                    style="opacity: 0; pointer-events: none; display: flex; align-items: center; gap: 10px;">
                     <!-- Hidden brand on header for desktop -->
-                    <img src="../assets/logo.png" alt="AWARENESS ACADEMY" style="height: 40px;"> <span style="font-family: var(--font-heading); font-weight: bold;">AWARENESS ACADEMY</span>
+                    <img src="../assets/logo.png" alt="AWARENESS ACADEMY" style="height: 40px;"> <span
+                        style="font-family: var(--font-heading); font-weight: bold;">AWARENESS ACADEMY</span>
                 </div>
                 <div class="top-header-right">
                     <div class="user-profile">
@@ -2107,6 +2700,7 @@
                             <div class="tabs">
                                 <button class="tab-btn active" onclick="switchUserTab('Student')">Students</button>
                                 <button class="tab-btn" onclick="switchUserTab('Staff')">Staff</button>
+                                <button class="tab-btn" onclick="switchUserTab('Subscriber')">Subscribers</button>
                                 <button class="tab-btn" onclick="switchUserTab('Admin')">Admins</button>
                             </div>
                         </div>
@@ -2132,7 +2726,7 @@
                             </div>
                         </div>
 
-                        <div id="userListContainer" style="flex: 1; overflow-y: auto;">
+                        <div id="userListContainer" style="flex: 1; overflow-y: auto; overflow-x: auto;">
                             <!-- User Table loads here -->
                         </div>
 
@@ -2140,6 +2734,26 @@
                         <button id="addUserFab" class="floating-add-btn" onclick="openAddUserModal()">
                             <i class="fas fa-plus"></i> <span>Add New User</span>
                         </button>
+
+                        <!-- Mobile Bottom Tabs (Mobile Only) -->
+                        <div class="mobile-bottom-tabs" id="usersMobileTabBar" style="display: none;">
+                            <button class="mobile-tab-btn active" onclick="switchUserTab('Student')">
+                                <i class="fas fa-user-graduate"></i>
+                                <span>Students</span>
+                            </button>
+                            <button class="mobile-tab-btn" onclick="switchUserTab('Staff')">
+                                <i class="fas fa-chalkboard-teacher"></i>
+                                <span>Staff</span>
+                            </button>
+                            <button class="mobile-tab-btn" onclick="switchUserTab('Subscriber')">
+                                <i class="fas fa-bell"></i>
+                                <span>Subscribers</span>
+                            </button>
+                            <button class="mobile-tab-btn" onclick="switchUserTab('Admin')">
+                                <i class="fas fa-user-shield"></i>
+                                <span>Admins</span>
+                            </button>
+                        </div>
                     </section>
 
                     <!-- COURSES SECTION -->
@@ -2180,7 +2794,7 @@
                             </div>
 
                             <!-- Scrollable List -->
-                            <div id="courseListContainer" style="flex: 1; overflow-y: auto;">
+                            <div id="courseListContainer" style="flex: 1; overflow-y: auto; overflow-x: auto;">
                                 <!-- Table loads here -->
                             </div>
 
@@ -2307,6 +2921,41 @@
                         <div class="glass-card" style="padding: 0; overflow: hidden; height: calc(100% - 80px);">
                             <div id="ticketsListContainer" style="overflow-y: auto; height: 100%; padding: 0;">
                                 <p style="text-align: center; color: #999; padding: 40px;">Loading tickets...</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- BANNER MANAGEMENT SECTION -->
+                    <section id="bannerManagementSection" class="dashboard-content-section" style="display: none;">
+                        <div class="glass-card" style="padding: 20px;">
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                                <h3 style="margin: 0;">Banner Management</h3>
+                                <button class="btn-primary" onclick="openBannerUploadModal()">
+                                    <i class="fas fa-plus"></i> Upload New Banner
+                                </button>
+                            </div>
+
+                            <div style="overflow-x: auto;">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Preview</th>
+                                            <th>Order</th>
+                                            <th>Dimensions</th>
+                                            <th>Uploaded</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="bannersTableBody">
+                                        <tr>
+                                            <td colspan="5" style="text-align: center; padding: 40px;">
+                                                <i class="fas fa-spinner fa-spin" style="font-size: 2rem;"></i>
+                                                <p>Loading banners...</p>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </section>
@@ -2847,6 +3496,22 @@
                                 </div>
 
                             </div>
+                        </div>
+
+                        <!-- Mobile Bottom Tabs for Settings (Mobile Only) -->
+                        <div class="settings-mobile-bottom-tabs" style="display: none;">
+                            <button class="settings-mobile-tab-btn active" onclick="switchSettingsTab(this, 's-gen')">
+                                <i class="fas fa-sliders-h"></i>
+                                <span>General</span>
+                            </button>
+                            <button class="settings-mobile-tab-btn" onclick="switchSettingsTab(this, 's-sec')">
+                                <i class="fas fa-shield-alt"></i>
+                                <span>Security</span>
+                            </button>
+                            <button class="settings-mobile-tab-btn" onclick="switchSettingsTab(this, 's-prof')">
+                                <i class="fas fa-user-circle"></i>
+                                <span>Profile</span>
+                            </button>
                         </div>
                     </div>
                 </div> <!-- End scrollable-content -->
@@ -4100,6 +4765,91 @@
             if (overlay) overlay.classList.toggle('active');
         }
     </script>
+    <!-- Banner Upload Modal -->
+    <div id="bannerUploadModal" class="modal">
+        <div class="modal-content" style="max-width: 1100px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h2><i class="fas fa-image"></i> Upload Banner</h2>
+                <span class="close" onclick="closeBannerUploadModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <!-- Step 1: File Selection -->
+                <div id="bannerUploadStep1" class="upload-step">
+                    <div id="bannerUploadZone"
+                        style="border: 2px dashed #e5e7eb; border-radius: 12px; padding: 60px 20px; text-align: center; background: #f9fafb; cursor: pointer; transition: all 0.3s ease;">
+                        <i class="fas fa-cloud-upload-alt"
+                            style="font-size: 4rem; color: #667eea; margin-bottom: 20px;"></i>
+                        <h3 style="margin-bottom: 10px;">Drag & Drop Banner Image</h3>
+                        <p style="color: #666;">or click to browse</p>
+                        <div
+                            style="margin-top: 20px; padding: 15px; background: white; border-radius: 8px; display: inline-block;">
+                            <p style="margin: 5px 0; font-size: 0.9rem;"><strong>Requirements:</strong></p>
+                            <p style="margin: 5px 0; font-size: 0.85rem; color: #666;">✓ Formats: JPG, PNG, or WEBP</p>
+                            <p style="margin: 5px 0; font-size: 0.85rem; color: #666;">✓ Max Size: 5MB</p>
+                            <p style="margin: 5px 0; font-size: 0.85rem; color: #666;">✓ Min Width: 1600px</p>
+                            <p style="margin: 5px 0; font-size: 0.85rem; color: #666;">✓ Aspect Ratio: 16:6 (cropped)
+                            </p>
+                        </div>
+                        <input type="file" id="bannerFileInput" accept=".jpg,.jpeg,.png,.webp" style="display: none;">
+                    </div>
+                    <div id="bannerUploadErrors" style="margin-top: 15px;"></div>
+                </div>
+
+                <!-- Step 2: Cropping -->
+                <div id="bannerUploadStep2" class="upload-step" style="display: none;">
+                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
+                        <!-- Cropper Container -->
+                        <div>
+                            <h4 style="margin-bottom: 10px;">Adjust Image Position</h4>
+                            <p style="color: #666; font-size: 0.9rem; margin-bottom: 15px;">
+                                The frame is fixed at 16:6 ratio. Drag the image to adjust positioning within the frame.
+                            </p>
+                            <div style="max-height: 400px; overflow: hidden; border-radius: 12px; background: #000;">
+                                <img id="imageToCrop" src="" alt="Image to crop" style="max-width: 100%;">
+                            </div>
+                        </div>
+
+                        <!-- Previews -->
+                        <div>
+                            <h4 style="margin-bottom: 10px;">Preview</h4>
+                            <div style="background: #f9fafb; border-radius: 12px; padding: 15px;">
+                                <p style="font-size: 0.85rem; color: #666; margin-bottom: 10px;">Desktop View</p>
+                                <div id="desktopPreview"
+                                    style="width: 100%; aspect-ratio: 16/6; background: #e5e7eb; border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
+                                    <div
+                                        style="display: flex; align-items: center; justify-content: center; height: 100%; color: #999;">
+                                        Preview Loading...
+                                    </div>
+                                </div>
+
+                                <p style="font-size: 0.85rem; color: #666; margin-bottom: 10px;">Mobile View</p>
+                                <div id="mobilePreview"
+                                    style="width: 100%; aspect-ratio: 16/6; background: #e5e7eb; border-radius: 8px; overflow: hidden;">
+                                    <div
+                                        style="display: flex; align-items: center; justify-content: center; height: 100%; color: #999;">
+                                        Preview Loading...
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeBannerUploadModal()">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button id="cropAndUploadBtn" class="btn-primary" style="display: none;"
+                    onclick="cropAndUploadBanner()">
+                    <i class="fas fa-check"></i> Crop & Upload
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cropper.js & Banner Management Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+    <script src="../js/banner-management.js"></script>
 </body>
 
 </html>
