@@ -136,42 +136,42 @@ const paymentSchema = new Schema({
     razorpayOrderId: { type: String, unique: true, sparse: true },
     razorpayPaymentId: { type: String, unique: true, sparse: true },
     razorpaySignature: { type: String },
-    
+
     // Internal transaction ID
     transactionID: { type: String, unique: true },
     studentID: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     courseID: { type: Schema.Types.ObjectId, ref: 'Course', required: true },
-    
+
     // Payment details
     amount: { type: Number, required: true },
     currency: { type: String, default: 'INR' },
-    paymentMethod: { 
-        type: String, 
-        enum: ['UPI', 'Card', 'NetBanking', 'Wallet', 'Manual'], 
-        required: true 
+    paymentMethod: {
+        type: String,
+        enum: ['UPI', 'Card', 'NetBanking', 'Wallet', 'Manual'],
+        required: true
     },
-    
+
     // Status tracking with Razorpay specific statuses
-    status: { 
-        type: String, 
-        enum: ['initiated', 'pending', 'authorized', 'captured', 'completed', 'failed', 'refunded'], 
-        default: 'initiated' 
+    status: {
+        type: String,
+        enum: ['initiated', 'pending', 'authorized', 'captured', 'completed', 'failed', 'refunded'],
+        default: 'initiated'
     },
-    
+
     // Timestamps
     initiatedAt: { type: Date, default: Date.now },
     completedAt: { type: Date },
     date: { type: Date, default: Date.now },
-    
+
     // Additional tracking
     failureReason: { type: String },
     receiptId: { type: String },
     emailSent: { type: Boolean, default: false },
-    
+
     // Audit trail
     ipAddress: { type: String },
     userAgent: { type: String },
-    
+
     // Coupon information
     couponCode: { type: String },
     originalAmount: { type: Number },
@@ -302,12 +302,28 @@ module.exports = {
         active: { type: Boolean, default: true },
         createdAt: { type: Date, default: Date.now }
     })),
-    Banner: mongoose.model('Banner', new Schema({
-        title: { type: String, required: true },
-        imageUrl: { type: String, required: true },
-        link: { type: String },
-        active: { type: Boolean, default: true }
-    })),
+    Banner: (() => {
+        const bannerSchema = new Schema({
+            title: { type: String, required: true },
+            imageUrl: { type: String, required: true },
+            mobileImageUrl: { type: String }, // Optional mobile-optimized image
+            link: { type: String },
+            active: { type: Boolean, default: true },
+            displayOrder: { type: Number, default: 0 },
+            metadata: {
+                width: Number,
+                height: Number,
+                size: Number,
+                format: String
+            },
+            uploadedBy: { type: Schema.Types.ObjectId, ref: 'User' }
+        }, { timestamps: true });
+
+        // Index for efficient sorting and querying
+        bannerSchema.index({ active: 1, displayOrder: 1 });
+
+        return mongoose.model('Banner', bannerSchema);
+    })(),
     Blog: mongoose.model('Blog', new Schema({
         title: { type: String, required: true },
         content: { type: String, required: true },

@@ -44,6 +44,7 @@ app.use('/uploads/content', express.static(path.join(__dirname, 'backend/uploads
 app.use('/uploads/profiles', express.static(path.join(__dirname, 'backend/uploads/profiles')));
 app.use('/uploads/thumbnails', express.static(path.join(__dirname, 'backend/uploads/thumbnails')));
 app.use('/uploads/gallery', express.static(path.join(__dirname, 'backend/uploads/gallery')));
+app.use('/uploads/banners', express.static(path.join(__dirname, 'backend/uploads/banners')));
 // Enable serving of video and PDF uploads
 app.use('/uploads/videos', express.static(path.join(__dirname, 'backend/uploads/videos')));
 app.use('/uploads/pdfs', express.static(path.join(__dirname, 'backend/uploads/pdfs')));
@@ -114,6 +115,7 @@ app.use('/api/tickets', require('./backend/routes/tickets'));
 app.use('/api/contact', require('./backend/routes/contact'));
 app.use('/api/subscribers', require('./backend/routes/subscribers'));
 app.use('/api/gallery', require('./backend/routes/gallery'));
+app.use('/api/banners', require('./backend/routes/banner'));
 app.use('/api/enrollments', require('./backend/routes/enrollments'));
 
 // New modular content system routes

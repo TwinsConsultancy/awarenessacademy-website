@@ -11,6 +11,7 @@
         href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
     <style>
         :root {
             --sidebar-width: 70px;
@@ -2005,7 +2006,8 @@
             }
 
             /* Add bottom padding to users section to prevent content overlap */
-            #usersSection {
+            #usersSection,
+            #gallerySection {
                 padding-bottom: 85px !important;
             }
 
@@ -2015,7 +2017,6 @@
             }
 
             /* --- FAB AND CHAT ICON - MOBILE POSITIONING --- */
-            /* Make FAB smaller and position to left side */
             .floating-add-btn {
                 position: fixed !important;
                 bottom: 90px !important;
@@ -2183,6 +2184,39 @@
                 max-width: 85vw;
             }
         }
+
+        /* Inner Tab Styling within Images Section */
+        .inner-tabs-container .inner-tab-btn {
+            padding: 10px 25px;
+            border: none;
+            background: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s;
+        }
+
+        .inner-tabs-container .inner-tab-btn.active {
+            background: var(--primary-gradient) !important;
+            color: white !important;
+            box-shadow: 0 4px 6px rgba(255, 153, 51, 0.2);
+        }
+
+        .inner-tabs-container .inner-tab-btn:hover:not(.active) {
+            background: rgba(255, 153, 51, 0.1) !important;
+            color: var(--color-saffron) !important;
+        }
+
+        @media (max-width: 768px) {
+            .glass-ultra {
+                padding: 15px !important;
+            }
+
+            .inner-tabs-container {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 
@@ -2242,14 +2276,10 @@
 
                 <li class="nav-item">
                     <a href="#" class="nav-link" onclick="switchSection('gallery')" title="Gallery Management">
-                        <i class="fas fa-images"></i> <span class="link-text">Gallery</span>
+                        <i class="fas fa-images"></i> <span class="link-text">Images</span>
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link" onclick="switchSection('bannerManagement')" title="Banner Management">
-                        <i class="fas fa-scroll"></i> <span class="link-text">Banners</span>
-                    </a>
-                </li>
+
                 <li class="nav-item">
                     <a href="#" class="nav-link" onclick="switchSection('settings')" title="System Settings">
                         <i class="fas fa-cogs"></i> <span class="link-text">Settings</span>
@@ -2299,26 +2329,6 @@
                     <!-- OVERVIEW SECTION -->
                     <section id="overviewSection" class="dashboard-content-section">
                         <!-- Admin Status Diagnostic Panel -->
-                        <div id="adminStatusDiagnostic"
-                            style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 20px; border-radius: 10px; margin-bottom: 20px; display: none;">
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <div style="display: flex; align-items: center; gap: 15px;">
-                                    <i class="fas fa-user-shield" style="font-size: 2rem;"></i>
-                                    <div>
-                                        <div style="font-size: 0.85rem; opacity: 0.9;">Admin Privilege Status</div>
-                                        <div id="diagnosticStatus" style="font-size: 1.2rem; font-weight: 600;">
-                                            Checking...
-                                        </div>
-                                        <div id="diagnosticDetails"
-                                            style="font-size: 0.75rem; opacity: 0.8; margin-top: 3px;"></div>
-                                    </div>
-                                </div>
-                                <button onclick="refreshAdminStatus()" class="btn-primary"
-                                    style="background: white; color: #667eea; border: none; padding: 8px 16px; font-size: 0.85rem;">
-                                    <i class="fas fa-sync-alt"></i> Refresh Status
-                                </button>
-                            </div>
-                        </div>
 
                         <div class="stats-row" id="adminStats">
                             <div class="stat-card">
@@ -2925,40 +2935,7 @@
                         </div>
                     </section>
 
-                    <!-- BANNER MANAGEMENT SECTION -->
-                    <section id="bannerManagementSection" class="dashboard-content-section" style="display: none;">
-                        <div class="glass-card" style="padding: 20px;">
-                            <div
-                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                                <h3 style="margin: 0;">Banner Management</h3>
-                                <button class="btn-primary" onclick="openBannerUploadModal()">
-                                    <i class="fas fa-plus"></i> Upload New Banner
-                                </button>
-                            </div>
 
-                            <div style="overflow-x: auto;">
-                                <table class="data-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Preview</th>
-                                            <th>Order</th>
-                                            <th>Dimensions</th>
-                                            <th>Uploaded</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="bannersTableBody">
-                                        <tr>
-                                            <td colspan="5" style="text-align: center; padding: 40px;">
-                                                <i class="fas fa-spinner fa-spin" style="font-size: 2rem;"></i>
-                                                <p>Loading banners...</p>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </section>
                     <div id="messagesSection" class="dashboard-content-section" style="display: none;">
                         <div class="content-header" style="margin-bottom: 40px;">
                             <h2
@@ -3167,71 +3144,151 @@
                         </div>
                     </div>
 
-                    <!-- GALLERY SECTION -->
+                    <!-- IMAGES SECTION (Gallery & Banners) -->
                     <div id="gallerySection" class="dashboard-content-section" style="display: none;">
-                        <!-- Header with Search, Filter, and Upload Button -->
-                        <div class="glass-ultra"
-                            style="padding: 20px 30px; border-radius: 20px; margin-bottom: 30px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
-                            <!-- Search -->
-                            <div style="flex: 1; min-width: 250px; position: relative;">
-                                <i class="fas fa-search"
-                                    style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-secondary);"></i>
-                                <input type="text" id="gallerySearchInput" class="form-control"
-                                    placeholder="Search by description..."
-                                    style="padding: 12px 15px 12px 45px; border-radius: 10px; width: 100%;"
-                                    onkeyup="searchGalleryImages()" />
-                            </div>
 
-                            <!-- Filter -->
-                            <div style="min-width: 180px;">
-                                <select id="galleryFilterSelect" class="form-control"
-                                    style="padding: 12px 15px; border-radius: 10px;" onchange="filterGalleryImages()">
-                                    <option value="all">All Images</option>
-                                    <option value="recent">Recently Added</option>
-                                    <option value="popular">Most Liked</option>
-                                </select>
-                            </div>
-
-                            <!-- Upload Button -->
-                            <button class="btn-primary" onclick="openGalleryUploadModal()"
-                                style="padding: 12px 25px; border-radius: 50px; display: flex; align-items: center; gap: 8px; white-space: nowrap;">
-                                <i class="fas fa-cloud-upload-alt"></i>
-                                <span>Upload Image</span>
+                        <!-- Internal Tab Navigation -->
+                        <div class="glass-ultra inner-tabs-container"
+                            style="padding: 10px 20px; border-radius: 15px; margin-bottom: 25px; display: inline-flex; gap: 10px; background: rgba(255, 255, 255, 0.5);">
+                            <button class="inner-tab-btn active" onclick="switchImageTab('gallery')"
+                                style="padding: 10px 25px; border: none; background: none; border-radius: 10px; cursor: pointer; font-weight: 600; color: #666; transition: all 0.3s;">
+                                Gallery
+                            </button>
+                            <button class="inner-tab-btn" onclick="switchImageTab('banners')"
+                                style="padding: 10px 25px; border: none; background: none; border-radius: 10px; cursor: pointer; font-weight: 600; color: #666; transition: all 0.3s;">
+                                Banners
                             </button>
                         </div>
 
-                        <!-- Gallery Grid -->
-                        <div class="glass-ultra" style="padding: 30px; border-radius: 20px;">
-                            <!-- Drag Info Banner -->
-                            <div id="galleryDragInfo"
-                                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 20px; border-radius: 10px; margin-bottom: 20px; display: none; align-items: center; justify-content: space-between;">
-                                <div style="display: flex; align-items: center; gap: 12px;">
-                                    <i class="fas fa-arrows-alt" style="font-size: 1.3rem;"></i>
-                                    <span style="font-weight: 500;">Drag and drop images to reorder them</span>
+                        <!-- TAB 1: GALLERY CONTENT -->
+                        <div id="galleryTabContent" class="inner-tab-content">
+                            <!-- Header with Search, Filter, and Upload Button -->
+                            <div class="glass-ultra"
+                                style="padding: 20px 30px; border-radius: 20px; margin-bottom: 30px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                                <!-- Search -->
+                                <div style="flex: 1; min-width: 250px; position: relative;">
+                                    <i class="fas fa-search"
+                                        style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-secondary);"></i>
+                                    <input type="text" id="gallerySearchInput" class="form-control"
+                                        placeholder="Search by description..."
+                                        style="padding: 12px 15px 12px 45px; border-radius: 10px; width: 100%;"
+                                        onkeyup="searchGalleryImages()" />
                                 </div>
-                                <button onclick="saveGalleryOrder()" class="btn-primary"
-                                    style="background: white; color: #667eea; border: none; padding: 10px 20px; font-weight: 600; border-radius: 8px; cursor: pointer;">
-                                    <i class="fas fa-save"></i> Save Order
+
+                                <!-- Filter -->
+                                <div style="min-width: 180px;">
+                                    <select id="galleryFilterSelect" class="form-control"
+                                        style="padding: 12px 15px; border-radius: 10px;"
+                                        onchange="filterGalleryImages()">
+                                        <option value="all">All Images</option>
+                                        <option value="recent">Recently Added</option>
+                                        <option value="popular">Most Liked</option>
+                                    </select>
+                                </div>
+
+                                <!-- Upload Button -->
+                                <button class="btn-primary" onclick="openGalleryUploadModal()"
+                                    style="padding: 12px 25px; border-radius: 50px; display: flex; align-items: center; gap: 8px; white-space: nowrap;">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <span>Upload Image</span>
                                 </button>
                             </div>
 
-                            <div id="galleryImagesGrid"
-                                style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px;">
-                                <!-- Images will be loaded dynamically -->
+                            <!-- Gallery Grid -->
+                            <div class="glass-ultra" style="padding: 30px; border-radius: 20px;">
+                                <!-- Drag Info Banner -->
+                                <div id="galleryDragInfo"
+                                    style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 20px; border-radius: 10px; margin-bottom: 20px; display: none; align-items: center; justify-content: space-between;">
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <i class="fas fa-arrows-alt" style="font-size: 1.3rem;"></i>
+                                        <span style="font-weight: 500;">Drag and drop images to reorder them</span>
+                                    </div>
+                                    <button onclick="saveGalleryOrder()" class="btn-primary"
+                                        style="background: white; color: #667eea; border: none; padding: 10px 20px; font-weight: 600; border-radius: 8px; cursor: pointer;">
+                                        <i class="fas fa-save"></i> Save Order
+                                    </button>
+                                </div>
+
+                                <div id="galleryImagesGrid"
+                                    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px;">
+                                    <!-- Images will be loaded dynamically -->
+                                </div>
+
+                                <div id="galleryEmptyState"
+                                    style="text-align: center; padding: 60px 20px; display: none;">
+                                    <i class="fas fa-images"
+                                        style="font-size: 4rem; color: #ddd; margin-bottom: 20px;"></i>
+                                    <p style="color: #666; font-size: 1.1rem;">No images in gallery yet. Click "Upload
+                                        Image" to
+                                        add your first image!</p>
+                                </div>
+
+                                <div id="galleryLoadingState" style="text-align: center; padding: 60px 20px;">
+                                    <i class="fas fa-spinner fa-spin"
+                                        style="font-size: 3rem; color: var(--color-golden);"></i>
+                                    <p style="color: #666; margin-top: 15px;">Loading gallery...</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB 2: BANNERS CONTENT -->
+                        <div id="bannersTabContent" class="inner-tab-content" style="display: none;">
+                            <!-- Header with Upload Button -->
+                            <div class="glass-ultra"
+                                style="padding: 20px 30px; border-radius: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                                <div>
+                                    <h3 style="margin: 0; color: #333;">Homepage Banners</h3>
+                                    <p style="margin: 5px 0 0; color: #666; font-size: 0.9rem;">Manage carousel images
+                                    </p>
+                                </div>
+                                <div style="display: flex; gap: 10px;">
+                                    <button id="saveBannerOrderBtn" class="btn-primary" onclick="saveBannerOrder()"
+                                        style="padding: 12px 20px; border-radius: 50px; display: none; align-items: center; gap: 8px; background: white; color: #667eea; border: 1px solid #667eea;">
+                                        <i class="fas fa-save"></i> Save Order
+                                    </button>
+                                    <button class="btn-primary" onclick="openBannerUploadModal()"
+                                        style="padding: 12px 25px; border-radius: 50px; display: flex; align-items: center; gap: 8px;">
+                                        <i class="fas fa-plus"></i>
+                                        <span>Upload New Banner</span>
+                                    </button>
+                                </div>
                             </div>
 
-                            <div id="galleryEmptyState" style="text-align: center; padding: 60px 20px; display: none;">
-                                <i class="fas fa-images" style="font-size: 4rem; color: #ddd; margin-bottom: 20px;"></i>
-                                <p style="color: #666; font-size: 1.1rem;">No images in gallery yet. Click "Upload
-                                    Image" to
-                                    add your first image!</p>
-                            </div>
+                            <!-- Banners Grid (Replaces Table) -->
+                            <div class="glass-ultra" style="padding: 30px; border-radius: 20px;">
+                                <!-- Drag Info -->
+                                <div id="bannerDragInfo"
+                                    style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 20px; border-radius: 10px; margin-bottom: 20px; display: none; align-items: center; gap: 12px;">
+                                    <i class="fas fa-arrows-alt" style="font-size: 1.3rem;"></i>
+                                    <span style="font-weight: 500;">Drag and drop to reorder. Click "Save Order" when
+                                        done.</span>
+                                </div>
 
-                            <div id="galleryLoadingState" style="text-align: center; padding: 60px 20px;">
-                                <i class="fas fa-spinner fa-spin"
-                                    style="font-size: 3rem; color: var(--color-golden);"></i>
-                                <p style="color: #666; margin-top: 15px;">Loading gallery...</p>
+                                <div id="bannersGrid"
+                                    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
+                                    <!-- Banners will be loaded dynamically here -->
+                                </div>
+
+                                <div id="bannersEmptyState"
+                                    style="text-align: center; padding: 60px 20px; display: none;">
+                                    <i class="fas fa-layer-group"
+                                        style="font-size: 4rem; color: #ddd; margin-bottom: 20px;"></i>
+                                    <p style="color: #666; font-size: 1.1rem;">No banners active. Upload your first one!
+                                    </p>
+                                </div>
                             </div>
+                        </div>
+
+                        <!-- Mobile Bottom Tabs (Mobile Only) -->
+                        <div class="mobile-bottom-tabs" style="display: none;">
+                            <button class="mobile-tab-btn active" onclick="switchImageTab('gallery')">
+                                <i class="fas fa-images"></i>
+                                <span>Gallery</span>
+                            </button>
+                            <button class="mobile-tab-btn" onclick="switchImageTab('banners')">
+                                <i class="fas fa-layer-group"></i>
+                                <span>Banners</span>
+                            </button>
                         </div>
                     </div>
 
@@ -3578,7 +3635,8 @@
                         </div>
                         <div
                             style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 20px; border-left: 4px solid #4a90e2;">
-                            <p style="margin: 0; font-size: 0.85rem; color: #666;">
+                            <p style="margin: 5px 0; font-size: 0.85rem; color: #666;">✓ Max Size: 5MB</p>
+                            <p style="margin: 5px 0; font-size: 0.85rem; color: #666;">
                                 <i class="fas fa-info-circle" style="color: #4a90e2; margin-right: 8px;"></i>
                                 Each role will be assigned a unique ID upon creation
                             </p>
@@ -4766,83 +4824,172 @@
         }
     </script>
     <!-- Banner Upload Modal -->
-    <div id="bannerUploadModal" class="modal">
-        <div class="modal-content" style="max-width: 1100px; max-height: 90vh; overflow-y: auto;">
-            <div class="modal-header">
-                <h2><i class="fas fa-image"></i> Upload Banner</h2>
-                <span class="close" onclick="closeBannerUploadModal()">&times;</span>
+    <div id="bannerUploadModal" class="modal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 3000; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
+        <div class="glass-card"
+            style="background: white; border-radius: 20px; width: 95%; max-width: 1100px; max-height: 90vh; overflow-y: auto; position: relative; animation: slideUp 0.3s ease; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);">
+
+            <!-- Close Button -->
+            <button onclick="closeBannerUploadModal()"
+                style="position: absolute; top: 20px; right: 25px; background: none; border: none; font-size: 1.8rem; cursor: pointer; color: #999; z-index: 10; transition: color 0.3s;"
+                onmouseover="this.style.color='#333'" onmouseout="this.style.color='#999'">
+                &times;
+            </button>
+
+            <!-- Modal Header -->
+            <div style="padding: 30px 30px 20px; border-bottom: 1px solid #f0f0f0;">
+                <h3 style="margin: 0; color: #333; font-size: 1.6rem; display: flex; align-items: center; gap: 12px;">
+                    <i class="fas fa-layer-group" style="color: var(--color-golden);"></i>
+                    Upload New Banner
+                </h3>
+                <p style="margin: 5px 0 0 0; color: #666; font-size: 0.95rem;">Add a stunning banner to your homepage
+                    carousel</p>
             </div>
-            <div class="modal-body">
+
+            <!-- Modal Body -->
+            <div style="padding: 30px;">
                 <!-- Step 1: File Selection -->
                 <div id="bannerUploadStep1" class="upload-step">
                     <div id="bannerUploadZone"
-                        style="border: 2px dashed #e5e7eb; border-radius: 12px; padding: 60px 20px; text-align: center; background: #f9fafb; cursor: pointer; transition: all 0.3s ease;">
-                        <i class="fas fa-cloud-upload-alt"
-                            style="font-size: 4rem; color: #667eea; margin-bottom: 20px;"></i>
-                        <h3 style="margin-bottom: 10px;">Drag & Drop Banner Image</h3>
-                        <p style="color: #666;">or click to browse</p>
+                        style="border: 3px dashed rgba(102, 126, 234, 0.3); border-radius: 16px; padding: 60px 20px; text-align: center; cursor: pointer; transition: all 0.3s; background: rgba(102, 126, 234, 0.05); margin-bottom: 25px;">
                         <div
-                            style="margin-top: 20px; padding: 15px; background: white; border-radius: 8px; display: inline-block;">
-                            <p style="margin: 5px 0; font-size: 0.9rem;"><strong>Requirements:</strong></p>
-                            <p style="margin: 5px 0; font-size: 0.85rem; color: #666;">✓ Formats: JPG, PNG, or WEBP</p>
-                            <p style="margin: 5px 0; font-size: 0.85rem; color: #666;">✓ Max Size: 5MB</p>
-                            <p style="margin: 5px 0; font-size: 0.85rem; color: #666;">✓ Min Width: 1600px</p>
-                            <p style="margin: 5px 0; font-size: 0.85rem; color: #666;">✓ Aspect Ratio: 16:6 (cropped)
-                            </p>
+                            style="width: 80px; height: 80px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; box-shadow: 0 10px 25px rgba(102, 126, 234, 0.15);">
+                            <i class="fas fa-cloud-upload-alt" style="font-size: 2.5rem; color: #667eea;"></i>
+                        </div>
+                        <h3 style="margin-bottom: 10px; color: #333;">Drag & Drop Banner Image</h3>
+                        <p style="color: #666; margin-bottom: 25px;">or <span
+                                style="color: #667eea; font-weight: 600; text-decoration: underline;">browse to
+                                upload</span></p>
+
+                        <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                            <span
+                                style="background: white; padding: 8px 15px; border-radius: 50px; font-size: 0.85rem; color: #666; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid #eee;">
+                                <i class="fas fa-check-circle" style="color: #27ae60; margin-right: 5px;"></i> JPG, PNG,
+                                WEBP
+                            </span>
+                            <span
+                                style="background: white; padding: 8px 15px; border-radius: 50px; font-size: 0.85rem; color: #666; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid #eee;">
+                                <i class="fas fa-check-circle" style="color: #27ae60; margin-right: 5px;"></i> Max 50MB
+                            </span>
+                            <span
+                                style="background: white; padding: 8px 15px; border-radius: 50px; font-size: 0.85rem; color: #666; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid #eee;">
+                                <i class="fas fa-check-circle" style="color: #27ae60; margin-right: 5px;"></i> Min
+                                1600px Width
+                            </span>
+                            <span
+                                style="background: white; padding: 8px 15px; border-radius: 50px; font-size: 0.85rem; color: #666; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid #eee;">
+                                <i class="fas fa-check-circle" style="color: #27ae60; margin-right: 5px;"></i> 16:6
+                                Ratio
+                            </span>
                         </div>
                         <input type="file" id="bannerFileInput" accept=".jpg,.jpeg,.png,.webp" style="display: none;">
                     </div>
-                    <div id="bannerUploadErrors" style="margin-top: 15px;"></div>
+                    <div id="bannerUploadErrors" style="margin-top: 20px;"></div>
                 </div>
 
                 <!-- Step 2: Cropping -->
                 <div id="bannerUploadStep2" class="upload-step" style="display: none;">
-                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
+                    <div style="display: flex; flex-wrap: wrap; gap: 30px; align-items: start;">
                         <!-- Cropper Container -->
-                        <div>
-                            <h4 style="margin-bottom: 10px;">Adjust Image Position</h4>
-                            <p style="color: #666; font-size: 0.9rem; margin-bottom: 15px;">
-                                The frame is fixed at 16:6 ratio. Drag the image to adjust positioning within the frame.
-                            </p>
-                            <div style="max-height: 400px; overflow: hidden; border-radius: 12px; background: #000;">
-                                <img id="imageToCrop" src="" alt="Image to crop" style="max-width: 100%;">
+                        <div style="flex: 2; min-width: 300px;">
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <h4 style="margin: 0; color: #333; font-size: 1.1rem;">
+                                    <i class="fas fa-crop-alt" style="color: #667eea; margin-right: 8px;"></i> Adjust
+                                    Crop Area
+                                </h4>
+                                <span
+                                    style="font-size: 0.85rem; color: #666; background: #f0f0f0; padding: 4px 10px; border-radius: 4px;">Fixed
+                                    16:6 Ratio</span>
                             </div>
+                            <div
+                                style="max-height: 500px; overflow: hidden; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); background: #1a1a1a;">
+                                <img id="imageToCrop" src="" alt="Image to crop"
+                                    style="max-width: 100%; display: block;">
+                            </div>
+                            <p
+                                style="color: #666; font-size: 0.9rem; margin-top: 15px; display: flex; align-items: center; gap: 8px;">
+                                <i class="fas fa-info-circle" style="color: #667eea;"></i> Drag the image to position it
+                                perfectly within the fixed frame.
+                            </p>
                         </div>
 
                         <!-- Previews -->
-                        <div>
-                            <h4 style="margin-bottom: 10px;">Preview</h4>
-                            <div style="background: #f9fafb; border-radius: 12px; padding: 15px;">
-                                <p style="font-size: 0.85rem; color: #666; margin-bottom: 10px;">Desktop View</p>
-                                <div id="desktopPreview"
-                                    style="width: 100%; aspect-ratio: 16/6; background: #e5e7eb; border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
-                                    <div
-                                        style="display: flex; align-items: center; justify-content: center; height: 100%; color: #999;">
-                                        Preview Loading...
-                                    </div>
-                                </div>
+                        <div style="flex: 1; min-width: 250px;">
+                            <h4 style="margin: 0 0 15px 0; color: #333; font-size: 1.1rem;">
+                                <i class="fas fa-eye" style="color: #667eea; margin-right: 8px;"></i> Live Preview
+                            </h4>
 
-                                <p style="font-size: 0.85rem; color: #666; margin-bottom: 10px;">Mobile View</p>
-                                <div id="mobilePreview"
-                                    style="width: 100%; aspect-ratio: 16/6; background: #e5e7eb; border-radius: 8px; overflow: hidden;">
+                            <!-- Toggle Tabs -->
+                            <div
+                                style="display: flex; gap: 10px; margin-bottom: 15px; background: #fff; padding: 5px; border-radius: 8px; border: 1px solid #eee;">
+                                <button onclick="switchBannerPreview('desktop')" id="btnPreviewDesktop" class="active"
+                                    style="flex: 1; padding: 8px; border: none; background: #eaecf0; border-radius: 6px; cursor: pointer; transition: all 0.2s; color: #333; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                    <i class="fas fa-desktop"></i> Desktop
+                                </button>
+                                <button onclick="switchBannerPreview('mobile')" id="btnPreviewMobile"
+                                    style="flex: 1; padding: 8px; border: none; background: transparent; border-radius: 6px; cursor: pointer; transition: all 0.2s; color: #666; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                    <i class="fas fa-mobile-alt"></i> Mobile
+                                </button>
+                            </div>
+
+                            <!-- Desktop Preview -->
+                            <div id="desktopPreviewContainer">
+                                <div id="desktopPreview"
+                                    style="width: 100%; aspect-ratio: 16/6; background: #e5e7eb; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center;">
+                                    <div style="color: #999;">Preview Loading...</div>
+                                </div>
+                            </div>
+
+                            <!-- Mobile Preview (Vertical Frame) -->
+                            <div id="mobilePreviewContainer" style="display: none; text-align: center;">
+                                <div
+                                    style="position: relative; width: 280px; height: 500px; background: #111; margin: 0 auto; border-radius: 30px; border: 4px solid #333; box-shadow: 0 10px 25px rgba(0,0,0,0.2); overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                                    <!-- Notch/Status Bar Simulation -->
                                     <div
-                                        style="display: flex; align-items: center; justify-content: center; height: 100%; color: #999;">
-                                        Preview Loading...
+                                        style="position: absolute; top: 0; left: 0; width: 100%; height: 25px; background: rgba(255,255,255,0.1); z-index: 10;">
+                                    </div>
+
+                                    <!-- The Image itself (Horizontal inside vertical frame) -->
+                                    <div id="bannerMobilePreview"
+                                        style="width: 100%; display: flex; align-items: center; justify-content: center; background: #000;">
+                                        <!-- Image inserted here by JS -->
                                     </div>
                                 </div>
+                                <p style="margin-top: 10px; font-size: 0.85rem; color: #999;">Simulated Mobile View</p>
+                            </div>
+
+                            <!-- Inputs (Missing previously) -->
+                            <div style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;">
+                                <div class="form-group" style="margin-bottom: 15px;">
+                                    <label
+                                        style="display: block; font-size: 0.9rem; font-weight: 600; color: #555; margin-bottom: 5px;">Banner
+                                        Title <span style="color: #e74c3c;">*</span></label>
+                                    <input type="text" id="bannerTitleInput" class="form-control"
+                                        placeholder="e.g. Summer Sale"
+                                        style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd;">
+                                </div>
+                            </div>
+
+                            <div style="margin-top: 15px;">
+                                <button id="saveTitleOnlyBtn" class="btn-primary"
+                                    style="display: none; width: 100%; padding: 15px; border-radius: 12px; font-size: 1.1rem; box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3); margin-bottom: 10px;"
+                                    onclick="saveBannerTitleOnly()">
+                                    <i class="fas fa-save"></i> Save Title Changes
+                                </button>
+                                <button id="cropAndUploadBtn" class="btn-primary"
+                                    style="width: 100%; padding: 15px; border-radius: 12px; font-size: 1.1rem; box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);"
+                                    onclick="cropAndUploadBanner()">
+                                    <i class="fas fa-check"></i> Crop & Upload
+                                </button>
+                                <button class="btn-secondary" onclick="closeBannerUploadModal()"
+                                    style="width: 100%; margin-top: 10px; padding: 12px; border-radius: 12px; background: transparent; border: 1px solid #ddd;">
+                                    Cancel
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn-secondary" onclick="closeBannerUploadModal()">
-                    <i class="fas fa-times"></i> Cancel
-                </button>
-                <button id="cropAndUploadBtn" class="btn-primary" style="display: none;"
-                    onclick="cropAndUploadBanner()">
-                    <i class="fas fa-check"></i> Crop & Upload
-                </button>
             </div>
         </div>
     </div>

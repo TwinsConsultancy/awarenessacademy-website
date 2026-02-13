@@ -17,8 +17,14 @@ async function checkAdminStatusDiagnostic() {
         return;
     }
 
+    // If diagnostic elements don't exist in HTML, skip this check
+    if (!diagnosticPanel || !statusEl || !detailsEl) {
+        console.log('Diagnostic panel elements not found, skipping admin status check');
+        return;
+    }
+
     // Show the diagnostic panel
-    if (diagnosticPanel) diagnosticPanel.style.display = 'block';
+    diagnosticPanel.style.display = 'block';
 
     // CRITICAL: Validate session against server
     try {
@@ -194,6 +200,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // 3. Initial Load
     loadQueue(); // For Overview
 
+    // 4. Initialize Banner Upload Handlers
+    if (typeof initBannerUploadHandlers === 'function') {
+        initBannerUploadHandlers();
+    }
+
     // Admin Course Info Video Upload Logic
     const adminIntroDropzone = document.getElementById('adminIntroVideoDropzone');
     const adminIntroInput = document.getElementById('adminIntroVideoInput');
@@ -355,10 +366,8 @@ function switchSection(section) {
         }
         if (section === 'gallery') {
             initGallerySection();
-        }
-        if (section === 'bannerManagement') {
-            if (window.loadBannersList) window.loadBannersList();
-            if (window.initBannerUploadHandlers) window.initBannerUploadHandlers();
+            // Default to Gallery tab when opening section
+            switchImageTab('gallery');
         }
         if (section === 'settings') {
             loadSettings();
@@ -4774,3 +4783,36 @@ window.toggleGalleryMenu = toggleGalleryMenu;
 window.saveGalleryOrder = saveGalleryOrder;
 
 // End of admin.js - All functions properly defined
+
+/* --- IMAGES SECTION TABS --- */
+function switchImageTab(tab) {
+    // Update active state of buttons (Desktop & Mobile)
+    const buttons = document.querySelectorAll('.inner-tab-btn, .mobile-tab-btn');
+    buttons.forEach(btn => {
+        // Only target buttons related to image switching to avoid conflict with User tabs
+        if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes('switchImageTab')) {
+            btn.classList.remove('active');
+            // Check if this button corresponds to the selected tab
+            if (btn.getAttribute('onclick').includes(`'${tab}'`)) {
+                btn.classList.add('active');
+            }
+        }
+    });
+
+    // Show/Hide content
+    const galleryContent = document.getElementById('galleryTabContent');
+    const bannersContent = document.getElementById('bannersTabContent');
+
+    if (galleryContent) galleryContent.style.display = tab === 'gallery' ? 'block' : 'none';
+    if (bannersContent) bannersContent.style.display = tab === 'banners' ? 'block' : 'none';
+
+    // Load data based on tab
+    if (tab === 'banners') {
+        if (window.loadBannersList) window.loadBannersList();
+        if (window.initBannerUploadHandlers) window.initBannerUploadHandlers();
+    } else if (tab === 'gallery') {
+        // Only re-init if needed, or if switching back
+        if (typeof initGallerySection === 'function') initGallerySection();
+    }
+}
+window.switchImageTab = switchImageTab;
