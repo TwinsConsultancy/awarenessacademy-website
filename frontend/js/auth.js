@@ -41,16 +41,20 @@ const Auth = {
                 }
             }
         } catch (e) {
-            // Invalid token format - clear session
-            console.log('Invalid token format, clearing session');
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
+            // Invalid token format - log but continue if we have a token
+            console.warn('Token validation warning:', e.message);
+            // Only clear if the token is truly malformed, not just a parsing issue
+            if (!token || token.split('.').length !== 3) {
+                console.log('Malformed token, clearing session');
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
 
-            if (passive) {
-                return null;
+                if (passive) {
+                    return null;
+                }
+                window.location.replace('login.html');
+                return;
             }
-            window.location.replace('login.html');
-            return;
         }
 
         if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {

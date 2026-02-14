@@ -117,6 +117,7 @@ app.use('/api/subscribers', require('./backend/routes/subscribers'));
 app.use('/api/gallery', require('./backend/routes/gallery'));
 app.use('/api/banners', require('./backend/routes/banner'));
 app.use('/api/enrollments', require('./backend/routes/enrollments'));
+app.use('/api/students', require('./backend/routes/students'));
 
 // New modular content system routes
 app.use('/api', require('./backend/routes/modules'));

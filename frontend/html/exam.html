@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zen Mode Assessment - AWARENESS ACADEMY</title>
+    <title>Assessment - AWARENESS ACADEMY</title>
     <link rel="stylesheet" href="../css/variables.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link
@@ -21,7 +21,6 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: background 1s ease;
         }
 
         #zen-container {
@@ -45,6 +44,38 @@
             background: linear-gradient(to right, var(--color-saffron), var(--color-golden));
             transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
             box-shadow: 0 2px 10px rgba(255, 153, 51, 0.3);
+        }
+
+        .timer-display {
+            position: fixed;
+            top: 30px;
+            left: 30px;
+            background: white;
+            padding: 15px 25px;
+            border-radius: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--color-saffron);
+        }
+
+        .timer-display.warning {
+            animation: pulse 1s infinite;
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
         }
 
         .question-card {
@@ -138,11 +169,32 @@
             z-index: 100;
             color: var(--color-text-secondary);
         }
+
+        .certificate-btn {
+            margin-top: 20px;
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #10B981, #059669);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+            transition: all 0.3s;
+        }
+
+        .certificate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+        }
     </style>
 </head>
 
 <body>
     <div class="zen-progress" id="progressBar" style="width: 0%;"></div>
+    <div class="timer-display" id="timerDisplay">
+        <i class="fas fa-clock"></i> <span id="timeLeft">00:00</span>
+    </div>
     <i class="fas fa-lotus zen-bg-icon"></i>
 
     <button id="fullScreenToggle" title="Toggle Zen Mode">
@@ -151,11 +203,36 @@
 
     <div id="zen-container">
         <div id="exam-content">
+            <!-- Exam Info Header -->
+            <div id="examInfoHeader"
+                style="text-align: center; margin-bottom: 40px; padding: 20px; background: rgba(255, 153, 51, 0.05); border-radius: 15px; border: 1px solid rgba(255, 153, 51, 0.1);">
+                <h1 id="examTitle"
+                    style="font-family: 'Playfair Display', serif; color: var(--color-saffron); font-size: 2rem; margin: 0 0 15px 0;">
+                </h1>
+                <div style="display: flex; justify-content: center; gap: 40px; flex-wrap: wrap;">
+                    <div style="text-align: center;">
+                        <i class="fas fa-clock" style="color: var(--color-golden); font-size: 1.2rem;"></i>
+                        <p style="margin: 5px 0 0 0; color: #666; font-weight: 600;">Duration: <span
+                                id="examDuration"></span> mins</p>
+                    </div>
+                    <div style="text-align: center;">
+                        <i class="fas fa-check-circle" style="color: var(--color-golden); font-size: 1.2rem;"></i>
+                        <p style="margin: 5px 0 0 0; color: #666; font-weight: 600;">Passing Score: <span
+                                id="examPassingScore"></span>%</p>
+                    </div>
+                    <div style="text-align: center;">
+                        <i class="fas fa-list-ol" style="color: var(--color-golden); font-size: 1.2rem;"></i>
+                        <p style="margin: 5px 0 0 0; color: #666; font-weight: 600;">Questions: <span
+                                id="examQuestionCount"></span></p>
+                    </div>
+                </div>
+            </div>
+
             <div id="questionsContainer"></div>
 
             <div class="zen-footer"
                 style="margin-top: 50px; display: flex; justify-content: space-between; align-items: center;">
-                <span id="questionCounter" style="color: #999; font-weight: 500;">Realization 1 of 10</span>
+                <span id="questionCounter" style="color: #999; font-weight: 500;">Question 1 of 10</span>
                 <button id="nextBtn" class="btn-primary"
                     style="padding: 15px 45px; border-radius: 30px; letter-spacing: 1px;">NEXT STEP</button>
             </div>
@@ -165,21 +242,28 @@
             <div style="margin-bottom: 30px;">
                 <i id="resultIcon" class="fas fa-spa" style="font-size: 6rem; color: var(--color-golden);"></i>
             </div>
-            <h2 id="resultTitle" style="font-size: 2.5rem; margin-bottom: 15px;">Sanctuary Reached</h2>
+            <h2 id="resultTitle" style="font-size: 2.5rem; margin-bottom: 15px;">Assessment Complete</h2>
+            <p id="resultScore" style="font-size: 2rem; color: var(--color-saffron); font-weight: 700; margin: 20px 0;">
+            </p>
             <p id="resultText"
-                style="color: #666; font-size: 1.2rem; max-width: 500px; margin: 0 auto 40px; line-height: 1.6;">You
-                have successfully navigated the spiritual inquiry.</p>
-            <button onclick="window.location.href='student-dashboard.html'" class="btn-primary"
-                style="padding: 15px 40px; border-radius: 30px;">RETURN TO SANCTUARY</button>
+                style="color: #666; font-size: 1.2rem; max-width: 500px; margin: 0 auto 40px; line-height: 1.6;"></p>
+
+            <div id="resultActions">
+                <button onclick="window.location.href='student-dashboard.html'" class="btn-primary"
+                    style="padding: 15px 40px; border-radius: 30px;">RETURN TO DASHBOARD</button>
+            </div>
         </div>
     </div>
 
     <script src="../js/auth.js"></script>
     <script src="../js/utils.js"></script>
     <script>
+        let attemptData = null;
         let currentExam = null;
         let currentQuestionIndex = 0;
         let answers = [];
+        let timerInterval = null;
+        let timeRemaining = 0; // in seconds
 
         document.getElementById('fullScreenToggle').onclick = () => {
             if (!document.fullscreenElement) {
@@ -189,22 +273,91 @@
             }
         };
 
+        function startTimer(durationMinutes) {
+            timeRemaining = durationMinutes * 60;
+            updateTimerDisplay();
+
+            timerInterval = setInterval(() => {
+                timeRemaining--;
+
+                if (timeRemaining <= 0) {
+                    clearInterval(timerInterval);
+                    UI.error('Time is up! Submitting your answers...');
+                    setTimeout(submitExam, 2000);
+                    return;
+                }
+
+                updateTimerDisplay();
+
+                // Warning when 5 minutes left
+                if (timeRemaining === 300) {
+                    UI.info('5 minutes remaining!');
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            const display = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            document.getElementById('timeLeft').textContent = display;
+
+            const timerEl = document.getElementById('timerDisplay');
+            if (timeRemaining <= 300) {
+                timerEl.classList.add('warning');
+            } else {
+                timerEl.classList.remove('warning');
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', async () => {
             const params = new URLSearchParams(window.location.search);
             const examID = params.get('id');
 
             if (!examID) {
-                window.location.href = 'student-dashboard.html';
+                UI.error('No exam specified');
+                setTimeout(() => window.location.href = 'student-dashboard.html', 2000);
                 return;
             }
 
             try {
                 UI.showLoader();
-                const res = await fetch(`/api/exams/${examID}`, { headers: Auth.getHeaders() });
-                currentExam = await res.json();
+
+                // Start exam attempt
+                const attemptRes = await fetch('/api/exams/attempt/start', {
+                    method: 'POST',
+                    headers: Auth.getHeaders(),
+                    body: JSON.stringify({ examID })
+                });
+
+                attemptData = await attemptRes.json();
+
+                if (!attemptRes.ok) {
+                    UI.error(attemptData.message || 'Failed to start exam');
+                    setTimeout(() => window.location.href = 'student-dashboard.html', 2000);
+                    return;
+                }
+
+                // Get exam details
+                const examRes = await fetch(`/api/exams/${examID}`, { headers: Auth.getHeaders() });
+                currentExam = await examRes.json();
+
+                // Initialize answers array
+                answers = new Array(currentExam.questions.length);
+
+                // Display exam info from database
+                document.getElementById('examTitle').textContent = attemptData.examTitle || currentExam.title;
+                document.getElementById('examDuration').textContent = attemptData.duration;
+                document.getElementById('examPassingScore').textContent = attemptData.passingScore;
+                document.getElementById('examQuestionCount').textContent = attemptData.questionCount || currentExam.questions.length;
+
                 renderExam();
+                startTimer(attemptData.duration);
+
             } catch (e) {
-                UI.error('The ancient scrolls are currently inaccessible.');
+                console.error('Exam load error:', e);
+                UI.error('Failed to load exam');
+                setTimeout(() => window.location.href = 'student-dashboard.html', 2000);
             } finally {
                 UI.hideLoader();
             }
@@ -212,18 +365,23 @@
 
         function renderExam() {
             const container = document.getElementById('questionsContainer');
-            container.innerHTML = currentExam.questions.map((q, i) => `
-                <div class="question-card ${i === 0 ? 'active' : ''}" id="q-${i}">
-                    <h2 style="font-family: 'Playfair Display', serif; font-size: 2.2rem; margin-bottom: 40px; line-height: 1.3; color: #1a1a1a;">${q.questionText}</h2>
-                    <div class="options">
-                        ${q.options.map((opt, optIdx) => `
-                            <button class="option-btn" onclick="selectOption(${i}, ${optIdx})">
-                                <span style="margin-right: 15px; opacity: 0.3;">0${optIdx + 1}.</span> ${opt}
-                            </button>
-                        `).join('')}
+            const questionOrder = attemptData.questionOrder;
+
+            container.innerHTML = questionOrder.map((originalIdx, displayIdx) => {
+                const q = currentExam.questions[originalIdx];
+                return `
+                    <div class="question-card ${displayIdx === 0 ? 'active' : ''}" id="q-${displayIdx}">
+                        <h2 style="font-family: 'Playfair Display', serif; font-size: 2.2rem; margin-bottom: 40px; line-height: 1.3; color: #1a1a1a;">${q.questionText}</h2>
+                        <div class="options">
+                            ${q.options.map((opt, optIdx) => `
+                                <button class="option-btn" onclick="selectOption(${displayIdx}, ${optIdx})">
+                                    <span style="margin-right: 15px; opacity: 0.3;">0${optIdx + 1}.</span> ${opt}
+                                </button>
+                            `).join('')}
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
 
             updateFooter();
         }
@@ -238,12 +396,12 @@
 
         function updateFooter() {
             const total = currentExam.questions.length;
-            document.getElementById('questionCounter').textContent = `Realization ${currentQuestionIndex + 1} of ${total}`;
+            document.getElementById('questionCounter').textContent = `Question ${currentQuestionIndex + 1} of ${total}`;
             document.getElementById('progressBar').style.width = `${((currentQuestionIndex + 1) / total) * 100}%`;
 
             const nextBtn = document.getElementById('nextBtn');
             if (currentQuestionIndex === total - 1) {
-                nextBtn.textContent = 'COMPLETE JOURNEY';
+                nextBtn.textContent = 'COMPLETE ASSESSMENT';
                 nextBtn.style.background = 'var(--color-success)';
             } else {
                 nextBtn.textContent = 'NEXT STEP';
@@ -254,7 +412,7 @@
             const total = currentExam.questions.length;
 
             if (answers[currentQuestionIndex] === undefined) {
-                UI.info('Take a moment to reflect and choose a path.');
+                UI.info('Please select an answer before proceeding.');
                 return;
             }
 
@@ -273,36 +431,80 @@
         document.getElementById('nextBtn').addEventListener('click', nextStep);
 
         async function submitExam() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+            }
+
+            // Check if all questions answered
+            const unanswered = answers.findIndex(a => a === undefined);
+            if (unanswered !== -1) {
+                if (!confirm(`You have not answered question ${unanswered + 1}. Submit anyway?`)) {
+                    return;
+                }
+            }
+
             try {
                 UI.showLoader();
                 const res = await fetch('/api/exams/submit', {
                     method: 'POST',
                     headers: Auth.getHeaders(),
-                    body: JSON.stringify({ examID: currentExam._id, answers })
+                    body: JSON.stringify({
+                        attemptID: attemptData.attemptID,
+                        answers
+                    })
                 });
+
                 const data = await res.json();
 
                 document.getElementById('exam-content').style.display = 'none';
                 document.getElementById('exam-result').style.display = 'block';
+                document.getElementById('timerDisplay').style.display = 'none';
 
                 const icon = document.getElementById('resultIcon');
+                const scoreDisplay = document.getElementById('resultScore');
+                const resultText = document.getElementById('resultText');
+
+                scoreDisplay.textContent = `${data.score}%`;
+
                 if (data.status === 'Pass') {
-                    UI.success('Harmony Found!');
+                    icon.className = 'fas fa-trophy';
+                    icon.style.color = '#FFC300';
+                    document.getElementById('resultTitle').textContent = 'Congratulations!';
+                    resultText.textContent = `You have passed with ${data.score}%. Your certificate is ready!`;
+
+                    if (data.certificateID) {
+                        const actionsDiv = document.getElementById('resultActions');
+                        actionsDiv.innerHTML = `
+                            <button onclick="downloadCertificate('${data.certificateID}')" class="certificate-btn">
+                                <i class="fas fa-download"></i> Download Certificate
+                            </button>
+                            <br>
+                            <button onclick="window.location.href='student-dashboard.html'" class="btn-primary"
+                                style="padding: 15px 40px; border-radius: 30px; margin-top: 10px;">RETURN TO DASHBOARD</button>
+                        `;
+                    }
+
+                    UI.success('Congratulations on passing!');
                 } else {
-                    icon.className = 'fas fa-wind';
+                    icon.className = 'fas fa-redo';
                     icon.style.color = '#999';
-                    document.getElementById('resultTitle').textContent = 'Reflection Required';
-                    document.getElementById('resultText').textContent = `Your alignment (Score: ${data.score}%) suggests further contemplation is needed.`;
+                    document.getElementById('resultTitle').textContent = 'Keep Learning';
+                    resultText.textContent = `You scored ${data.score}%. Passing score is ${data.passingScore}%. Review the material and try again!`;
+                    UI.info('You can retake the assessment anytime.');
                 }
             } catch (err) {
-                UI.error('Submission failed.');
+                console.error('Submission error:', err);
+                UI.error('Submission failed. Please try again.');
             } finally {
                 UI.hideLoader();
             }
         }
+
+        function downloadCertificate(certID) {
+            window.open(`/api/certificates/download/${certID}`, '_blank');
+            UI.success('Certificate download started!');
+        }
     </script>
 </body>
-
-</html>
 
 </html>

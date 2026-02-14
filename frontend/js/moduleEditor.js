@@ -23,8 +23,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     courseId = urlParams.get('courseId');
     moduleId = urlParams.get('moduleId');
 
+    // Validate parameters
     if (!courseId && !moduleId) {
         UI.error('Missing course information');
+        setTimeout(() => window.location.href = 'staff-dashboard.html', 2000);
+        return;
+    }
+
+    // Check if moduleId is valid (not 'undefined', 'null', or empty)
+    if (moduleId && (moduleId === 'undefined' || moduleId === 'null' || moduleId.trim() === '')) {
+        console.error('Invalid moduleId:', moduleId);
+        moduleId = null;
+    }
+
+    // Check if courseId is valid
+    if (courseId && (courseId === 'undefined' || courseId === 'null' || courseId.trim() === '')) {
+        console.error('Invalid courseId:', courseId);
+        courseId = null;
+    }
+
+    // After validation, check if we have at least one valid ID
+    if (!courseId && !moduleId) {
+        UI.error('Invalid course or module information');
         setTimeout(() => window.location.href = 'staff-dashboard.html', 2000);
         return;
     }

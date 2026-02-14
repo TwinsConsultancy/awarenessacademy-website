@@ -217,7 +217,25 @@ const certificateSchema = new Schema({
     examScore: { type: Number, required: true },
     issueDate: { type: Date, default: Date.now },
     certificateURL: { type: String },
-    uniqueCertID: { type: String, unique: true } // CERT-<courseID>-12345
+    uniqueCertID: { type: String, unique: true }, // Format: {courseID-4digits}{YY}{studentID-4digits}
+    mentorName: { type: String },
+    completedAt: { type: Date },
+    percentage: { type: Number }
+});
+
+// 9b. Exam Attempts Collection (for tracking randomized questions and timing)
+const examAttemptSchema = new Schema({
+    studentID: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    examID: { type: Schema.Types.ObjectId, ref: 'Exam', required: true },
+    courseID: { type: Schema.Types.ObjectId, ref: 'Course', required: true },
+    questionOrder: [{ type: Number, required: true }], // Array of indices showing randomized order
+    startTime: { type: Date, required: true },
+    endTime: { type: Date },
+    completed: { type: Boolean, default: false },
+    score: { type: Number },
+    status: { type: String, enum: ['In Progress', 'Submitted', 'Expired'], default: 'In Progress' },
+    answers: [{ type: Number }], // Student answers in the order presented
+    timeTaken: { type: Number } // Seconds taken to complete
 });
 
 // 11. Progress Tracking
@@ -265,6 +283,7 @@ module.exports = {
     Progress: mongoose.model('Progress', progressSchema),
     Exam: mongoose.model('Exam', examSchema), // Add Exam model
     Certificate: mongoose.model('Certificate', certificateSchema), // Add Certificate model
+    ExamAttempt: mongoose.model('ExamAttempt', examAttemptSchema), // Track exam sessions
     Module, // New modular content system
     Result: mongoose.model('Result', new Schema({
         studentID: { type: Schema.Types.ObjectId, ref: 'User', required: true },

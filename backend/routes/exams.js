@@ -253,6 +253,9 @@ router.post('/:id/approve', authorize('Admin'), async (req, res) => {
     }
 });
 
+// Start Exam Attempt (Student)
+router.post('/attempt/start', authorize(['Student', 'Admin']), staffController.startExamAttempt);
+
 // Submit Exam (Student)
 router.post('/submit', authorize(['Student', 'Admin']), staffController.submitExam);
 

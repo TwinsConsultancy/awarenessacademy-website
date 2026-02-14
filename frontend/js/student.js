@@ -94,7 +94,7 @@ window.toggleNotifications = toggleNotifications;
 function getThumbnail(url) {
     // Return actual URL or a default course thumbnail
     if (!url || url.includes('via.placeholder.com')) {
-        return '/assets/default-course-thumb.jpg'; // Real default image
+        return 'https://via.placeholder.com/400x250/FF9933/FFFFFF?text=Course+Thumbnail';
     }
     return url;
 }
@@ -244,8 +244,16 @@ async function checkAndTakeExam(courseID) {
         const data = await res.json();
 
         if (data.eligible) {
-            UI.success('Assessment path cleared.');
-            setTimeout(() => window.location.href = `exam.html?id=${data.examID}`, 1000);
+            if (data.isPending && data.warningMessage) {
+                UI.info(data.warningMessage);
+                setTimeout(() => {
+                    UI.success('Assessment path cleared.');
+                    setTimeout(() => window.location.href = `exam.html?id=${data.examID}`, 500);
+                }, 2000);
+            } else {
+                UI.success('Assessment path cleared.');
+                setTimeout(() => window.location.href = `exam.html?id=${data.examID}`, 1000);
+            }
         } else {
             UI.info(data.message || 'You are not yet eligible for this assessment.');
         }

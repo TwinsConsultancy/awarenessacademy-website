@@ -133,66 +133,198 @@ exports.createExam = async (req, res) => {
     }
 };
 
-// Submit Exam (Student)
-// Submit Exam (Student)
-exports.submitExam = async (req, res) => {
+// Start Exam Attempt - Create attempt session with randomized questions
+exports.startExamAttempt = async (req, res) => {
     try {
-        const { examID, answers } = req.body;
+        const { examID } = req.body;
         const studentID = req.user.id;
 
-        const exam = await Exam.findById(examID);
-        if (!exam) return res.status(404).json({ message: 'Exam not found' });
+        const { ExamAttempt, Result, Exam } = require('../models/index');
 
-        // Grade Exam - Support multiple correct answers
+        // Get exam
+        const exam = await Exam.findById(examID);
+        if (!exam) {
+            return res.status(404).json({ message: 'Exam not found' });
+        }
+
+        // Check if already passed
+        const passedResult = await Result.findOne({
+            studentID,
+            examID,
+            status: 'Pass'
+        });
+
+        if (passedResult) {
+            return res.status(403).json({
+                message: 'You have already passed this assessment. No retakes allowed.'
+            });
+        }
+
+        // Check for incomplete attempts
+        const incompleteAttempt = await ExamAttempt.findOne({
+            studentID,
+            examID,
+            completed: false
+        });
+
+        if (incompleteAttempt) {
+            // Return existing attempt with full exam settings
+            return res.status(200).json({
+                message: 'Resuming existing attempt',
+                attemptID: incompleteAttempt._id,
+                questionOrder: incompleteAttempt.questionOrder,
+                startTime: incompleteAttempt.startTime,
+                duration: exam.duration,
+                passingScore: exam.passingScore,
+                activationThreshold: exam.activationThreshold,
+                questionCount: exam.questions.length,
+                examTitle: exam.title
+            });
+        }
+
+        // Create randomized question order
+        const questionIndices = Array.from({ length: exam.questions.length }, (_, i) => i);
+        const randomizedOrder = questionIndices.sort(() => Math.random() - 0.5);
+
+        // Create new attempt
+        const attempt = new ExamAttempt({
+            studentID,
+            examID,
+            courseID: exam.courseID,
+            questionOrder: randomizedOrder,
+            startTime: new Date()
+        });
+
+        await attempt.save();
+
+        res.status(201).json({
+            message: 'Exam attempt started',
+            attemptID: attempt._id,
+            questionOrder: randomizedOrder,
+            startTime: attempt.startTime,
+            duration: exam.duration,
+            passingScore: exam.passingScore,
+            activationThreshold: exam.activationThreshold,
+            questionCount: exam.questions.length,
+            examTitle: exam.title
+        });
+
+    } catch (err) {
+        console.error('Start attempt error:', err);
+        res.status(500).json({ message: 'Failed to start exam', error: err.message });
+    }
+};
+
+// Submit Exam (Student) - Enhanced with attempt tracking and retake prevention
+exports.submitExam = async (req, res) => {
+    try {
+        const { attemptID, answers } = req.body;
+        const studentID = req.user.id;
+
+        const { ExamAttempt, User, Course } = require('../models/index');
+
+        // Get the exam attempt
+        const attempt = await ExamAttempt.findById(attemptID)
+            .populate('examID')
+            .populate('courseID', 'title mentors');
+
+        if (!attempt) {
+            return res.status(404).json({ message: 'Exam attempt not found' });
+        }
+
+        if (attempt.studentID.toString() !== studentID) {
+            return res.status(403).json({ message: 'Unauthorized' });
+        }
+
+        if (attempt.completed) {
+            return res.status(400).json({ message: 'This attempt has already been submitted' });
+        }
+
+        const exam = attempt.examID;
+        const questionOrder = attempt.questionOrder;
+
+        // Map answers back to original question order
+        const mappedAnswers = [];
+        answers.forEach((answer, idx) => {
+            const originalQuestionIdx = questionOrder[idx];
+            mappedAnswers[originalQuestionIdx] = answer;
+        });
+
+        // Grade Exam
         let score = 0;
         exam.questions.forEach((q, idx) => {
-            const studentAnswer = answers[idx];
-            const correctIndices = q.correctOptionIndices || [q.correctOptionIndex]; // Backward compatibility
+            const studentAnswer = mappedAnswers[idx];
+            const correctIndices = q.correctOptionIndices || [q.correctOptionIndex];
 
-            // Convert student answer to array if not already
+            if (studentAnswer === undefined) return;
+
             const studentAnswers = Array.isArray(studentAnswer) ? studentAnswer : [studentAnswer];
-
-            // Clean inputs (handle strings '0' vs numbers 0)
             const cleanStudentAnswers = studentAnswers.map(i => parseInt(i));
             const cleanCorrectIndices = correctIndices.map(i => parseInt(i));
 
-            // Check if student selected all correct answers and no incorrect ones
             const correctSet = new Set(cleanCorrectIndices);
             const studentSet = new Set(cleanStudentAnswers);
 
-            // Perfect match: same size and all elements match
             if (correctSet.size === studentSet.size &&
                 [...correctSet].every(val => studentSet.has(val))) {
                 score++;
             }
         });
 
-        const finalScore = (score / exam.questions.length) * 100;
+        const finalScore = Math.round((score / exam.questions.length) * 100);
         const status = finalScore >= exam.passingScore ? 'Pass' : 'Fail';
 
+        // Update attempt
+        attempt.endTime = new Date();
+        attempt.completed = true;
+        attempt.score = finalScore;
+        attempt.status = 'Submitted';
+        attempt.answers = answers;
+        attempt.timeTaken = Math.round((attempt.endTime - attempt.startTime) / 1000); // seconds
+        await attempt.save();
+
+        // Save result
         const result = new Result({
             studentID,
-            examID,
+            examID: exam._id,
             score: finalScore,
             status
         });
-
         await result.save();
 
         let certificateID = null;
 
         // If Passed, Issue Certificate
         if (status === 'Pass') {
-            // Check if already exists first
             let certificate = await Certificate.findOne({ studentID, courseID: exam.courseID });
 
             if (!certificate) {
+                // Get student and mentor info
+                const student = await User.findById(studentID).select('studentID');
+                const course = attempt.courseID;
+
+                // Get mentor name
+                let mentorName = 'AWARENESS ACADEMY';
+                if (course.mentors && course.mentors.length > 0) {
+                    const mentor = await User.findById(course.mentors[0]).select('name');
+                    if (mentor) mentorName = mentor.name;
+                }
+
+                // Generate unique certificate ID: {courseID-4digits}{YY}{studentID-4digits}
+                const courseIDLast4 = course._id.toString().slice(-4).toUpperCase();
+                const year = new Date().getFullYear().toString().slice(-2);
+                const studentIDLast4 = student.studentID ? student.studentID.slice(-4) : studentID.toString().slice(-4);
+                const uniqueCertID = `${courseIDLast4}${year}${studentIDLast4}`;
+
                 certificate = new Certificate({
                     studentID,
                     courseID: exam.courseID,
                     examScore: finalScore,
                     issueDate: new Date(),
-                    uniqueCertID: `CERT-${Date.now()}-${Math.floor(Math.random() * 1000)}`
+                    completedAt: new Date(),
+                    uniqueCertID,
+                    mentorName,
+                    percentage: finalScore
                 });
                 await certificate.save();
             }
@@ -200,44 +332,94 @@ exports.submitExam = async (req, res) => {
         }
 
         res.status(200).json({
-            message: `Assessment complete. Status: ${status}`,
+            message: status === 'Pass' ? 'Congratulations! You have passed!' : 'Keep learning and try again!',
             score: finalScore,
             status,
-            certificateID, // Return this for frontend redirection
+            certificateID,
             passingScore: exam.passingScore
         });
 
     } catch (err) {
-        console.error('Submission error', err);
+        console.error('Submission error:', err);
         res.status(500).json({ message: 'Submission failed', error: err.message });
     }
 };
 
-// Check Exam Eligibility
+// Check Exam Eligibility - Enhanced to return previous attempts and pass status
 exports.checkEligibility = async (req, res) => {
     try {
         const { courseID } = req.params;
         const studentID = req.user.id;
 
-        const { Progress, Exam } = require('../models/index');
+        const { Progress, Exam, Result, Certificate } = require('../models/index');
 
-        const exam = await Exam.findOne({ courseID, status: 'Published' });
-        if (!exam) return res.status(404).json({ message: 'No assessment available for this path.' });
+        // Find any exam for this course (Approved or Pending for testing)
+        const exam = await Exam.findOne({
+            courseID,
+            approvalStatus: { $in: ['Approved', 'Pending'] }
+        }).sort({ approvalStatus: -1, createdAt: -1 }); // Prefer Approved, then most recent
 
+        if (!exam) {
+            return res.status(404).json({
+                eligible: false,
+                message: 'No assessment available for this course yet.'
+            });
+        }
+
+        // Check if already passed
+        const passedResult = await Result.findOne({
+            studentID,
+            examID: exam._id,
+            status: 'Pass'
+        });
+
+        if (passedResult) {
+            const certificate = await Certificate.findOne({ studentID, courseID });
+            return res.status(200).json({
+                eligible: false,
+                alreadyPassed: true,
+                message: 'You have already passed this assessment!',
+                score: passedResult.score,
+                certificateID: certificate ? certificate._id : null
+            });
+        }
+
+        // Check progress
         const progress = await Progress.findOne({ studentID, courseID });
         const percent = progress ? progress.percentComplete : 0;
 
         if (percent < exam.activationThreshold) {
-            return res.status(403).json({
+            return res.status(200).json({
                 eligible: false,
-                message: `You must complete ${exam.activationThreshold}% of the pathway to unlock this assessment. Your current progress: ${percent}%`,
+                message: `Complete ${exam.activationThreshold}% of the course to unlock this assessment.`,
                 progress: percent,
                 threshold: exam.activationThreshold
             });
         }
 
-        res.status(200).json({ eligible: true, examID: exam._id });
+        // Get previous attempts count
+        const { ExamAttempt } = require('../models/index');
+        const attemptCount = await ExamAttempt.countDocuments({
+            studentID,
+            examID: exam._id,
+            completed: true
+        });
+
+
+        res.status(200).json({
+            eligible: true,
+            examID: exam._id,
+            title: exam.title,
+            duration: exam.duration,
+            passingScore: exam.passingScore,
+            questionCount: exam.questions.length,
+            attemptCount,
+            isPending: exam.approvalStatus === 'Pending',
+            warningMessage: exam.approvalStatus === 'Pending' ?
+                'This assessment is in testing mode and has not been officially approved yet.' : null
+        });
     } catch (err) {
+        console.error('Eligibility check error:', err);
         res.status(500).json({ message: 'Eligibility check failed', error: err.message });
     }
 };

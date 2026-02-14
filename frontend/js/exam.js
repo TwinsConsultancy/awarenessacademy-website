@@ -27,9 +27,14 @@ async function loadExam() {
         const res = await fetch(`${Auth.apiBase}/exams/${currentExamID}`, {
             headers: Auth.getHeaders()
         });
+
+        if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
+        }
+
         examData = await res.json();
 
-        if (!examData) {
+        if (!examData || !examData.questions) {
             alert('Assessment not found or unavailable.');
             window.location.href = 'student-dashboard.html';
             return;
@@ -40,7 +45,9 @@ async function loadExam() {
         startTimer(examData.duration);
 
     } catch (err) {
-        console.error(err);
+        console.error('Failed to load exam:', err);
+        alert('Failed to load exam. Please try again or contact support.');
+        window.location.href = 'student-dashboard.html';
     }
 }
 

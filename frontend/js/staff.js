@@ -5,7 +5,7 @@
 // Navigation function to switch between sections
 function switchSection(sectionName) {
     // Hide all sections
-    const sections = ['overviewSection', 'coursesSection', 'materialsSection', 'studentsSection', 'notificationsSection', 'liveSection', 'assessmentsSection', 'ticketsSection', 'profileSection'];
+    const sections = ['overviewSection', 'coursesSection', 'materialsSection', 'modulesSection', 'studentsSection', 'notificationsSection', 'liveSection', 'assessmentsSection', 'ticketsSection', 'profileSection'];
     sections.forEach(id => {
         const section = document.getElementById(id);
         if (section) section.style.display = 'none';
@@ -28,6 +28,8 @@ function switchSection(sectionName) {
         loadOverview();
     } else if (sectionName === 'materials') {
         loadMyMaterials();
+    } else if (sectionName === 'modules') {
+        loadModulesSection();
     } else if (sectionName === 'students') {
         loadEnrolledStudents();
     } else if (sectionName === 'notifications') {
@@ -1062,322 +1064,401 @@ function openScheduleModal() {
     select.innerHTML = courses.map(c => `<option value="${c._id}">${c.title}</option>`).join('');
     document.getElementById('scheduleModal').style.display = 'flex';
 }
-// My Materials Management
+// My Materials Management - Now shows all modules
 async function loadMyMaterials() {
     try {
         UI.showLoader();
-        const res = await fetch(`${Auth.apiBase}/courses/materials/my`, {
+        const res = await fetch(`${Auth.apiBase}/staff/modules`, {
             headers: Auth.getHeaders()
         });
 
-        if (!res.ok) throw new Error('Failed to load materials');
+        if (!res.ok) throw new Error('Failed to load modules');
 
-        const materials = await res.json();
+        const modules = await res.json();
         const list = document.getElementById('myMaterialsList');
 
-        // Show migration notice
-        list.innerHTML = `
-            <div style="text-align: center; padding: 60px 40px; background: linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%); border-radius: 16px; max-width: 600px; margin: 0 auto;">
-                <div style="font-size: 4rem; margin-bottom: 20px; color: var(--color-primary);">
-                    <i class="fas fa-sync-alt"></i>
+        // Store modules globally for filtering
+        window.staffModules = modules;
+
+        if (modules.length === 0) {
+            list.innerHTML = `
+                <div class="glass-card" style="text-align: center; padding: 40px 20px;">
+                    <div style="font-size: 3rem; margin-bottom: 15px; color: var(--color-text-secondary); opacity: 0.5;">
+                        <i class="fas fa-book-open"></i>
+                    </div>
+                    <h4 style="color: var(--color-text-secondary); margin-bottom: 10px;">No Modules Yet</h4>
+                    <p style="color: var(--color-text-secondary); font-size: 0.9rem; margin-bottom: 20px;">
+                        You haven't created any modules yet. Create your first module to get started!
+                    </p>
+                    <button onclick="switchSection('modules')" class="btn-primary" style="border: none; cursor: pointer; padding: 12px 24px;">
+                        <i class="fas fa-plus"></i> Create Module
+                    </button>
                 </div>
-                <h3 style="color: var(--color-primary); margin-bottom: 15px; font-size: 1.5rem;">System Upgraded!</h3>
-                <p style="color: #666; line-height: 1.7; margin-bottom: 25px; font-size: 1rem;">
-                    The material management system has been upgraded to a more powerful <strong>Modular Content System</strong>.
-                </p>
-                <p style="color: #666; line-height: 1.7; margin-bottom: 30px; font-size: 0.95rem;">
-                    You can now create, organize, and manage course content with enhanced features including modules, lessons, quizzes, and more.
-                </p>
-                <a href="module-manager.html" class="btn-primary" style="display: inline-block; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600;">
-                    <i class="fas fa-arrow-right"></i> Go to Module Manager
-                </a>
+            `;
+            return;
+        }
+
+        // Populate course filter dropdown
+        const courseFilter = document.getElementById('materialCourseFilter');
+        if (courseFilter) {
+            const uniqueCourses = [...new Map(modules.map(m => [m.courseId?._id, m.courseId])).values()];
+            courseFilter.innerHTML = '<option value="">All Courses</option>' + 
+                uniqueCourses.filter(c => c).map(course => 
+                    `<option value="${course._id}">${course.title}</option>`
+                ).join('');
+        }
+
+        // Group modules by course
+        const modulesByCourse = {};
+        modules.forEach(module => {
+            const courseId = module.courseId?._id || 'uncategorized';
+            const courseTitle = module.courseId?.title || 'Uncategorized';
+            if (!modulesByCourse[courseId]) {
+                modulesByCourse[courseId] = {
+                    title: courseTitle,
+                    modules: []
+                };
+            }
+            modulesByCourse[courseId].modules.push(module);
+        });
+
+        // Sort modules by order within each course
+        Object.values(modulesByCourse).forEach(course => {
+            course.modules.sort((a, b) => (a.order || 0) - (b.order || 0));
+        });
+
+        // Render modules grouped by course
+        list.innerHTML = Object.entries(modulesByCourse).map(([courseId, course]) => `
+            <div class="course-group-container" data-course-id="${courseId}" style="margin-bottom: 30px;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid var(--color-golden);">
+                    <i class="fas fa-graduation-cap" style="color: var(--color-golden); font-size: 1.2rem;"></i>
+                    <h4 style="margin: 0; color: #333; font-size: 1.1rem;">${course.title}</h4>
+                    <span style="background: rgba(212, 165, 58, 0.1); color: var(--color-golden); padding: 4px 12px; border-radius: 12px; font-size: 0.85rem; font-weight: 600;">
+                        ${course.modules.length} module${course.modules.length !== 1 ? 's' : ''}
+                    </span>
+                </div>
+                <div style="display: grid; gap: 12px;">
+                    ${course.modules.map(module => renderModuleCard(module)).join('')}
+                </div>
             </div>
-        `;
-        return;
+        `).join('');
 
     } catch (err) {
         console.error(err);
-        UI.error('Failed to load materials');
+        UI.error('Failed to load modules');
     } finally {
         UI.hideLoader();
     }
 }
 
-function renderMaterialCard(material, canEdit) {
+function renderModuleCard(module) {
     const statusColors = {
-        'Pending': 'var(--color-saffron)',
-        'Approved': 'var(--color-success)',
-        'Rejected': 'var(--color-error)'
+        'Published': '#28a745',
+        'Approved': '#17a2b8',
+        'Draft': '#ffc107',
+        'Pending': '#ffc107'
     };
 
-    const icons = {
-        'video': 'fa-video',
-        'pdf': 'fa-file-pdf',
-        'audio': 'fa-music'
+    const contentTypeIcons = {
+        'video': { icon: 'fa-video', color: '#856404', label: 'Video' },
+        'pdf': { icon: 'fa-file-pdf', color: '#721c24', label: 'PDF' },
+        'rich-content': { icon: 'fa-align-left', color: '#0056b3', label: 'Content' }
     };
 
+    const typeInfo = contentTypeIcons[module.contentType] || contentTypeIcons['rich-content'];
+    const statusColor = statusColors[module.status] || '#6c757d';
+    
+    // Extract courseId properly (handle both object and string)
+    const courseIdValue = module.courseId?._id || module.courseId || '';
+    
     return `
-        <div class="course-list-item" style="margin-bottom: 15px;">
-            <div style="flex: 1;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <i class="fas ${icons[material.category] || 'fa-file'}" 
-                       style="font-size: 1.5rem; color: ${statusColors[material.approvalStatus]};"></i>
-                    <div>
-                        <strong>${material.title}</strong>
-                        <p style="font-size: 0.85rem; color: var(--color-text-secondary); margin-top: 5px;">
-                            ${material.type} | 
-                            <span style="color: ${statusColors[material.approvalStatus]}; font-weight: 600;">
-                                ${material.approvalStatus}
-                            </span>
+        <div class="module-card" data-module-id="${module._id}" data-course-title="${module.courseId?.title || ''}" data-content-type="${module.contentType || 'rich-content'}">
+            <div style="display: flex; gap: 15px; align-items: flex-start; padding: 15px; background: white; border-radius: 10px; border: 1px solid #e0e0e0; transition: all 0.3s;">
+                <div style="flex-shrink: 0; width: 40px; height: 40px; background: rgba(212, 165, 58, 0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas ${typeInfo.icon}" style="color: ${typeInfo.color}; font-size: 1.2rem;" title="${typeInfo.label}"></i>
+                </div>
+                <div style="flex: 1; min-width: 0;">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 5px;">
+                        <span style="background: rgba(0, 0, 0, 0.05); color: #666; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">
+                            #${(module.order || 0) + 1}
+                        </span>
+                        <h5 style="margin: 0; font-size: 1rem; color: #212529; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;" title="${module.title}">
+                            ${module.title}
+                        </h5>
+                    </div>
+                    ${module.description ? `
+                        <p style="font-size: 0.85rem; color: #6c757d; margin: 8px 0 0 0; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+                            ${module.description}
                         </p>
-                        ${material.rejectionReason ? `
-                            <div style="background: rgba(239, 68, 68, 0.1); padding: 10px; border-radius: 8px; margin-top: 10px;">
-                                <strong style="color: var(--color-error); font-size: 0.85rem;">
-                                    <i class="fas fa-exclamation-circle"></i> Corrections Needed:
-                                </strong>
-                                <p style="color: var(--color-error); font-size: 0.85rem; margin-top: 5px;">
-                                    ${material.rejectionReason}
-                                </p>
-                            </div>
-                        ` : ''}
+                    ` : ''}
+                    <div style="display: flex; align-items: center; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
+                        <span style="font-size: 0.8rem; color: ${statusColor}; font-weight: 600;">
+                            <i class="fas fa-circle" style="font-size: 0.4rem; margin-right: 5px;"></i>${module.status}
+                        </span>
+                        <span style="font-size: 0.8rem; color: #999;">
+                            <i class="fas fa-clock" style="margin-right: 5px;"></i>${new Date(module.createdAt).toLocaleDateString()}
+                        </span>
                     </div>
                 </div>
-            </div>
-            <div style="display: flex; gap: 10px;">
-                ${canEdit ? `
-                    <button class="btn-primary" onclick="openEditMaterial('${material._id}')" 
-                            style="padding: 8px 16px; font-size: 0.85rem; background: var(--color-golden);">
+                <div style="flex-shrink: 0; display: flex; flex-direction: column; gap: 8px;">
+                    <button onclick="viewModuleInManager('${courseIdValue}', '${module._id}')" class="icon-btn" title="View in Module Manager" style="padding: 8px 12px; background: var(--color-golden); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; white-space: nowrap; transition: all 0.3s;">
                         <i class="fas fa-edit"></i> Edit
                     </button>
-                ` : `
-                    <button class="btn-primary" onclick="viewMaterial('${material._id}')" 
-                            style="padding: 8px 16px; font-size: 0.85rem;">
-                        <i class="fas fa-eye"></i> View
-                    </button>
-                `}
+                </div>
             </div>
         </div>
     `;
 }
 
-async function openEditMaterial(materialId) {
+// Function to open module edit modal
+window.viewModuleInManager = async function(courseId, moduleId) {
+    if (!courseId || !moduleId) {
+        UI.error('Module information not available');
+        console.error('Missing IDs - courseId:', courseId, 'moduleId:', moduleId);
+        return;
+    }
+    
     try {
         UI.showLoader();
-        const res = await fetch(`${Auth.apiBase}/courses/materials/${materialId}`, {
+        
+        console.log('Loading module for editing - courseId:', courseId, 'moduleId:', moduleId);
+        
+        // Fetch module details
+        const res = await fetch(`${Auth.apiBase}/modules/${moduleId}`, {
             headers: Auth.getHeaders()
         });
-
-        if (!res.ok) throw new Error('Failed to load material');
-
-        const material = await res.json();
-
-        // Populate edit form
-        document.getElementById('editMaterialId').value = material._id;
-        document.getElementById('editMaterialTitle').value = material.title;
-        document.getElementById('editMaterialType').value = material.type;
-        document.getElementById('editPreviewDuration').value = material.previewDuration || 30;
-
-        // Show modal
-        document.getElementById('editMaterialModal').style.display = 'flex';
-    } catch (err) {
-        console.error(err);
-        UI.error('Failed to load material for editing');
-    } finally {
-        UI.hideLoader();
-    }
-}
-
-document.getElementById('closeEditMaterialModal').addEventListener('click', () => {
-    document.getElementById('editMaterialModal').style.display = 'none';
-    document.getElementById('editMaterialForm').reset();
-});
-
-document.getElementById('editMaterialForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const materialId = document.getElementById('editMaterialId').value;
-    const formData = new FormData();
-
-    formData.append('title', document.getElementById('editMaterialTitle').value);
-    formData.append('previewDuration', document.getElementById('editPreviewDuration').value);
-
-    const fileInput = document.getElementById('editMaterialFile');
-    if (fileInput.files[0]) {
-        formData.append('file', fileInput.files[0]);
-    }
-
-    const btn = e.target.querySelector('button[type="submit"]');
-    const originalText = btn.textContent;
-    btn.textContent = 'Updating...';
-    btn.disabled = true;
-
-    try {
-        UI.showLoader();
-        const res = await fetch(`${Auth.apiBase}/courses/materials/${materialId}`, {
-            method: 'PUT',
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
-            body: formData
-        });
-
-        if (res.ok) {
-            UI.success('Material updated successfully!');
-            document.getElementById('editMaterialModal').style.display = 'none';
-            loadMyMaterials(); // Reload the list
-        } else {
-            const err = await res.json();
-            UI.error('Update failed: ' + err.message);
+        
+        if (!res.ok) {
+            const errorText = await res.text();
+            console.error('API Error:', res.status, errorText);
+            throw new Error('Failed to load module');
         }
-    } catch (err) {
-        console.error(err);
-        UI.error('Update failed. Please try again.');
-    } finally {
-        btn.textContent = originalText;
-        btn.disabled = false;
-        UI.hideLoader();
-    }
-});
-
-let currentViewMaterialUrl = null;
-
-async function viewMaterial(materialId) {
-    try {
-        UI.showLoader();
-        const res = await fetch(`${Auth.apiBase}/courses/materials/${materialId}`, {
-            headers: Auth.getHeaders()
-        });
-
-        if (!res.ok) throw new Error('Failed to load material');
-
-        const material = await res.json();
-        currentViewMaterialUrl = material.fileUrl;
-
+        
+        const module = await res.json();
+        console.log('Module loaded successfully:', module);
+        
+        // Populate the modal
+        document.getElementById('editModuleId').value = module._id;
+        // Extract courseId properly (handle if it's an object reference)
+        const extractedCourseId = module.courseId?._id || module.courseId || courseId;
+        document.getElementById('editModuleCourseId').value = extractedCourseId;
+        
+        console.log('Set hidden inputs - moduleId:', module._id, 'courseId:', extractedCourseId);
+        
+        document.getElementById('editModuleTitle').value = module.title || '';
+        document.getElementById('editModuleDescription').value = module.description || '';
+        document.getElementById('editModuleDuration').value = module.minDuration || 10;
+        
+        // Display module info card
+        const contentTypeIcons = {
+            'video': { icon: 'fa-video', color: '#856404', label: 'Video' },
+            'pdf': { icon: 'fa-file-pdf', color: '#721c24', label: 'PDF' },
+            'rich-content': { icon: 'fa-align-left', color: '#0056b3', label: 'Rich Content' }
+        };
+        
         const statusColors = {
-            'Pending': 'var(--color-saffron)',
-            'Approved': 'var(--color-success)',
-            'Rejected': 'var(--color-error)'
+            'Published': '#28a745',
+            'Approved': '#17a2b8',
+            'Draft': '#ffc107',
+            'Pending': '#ffc107'
         };
-
-        const icons = {
-            'video': 'fa-video',
-            'pdf': 'fa-file-pdf',
-            'audio': 'fa-music'
-        };
-
-        // Build preview content based on file type
-        let previewHTML = '';
-        const fileUrl = material.fileUrl;
-
-        if (material.category === 'video' && fileUrl) {
-            previewHTML = `
-                <div style="margin: 20px 0; background: #000; border-radius: 8px; overflow: hidden;">
-                    <video controls style="width: 100%; max-height: 400px;">
-                        <source src="${fileUrl}" type="video/mp4">
-                        Your browser does not support video playback.
-                    </video>
-                </div>
-            `;
-        } else if (material.category === 'pdf' && fileUrl) {
-            previewHTML = `
-                <div style="margin: 20px 0; background: #f5f5f5; border-radius: 8px; padding: 20px; text-align: center;">
-                    <i class="fas fa-file-pdf" style="font-size: 4rem; color: #dc3545; margin-bottom: 15px;"></i>
-                    <p style="font-weight: 600; margin-bottom: 10px;">PDF Document</p>
-                    <p style="font-size: 0.9rem; color: #666;">Click "Download" below to view the PDF file.</p>
-                </div>
-            `;
-        } else if (material.category === 'audio' && fileUrl) {
-            previewHTML = `
-                <div style="margin: 20px 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; padding: 30px; text-align: center;">
-                    <i class="fas fa-music" style="font-size: 3rem; color: white; margin-bottom: 15px;"></i>
-                    <audio controls style="width: 100%; margin-top: 10px;">
-                        <source src="${fileUrl}" type="audio/mpeg">
-                        Your browser does not support audio playback.
-                    </audio>
-                </div>
-            `;
-        }
-
-        document.getElementById('viewMaterialContent').innerHTML = `
-            <div style="text-align: center; margin-bottom: 25px;">
-                <div style="width: 80px; height: 80px; background: ${statusColors[material.approvalStatus]}20; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 15px;">
-                    <i class="fas ${icons[material.category] || 'fa-file'}" style="color: ${statusColors[material.approvalStatus]}; font-size: 2.5rem;"></i>
-                </div>
-                <h3 style="margin: 0 0 10px 0; color: #333;">${material.title}</h3>
-                <span style="padding: 5px 12px; background: ${statusColors[material.approvalStatus]}20; color: ${statusColors[material.approvalStatus]}; border-radius: 15px; font-size: 0.85rem; font-weight: 600;">
-                    ${material.approvalStatus}
-                </span>
-            </div>
-            
-            ${previewHTML}
-            
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 20px;">
-                <div style="padding: 15px; background: #f8f9fa; border-radius: 8px;">
-                    <div style="font-size: 0.8rem; color: #999; margin-bottom: 5px;">Type</div>
-                    <div style="font-weight: 600;">${material.type}</div>
-                </div>
-                <div style="padding: 15px; background: #f8f9fa; border-radius: 8px;">
-                    <div style="font-size: 0.8rem; color: #999; margin-bottom: 5px;">Category</div>
-                    <div style="font-weight: 600;">${material.category.toUpperCase()}</div>
-                </div>
-                <div style="padding: 15px; background: #f8f9fa; border-radius: 8px;">
-                    <div style="font-size: 0.8rem; color: #999; margin-bottom: 5px;">Course</div>
-                    <div style="font-weight: 600;">${material.courseID?.title || 'Unknown'}</div>
-                </div>
-                <div style="padding: 15px; background: #f8f9fa; border-radius: 8px;">
-                    <div style="font-size: 0.8rem; color: #999; margin-bottom: 5px;">File Size</div>
-                    <div style="font-weight: 600;">${material.fileSize ? (material.fileSize / 1024 / 1024).toFixed(2) + ' MB' : 'Unknown'}</div>
-                </div>
-                <div style="padding: 15px; background: #f8f9fa; border-radius: 8px;">
-                    <div style="font-size: 0.8rem; color: #999; margin-bottom: 5px;">Uploaded On</div>
-                    <div style="font-weight: 600;">${new Date(material.createdAt).toLocaleDateString()}</div>
-                </div>
-                <div style="padding: 15px; background: #f8f9fa; border-radius: 8px;">
-                    <div style="font-size: 0.8rem; color: #999; margin-bottom: 5px;">Preview Duration</div>
-                    <div style="font-weight: 600;">${material.previewDuration || 0} seconds</div>
-                </div>
-            </div>
-            
-            ${material.adminRemarks ? `
-                <div style="padding: 15px; background: #e3f2fd; border-left: 4px solid #2196f3; border-radius: 8px; margin-bottom: 15px;">
-                    <div style="font-size: 0.8rem; color: #1976d2; font-weight: 600; margin-bottom: 5px;">Admin Remarks:</div>
-                    <div style="color: #333;">${material.adminRemarks}</div>
-                </div>
-            ` : ''}
-            
-            ${material.rejectionReason ? `
-                <div style="padding: 15px; background: #f8d7da; border-left: 4px solid #dc3545; border-radius: 8px; margin-bottom: 15px;">
-                    <div style="font-size: 0.8rem; color: #721c24; font-weight: 600; margin-bottom: 5px;">
-                        <i class="fas fa-exclamation-circle"></i> Rejection Reason:
-                    </div>
-                    <div style="color: #333;">${material.rejectionReason}</div>
-                </div>
-            ` : ''}
-        `;
-
+        
+        const typeInfo = contentTypeIcons[module.contentType] || contentTypeIcons['rich-content'];
+        const statusColor = statusColors[module.status] || '#6c757d';
+        
+        // Update info card
+        document.getElementById('editModuleInfoCard').style.display = 'block';
+        document.getElementById('editModuleIcon').className = `fas ${typeInfo.icon}`;
+        document.getElementById('editModuleIcon').style.color = typeInfo.color;
+        document.getElementById('editModuleCurrentTitle').textContent = module.title || 'Untitled Module';
+        document.getElementById('editModuleCurrentStatus').textContent = module.status || 'Draft';
+        document.getElementById('editModuleCurrentStatus').style.color = statusColor;
+        document.getElementById('editModuleCurrentContentType').textContent = typeInfo.label;
+        document.getElementById('editModuleCurrentContentType').style.color = typeInfo.color;
+        
+        // Display content preview
+        displayContentPreview(module);
+        
         // Show modal
-        document.getElementById('viewMaterialModal').style.display = 'flex';
+        document.getElementById('editModuleModal').style.display = 'flex';
+        
     } catch (err) {
-        console.error(err);
-        UI.error('Failed to load material details');
+        console.error('Failed to load module:', err);
+        UI.error('Failed to load module details');
     } finally {
         UI.hideLoader();
     }
+};
+
+// Display content preview in edit modal
+function displayContentPreview(module) {
+    const previewContainer = document.getElementById('editModuleContentPreview');
+    if (!previewContainer) return;
+    
+    const contentType = module.contentType || 'rich-content';
+    
+    if (contentType === 'rich-content') {
+        // Show text preview
+        const content = module.content || '';
+        const textContent = content.replace(/<[^>]*>/g, ''); // Strip HTML tags
+        const preview = textContent.substring(0, 200) + (textContent.length > 200 ? '...' : '');
+        
+        previewContainer.innerHTML = `
+            <div style="background: #f8f9fa; padding: 12px; border-radius: 8px; border-left: 3px solid #0056b3;">
+                <div style="font-size: 0.8rem; color: #666; margin-bottom: 5px; font-weight: 600;">
+                    <i class="fas fa-align-left" style="color: #0056b3;"></i> Content Preview:
+                </div>
+                <div style="font-size: 0.85rem; color: #333; line-height: 1.5; font-style: ${preview ? 'normal' : 'italic'};">
+                    ${preview || 'No content yet. Click "Edit Content" to add content.'}
+                </div>
+            </div>
+        `;
+    } else if (contentType === 'video' && module.fileUrl) {
+        // Show video file info
+        const fileName = module.fileMetadata?.originalName || 'Video file';
+        const fileSize = module.fileMetadata?.fileSize 
+            ? (module.fileMetadata.fileSize / (1024 * 1024)).toFixed(2) + ' MB' 
+            : 'Unknown size';
+        
+        previewContainer.innerHTML = `
+            <div style="background: #fff3cd; padding: 12px; border-radius: 8px; border-left: 3px solid #856404;">
+                <div style="font-size: 0.8rem; color: #856404; margin-bottom: 8px; font-weight: 600;">
+                    <i class="fas fa-video" style="color: #856404;"></i> Video Content:
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px; background: white; padding: 10px; border-radius: 6px;">
+                    <div style="width: 40px; height: 40px; background: #fff3cd; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-play-circle" style="color: #856404; font-size: 1.2rem;"></i>
+                    </div>
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="font-size: 0.85rem; font-weight: 600; color: #333; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${fileName}">
+                            ${fileName}
+                        </div>
+                        <div style="font-size: 0.75rem; color: #999;">${fileSize}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else if (contentType === 'pdf' && module.fileUrl) {
+        // Show PDF file info
+        const fileName = module.fileMetadata?.originalName || 'PDF document';
+        const fileSize = module.fileMetadata?.fileSize 
+            ? (module.fileMetadata.fileSize / (1024 * 1024)).toFixed(2) + ' MB' 
+            : 'Unknown size';
+        
+        previewContainer.innerHTML = `
+            <div style="background: #f8d7da; padding: 12px; border-radius: 8px; border-left: 3px solid #721c24;">
+                <div style="font-size: 0.8rem; color: #721c24; margin-bottom: 8px; font-weight: 600;">
+                    <i class="fas fa-file-pdf" style="color: #721c24;"></i> PDF Document:
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px; background: white; padding: 10px; border-radius: 6px;">
+                    <div style="width: 40px; height: 40px; background: #f8d7da; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-file-pdf" style="color: #721c24; font-size: 1.2rem;"></i>
+                    </div>
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="font-size: 0.85rem; font-weight: 600; color: #333; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${fileName}">
+                            ${fileName}
+                        </div>
+                        <div style="font-size: 0.75rem; color: #999;">${fileSize}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else {
+        // No content yet
+        previewContainer.innerHTML = `
+            <div style="background: #e9ecef; padding: 15px; border-radius: 8px; text-align: center;">
+                <i class="fas fa-inbox" style="font-size: 2rem; color: #adb5bd; margin-bottom: 8px;"></i>
+                <div style="font-size: 0.85rem; color: #6c757d; font-style: italic;">
+                    No content added yet. Click "Edit Content" to add content.
+                </div>
+            </div>
+        `;
+    }
 }
 
-// Close view modal handler
-document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('closeViewMaterialModal')?.addEventListener('click', () => {
-        document.getElementById('viewMaterialModal').style.display = 'none';
-        currentViewMaterialUrl = null;
-    });
+// Close module edit modal
+window.closeEditModuleModal = function() {
+    document.getElementById('editModuleModal').style.display = 'none';
+    document.getElementById('editModuleForm').reset();
+    
+    // Clear content preview
+    const previewContainer = document.getElementById('editModuleContentPreview');
+    if (previewContainer) {
+        previewContainer.innerHTML = '';
+    }
+};
 
-    document.getElementById('downloadMaterialBtn')?.addEventListener('click', () => {
-        if (currentViewMaterialUrl) {
-            window.open(currentViewMaterialUrl, '_blank');
-        } else {
-            UI.error('No file URL available');
+// Open full module editor in new page
+window.openFullModuleEditor = function() {
+    const courseId = document.getElementById('editModuleCourseId').value;
+    const moduleId = document.getElementById('editModuleId').value;
+    
+    if (!courseId || !moduleId) {
+        UI.error('Module information not available');
+        console.error('Missing IDs - courseId:', courseId, 'moduleId:', moduleId);
+        return;
+    }
+    
+    // Validate IDs are not 'undefined' or 'null' strings
+    if (courseId === 'undefined' || courseId === 'null' || moduleId === 'undefined' || moduleId === 'null') {
+        UI.error('Invalid module information');
+        console.error('Invalid IDs - courseId:', courseId, 'moduleId:', moduleId);
+        return;
+    }
+    
+    console.log('Opening editor with courseId:', courseId, 'moduleId:', moduleId);
+    window.location.href = `module-editor.html?courseId=${courseId}&moduleId=${moduleId}`;
+};
+
+// Handle module edit form submission
+if (document.getElementById('editModuleForm')) {
+    document.getElementById('editModuleForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const moduleId = document.getElementById('editModuleId').value;
+        const data = {
+            title: document.getElementById('editModuleTitle').value,
+            description: document.getElementById('editModuleDescription').value,
+            minDuration: parseInt(document.getElementById('editModuleDuration').value) || 10,
+            status: 'Pending'  // Always set to Pending after staff edits
+        };
+        
+        try {
+            UI.showLoader();
+            
+            const res = await fetch(`${Auth.apiBase}/modules/${moduleId}`, {
+                method: 'PUT',
+                headers: {
+                    ...Auth.getHeaders(),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+            
+            if (!res.ok) {
+                const error = await res.json();
+                throw new Error(error.message || 'Failed to update module');
+            }
+            
+            UI.success('Module updated and sent for approval!');
+            closeEditModuleModal();
+            
+            // Reload the materials section to show updated data
+            loadMyMaterials();
+            
+            // If in modules section, reload that too
+            if (currentModuleCourse) {
+                await loadCourseModules(currentModuleCourse);
+            }
+            
+        } catch (err) {
+            console.error('Update failed:', err);
+            UI.error('Failed to update module: ' + err.message);
+        } finally {
+            UI.hideLoader();
         }
     });
-});
+}
 
 // ============================================
 // NEW UI ENHANCEMENTS
@@ -1600,20 +1681,53 @@ function searchCourses() {
     });
 }
 
-// Search/Filter Functions for Materials
+// Search/Filter Functions for Materials (Modules)
 function searchMaterials() {
     const searchTerm = document.getElementById('materialSearchInput')?.value.toLowerCase();
     const filterType = document.getElementById('materialTypeFilter')?.value;
-    const materialCards = document.querySelectorAll('#myMaterialsList .course-list-item');
+    const filterCourse = document.getElementById('materialCourseFilter')?.value;
+    
+    const courseGroups = document.querySelectorAll('#myMaterialsList .course-group-container');
+    const moduleCards = document.querySelectorAll('#myMaterialsList .module-card');
 
-    materialCards.forEach(card => {
-        const title = card.querySelector('strong')?.textContent.toLowerCase() || '';
-        const type = card.querySelector('p')?.textContent.toLowerCase() || '';
+    // Track which courses have visible modules
+    const courseVisibility = new Map();
 
-        const matchesSearch = !searchTerm || title.includes(searchTerm);
-        const matchesFilter = !filterType || filterType === '' || type.includes(filterType.toLowerCase());
+    moduleCards.forEach(card => {
+        const moduleTitle = card.querySelector('h5')?.textContent.toLowerCase() || '';
+        const moduleDesc = card.querySelector('p')?.textContent.toLowerCase() || '';
+        const courseTitle = card.dataset.courseTitle?.toLowerCase() || '';
+        const contentType = card.dataset.contentType || '';
+        const courseId = card.closest('.course-group-container')?.dataset.courseId;
 
-        card.style.display = matchesSearch && matchesFilter ? '' : 'none';
+        const matchesSearch = !searchTerm || 
+            moduleTitle.includes(searchTerm) || 
+            moduleDesc.includes(searchTerm) || 
+            courseTitle.includes(searchTerm);
+        
+        const matchesType = !filterType || filterType === '' || contentType === filterType;
+        const matchesCourse = !filterCourse || filterCourse === '' || 
+            card.closest('.course-group-container')?.dataset.courseId === filterCourse;
+
+        const isVisible = matchesSearch && matchesType && matchesCourse;
+        card.style.display = isVisible ? '' : 'none';
+
+        // Track course visibility
+        if (courseId) {
+            if (!courseVisibility.has(courseId)) {
+                courseVisibility.set(courseId, false);
+            }
+            if (isVisible) {
+                courseVisibility.set(courseId, true);
+            }
+        }
+    });
+
+    // Hide/show course groups based on whether they have visible modules
+    courseGroups.forEach(group => {
+        const courseId = group.dataset.courseId;
+        const hasVisibleModules = courseVisibility.get(courseId) || false;
+        group.style.display = hasVisibleModules ? '' : 'none';
     });
 }
 
@@ -1905,6 +2019,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('courseStatusFilter')?.addEventListener('change', searchCourses);
     document.getElementById('materialSearchInput')?.addEventListener('input', searchMaterials);
     document.getElementById('materialTypeFilter')?.addEventListener('change', searchMaterials);
+    document.getElementById('materialCourseFilter')?.addEventListener('change', searchMaterials);
     document.getElementById('studentSearchInput')?.addEventListener('input', searchStudents);
     document.getElementById('studentCourseFilter')?.addEventListener('change', searchStudents);
 
@@ -2271,6 +2386,349 @@ window.submitCourse = async function () {
         }
     } catch (err) {
         UI.error('Could not initiate the course draft.');
+    } finally {
+        UI.hideLoader();
+    }
+};
+
+// ===================================
+// MODULE MANAGER FUNCTIONALITY
+// ===================================
+
+let currentModuleCourse = null;
+let currentModules = [];
+let moduleSortable = null;
+
+// Initialize modules section
+async function loadModulesSection() {
+    try {
+        // Load courses for dropdown
+        const res = await fetch(`${Auth.apiBase}/staff/courses`, {
+            headers: Auth.getHeaders()
+        });
+
+        if (!res.ok) throw new Error('Failed to load courses');
+
+        const courses = await res.json();
+        const select = document.getElementById('modulesCourseSelect');
+        
+        select.innerHTML = '<option value="">-- Select a course --</option>';
+        
+        if (!courses || courses.length === 0) {
+            select.innerHTML += '<option value="" disabled>No courses available</option>';
+            return;
+        }
+
+        courses.forEach(course => {
+            const option = document.createElement('option');
+            option.value = course._id;
+            option.textContent = course.title;
+            select.appendChild(option);
+        });
+
+        // Setup event listeners if not already set
+        if (!select.dataset.listenerAdded) {
+            select.addEventListener('change', handleModuleCourseChange);
+            select.dataset.listenerAdded = 'true';
+        }
+
+        // Setup add module button
+        const addBtn = document.getElementById('addModuleBtn');
+        if (addBtn && !addBtn.dataset.listenerAdded) {
+            addBtn.addEventListener('click', handleAddModule);
+            addBtn.dataset.listenerAdded = 'true';
+        }
+
+        // Auto-select if only one course
+        if (courses.length === 1) {
+            select.value = courses[0]._id;
+            await handleModuleCourseChange();
+        }
+
+    } catch (err) {
+        console.error('Failed to load courses:', err);
+        UI.error('Failed to load courses for modules');
+    }
+}
+
+async function handleModuleCourseChange() {
+    const courseId = document.getElementById('modulesCourseSelect').value;
+
+    if (!courseId) {
+        currentModuleCourse = null;
+        currentModules = [];
+        renderModulesList();
+        return;
+    }
+
+    currentModuleCourse = courseId;
+    await loadCourseModules(courseId);
+}
+
+async function loadCourseModules(courseId) {
+    try {
+        UI.showLoader();
+
+        const res = await fetch(`${Auth.apiBase}/courses/${courseId}/modules?includeUnpublished=true`, {
+            headers: Auth.getHeaders()
+        });
+
+        if (!res.ok) throw new Error('Failed to load modules');
+
+        const data = await res.json();
+        currentModules = data.modules || [];
+
+        renderModulesList();
+
+    } catch (err) {
+        console.error('Failed to load modules:', err);
+        UI.error('Failed to load modules');
+    } finally {
+        UI.hideLoader();
+    }
+}
+
+function renderModulesList() {
+    const container = document.getElementById('modulesList');
+
+    if (!currentModuleCourse) {
+        container.innerHTML = `
+            <div class="glass-card" style="text-align: center; padding: 40px 20px;">
+                <div style="font-size: 3rem; margin-bottom: 15px; color: var(--color-text-secondary); opacity: 0.3;">
+                    <i class="fas fa-layer-group"></i>
+                </div>
+                <p style="color: var(--color-text-secondary);">Select a course to view and manage modules</p>
+            </div>
+        `;
+        return;
+    }
+
+    if (currentModules.length === 0) {
+        container.innerHTML = `
+            <div class="glass-card" style="text-align: center; padding: 40px 20px;">
+                <div style="font-size: 3rem; margin-bottom: 15px; color: var(--color-text-secondary); opacity: 0.3;">
+                    <i class="fas fa-book"></i>
+                </div>
+                <h4 style="color: var(--color-text-secondary); margin-bottom: 10px;">No Modules Yet</h4>
+                <p style="color: var(--color-text-secondary);">Create your first module to start building course content!</p>
+            </div>
+        `;
+        return;
+    }
+
+    // Helper function to get content type icon
+    const getContentTypeIcon = (contentType) => {
+        switch (contentType) {
+            case 'video':
+                return '<i class="fas fa-video" style="color: #856404;" title="Video"></i>';
+            case 'pdf':
+                return '<i class="fas fa-file-pdf" style="color: #721c24;" title="PDF"></i>';
+            case 'rich-content':
+            default:
+                return '<i class="fas fa-align-left" style="color: #0056b3;" title="Rich Content"></i>';
+        }
+    };
+
+    container.innerHTML = `
+        <div style="display: grid; gap: 15px;">
+            ${currentModules.map(module => `
+                <div class="module-item" data-module-id="${module._id}">
+                    <div class="module-header">
+                        <i class="fas fa-grip-vertical drag-handle"></i>
+                        <div class="module-info">
+                            <div class="module-title">
+                                ${getContentTypeIcon(module.contentType || 'rich-content')}
+                                <span>${module.order + 1}. ${module.title}</span>
+                            </div>
+                            <div class="module-meta">
+                                ${module.status === 'Published' ? 
+                                    '<span style="color: #28a745;">• Published</span>' : 
+                                    (module.status === 'Approved' ? 
+                                        '<span style="color: #17a2b8;">• Approved (Upcoming)</span>' : 
+                                        '<span style="color: #ffc107;">• ' + module.status + '</span>'
+                                    )
+                                }
+                            </div>
+                        </div>
+                        <div class="module-actions">
+                            <button class="icon-btn" onclick="editModule('${module._id}')" title="Edit Content">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="icon-btn delete" onclick="deleteModule('${module._id}')" title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    ${module.description ? `<p style="margin: 10px 0 0 40px; color: #6c757d; font-size: 0.9rem; overflow-wrap: break-word;">${module.description}</p>` : ''}
+                </div>
+            `).join('')}
+        </div>
+    `;
+
+    // Initialize drag-drop
+    initializeModuleSortable();
+}
+
+function initializeModuleSortable() {
+    const container = document.getElementById('modulesList');
+    const moduleContainer = container.querySelector('[style*="display: grid"]');
+
+    if (!moduleContainer) return;
+
+    if (moduleSortable) {
+        moduleSortable.destroy();
+    }
+
+    moduleSortable = new Sortable(moduleContainer, {
+        animation: 200,
+        handle: '.drag-handle',
+        ghostClass: 'sortable-ghost',
+        onEnd: handleModuleReorder
+    });
+}
+
+async function handleModuleReorder(evt) {
+    const newOrder = Array.from(document.querySelectorAll('.module-item')).map((item, index) => {
+        return {
+            id: item.dataset.moduleId,
+            order: index
+        };
+    });
+
+    try {
+        const res = await fetch(`${Auth.apiBase}/courses/${currentModuleCourse}/modules/reorder`, {
+            method: 'PUT',
+            headers: {
+                ...Auth.getHeaders(),
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ moduleOrders: newOrder })
+        });
+
+        if (!res.ok) throw new Error('Failed to reorder');
+
+        // Update local order
+        currentModules.forEach(module => {
+            const found = newOrder.find(o => o.id === module._id);
+            if (found) module.order = found.order;
+        });
+
+        UI.success('Modules reordered successfully');
+
+    } catch (err) {
+        console.error('Reorder failed:', err);
+        UI.error('Failed to reorder modules');
+        // Reload to restore original order
+        await loadCourseModules(currentModuleCourse);
+    }
+}
+
+function handleAddModule() {
+    if (!currentModuleCourse) {
+        UI.error('Please select a course first');
+        return;
+    }
+    
+    // Set course ID and open modal
+    document.getElementById('addModuleCourseId').value = currentModuleCourse;
+    document.getElementById('addModuleModal').style.display = 'flex';
+}
+
+// Close add module modal
+window.closeAddModuleModal = function() {
+    document.getElementById('addModuleModal').style.display = 'none';
+    document.getElementById('addModuleForm').reset();
+};
+
+// Handle add module form submission
+if (document.getElementById('addModuleForm')) {
+    document.getElementById('addModuleForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const courseId = document.getElementById('addModuleCourseId').value;
+        const contentType = document.querySelector('input[name="contentType"]:checked').value;
+        
+        const data = {
+            title: document.getElementById('addModuleTitle').value,
+            description: document.getElementById('addModuleDescription').value,
+            minDuration: parseInt(document.getElementById('addModuleDuration').value) || 10,
+            contentType: contentType,
+            status: 'Pending',  // New modules start as Pending
+            courseId: courseId
+        };
+        
+        try {
+            UI.showLoader();
+            
+            const res = await fetch(`${Auth.apiBase}/courses/${courseId}/modules`, {
+                method: 'POST',
+                headers: {
+                    ...Auth.getHeaders(),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+            
+            if (!res.ok) {
+                const error = await res.json();
+                throw new Error(error.message || 'Failed to create module');
+            }
+            
+            const result = await res.json();
+            UI.success('Module created successfully! Redirecting to editor...');
+            closeAddModuleModal();
+            
+            // Reload modules list
+            await loadCourseModules(courseId);
+            
+            // Redirect to editor to add content
+            setTimeout(() => {
+                window.location.href = `module-editor.html?courseId=${courseId}&moduleId=${result._id || result.module?._id}`;
+            }, 1000);
+            
+        } catch (err) {
+            console.error('Creation failed:', err);
+            UI.error('Failed to create module: ' + err.message);
+        } finally {
+            UI.hideLoader();
+        }
+    });
+}
+
+window.editModule = async function (moduleId) {
+    if (!currentModuleCourse) return;
+    
+    // Use the same modal as materials section for consistency
+    await viewModuleInManager(currentModuleCourse, moduleId);
+};
+
+window.deleteModule = async function (moduleId) {
+    const module = currentModules.find(m => m._id === moduleId);
+    if (!module) return;
+
+    if (!confirm(`Are you sure you want to delete "${module.title}"?\n\nThis cannot be undone.`)) {
+        return;
+    }
+
+    try {
+        UI.showLoader();
+
+        const res = await fetch(`${Auth.apiBase}/modules/${moduleId}`, {
+            method: 'DELETE',
+            headers: Auth.getHeaders()
+        });
+
+        if (!res.ok) {
+            const error = await res.json();
+            throw new Error(error.message || 'Failed to delete');
+        }
+
+        UI.success('Module deleted successfully');
+        await loadCourseModules(currentModuleCourse);
+
+    } catch (err) {
+        console.error('Delete failed:', err);
+        UI.error('Failed to delete module: ' + err.message);
     } finally {
         UI.hideLoader();
     }
