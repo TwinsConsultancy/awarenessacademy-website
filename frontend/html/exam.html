@@ -323,24 +323,49 @@
             try {
                 UI.showLoader();
 
+                console.log('[EXAM] Starting attempt for exam ID:', examID);
+
                 // Start exam attempt
-                const attemptRes = await fetch('/api/exams/attempt/start', {
+                const attemptRes = await fetch(`${Auth.apiBase}/exams/attempt/start`, {
                     method: 'POST',
                     headers: Auth.getHeaders(),
                     body: JSON.stringify({ examID })
                 });
 
                 attemptData = await attemptRes.json();
+                console.log('[EXAM] Attempt response:', attemptData);
 
                 if (!attemptRes.ok) {
+                    console.error('[EXAM] Attempt creation failed:', attemptData);
                     UI.error(attemptData.message || 'Failed to start exam');
-                    setTimeout(() => window.location.href = 'student-dashboard.html', 2000);
+                    alert(`Error: ${attemptData.message || 'Failed to start exam'}.\n\nPlease check:\n1. The exam exists and is approved\n2. You haven't already passed this exam\n3. You meet the course progress requirement\n\nYou will be redirected back in 5 seconds.`);
+                    setTimeout(() => window.location.href = 'student-dashboard.html', 5000);
                     return;
                 }
 
                 // Get exam details
-                const examRes = await fetch(`/api/exams/${examID}`, { headers: Auth.getHeaders() });
+                console.log('[EXAM] Fetching exam details for ID:', examID);
+                const examRes = await fetch(`${Auth.apiBase}/exams/${examID}`, { headers: Auth.getHeaders() });
+                
+                if (!examRes.ok) {
+                    console.error('[EXAM] Failed to fetch exam details');
+                    UI.error('Failed to load exam details');
+                    alert('Could not load exam questions. The exam may not exist or you may not have permission.');
+                    setTimeout(() => window.location.href = 'student-dashboard.html', 5000);
+                    return;
+                }
+                
                 currentExam = await examRes.json();
+                console.log('[EXAM] Exam loaded successfully:', currentExam.title, 'Questions:', currentExam.questions?.length);
+
+                // Validate exam has questions
+                if (!currentExam.questions || currentExam.questions.length === 0) {
+                    console.error('[EXAM] No questions found in exam');
+                    UI.error('This exam has no questions yet');
+                    alert('This assessment has no questions configured. Please contact your instructor.');
+                    setTimeout(() => window.location.href = 'student-dashboard.html', 5000);
+                    return;
+                }
 
                 // Initialize answers array
                 answers = new Array(currentExam.questions.length);
@@ -351,13 +376,17 @@
                 document.getElementById('examPassingScore').textContent = attemptData.passingScore;
                 document.getElementById('examQuestionCount').textContent = attemptData.questionCount || currentExam.questions.length;
 
+                console.log('[EXAM] Rendering exam with', currentExam.questions.length, 'questions');
                 renderExam();
+                console.log('[EXAM] Starting timer for', attemptData.duration, 'minutes');
                 startTimer(attemptData.duration);
+                console.log('[EXAM] Exam initialization complete');
 
             } catch (e) {
                 console.error('Exam load error:', e);
                 UI.error('Failed to load exam');
-                setTimeout(() => window.location.href = 'student-dashboard.html', 2000);
+                alert(`Unexpected error loading exam: ${e.message}\n\nPlease check the browser console for details and contact support if the issue persists.`);
+                setTimeout(() => window.location.href = 'student-dashboard.html', 5000);
             } finally {
                 UI.hideLoader();
             }
@@ -367,8 +396,26 @@
             const container = document.getElementById('questionsContainer');
             const questionOrder = attemptData.questionOrder;
 
+            console.log('[EXAM] Rendering with question order:', questionOrder);
+
             container.innerHTML = questionOrder.map((originalIdx, displayIdx) => {
                 const q = currentExam.questions[originalIdx];
+                
+                if (!q) {
+                    console.error('[EXAM] Question not found at index:', originalIdx);
+                    return '';
+                }
+                
+                if (!q.questionText) {
+                    console.error('[EXAM] Question missing questionText:', q);
+                    return '';
+                }
+                
+                if (!q.options || !Array.isArray(q.options) || q.options.length === 0) {
+                    console.error('[EXAM] Question missing options:', q);
+                    return '';
+                }
+                
                 return `
                     <div class="question-card ${displayIdx === 0 ? 'active' : ''}" id="q-${displayIdx}">
                         <h2 style="font-family: 'Playfair Display', serif; font-size: 2.2rem; margin-bottom: 40px; line-height: 1.3; color: #1a1a1a;">${q.questionText}</h2>
@@ -381,8 +428,17 @@
                         </div>
                     </div>
                 `;
-            }).join('');
+            }).filter(html => html !== '').join('');
 
+            if (container.innerHTML.trim() === '') {
+                console.error('[EXAM] No questions rendered!');
+                UI.error('Failed to render exam questions');
+                alert('Could not display exam questions. Please contact support.');
+                setTimeout(() => window.location.href = 'student-dashboard.html', 3000);
+                return;
+            }
+
+            console.log('[EXAM] Rendered', questionOrder.length, 'questions successfully');
             updateFooter();
         }
 
@@ -445,7 +501,7 @@
 
             try {
                 UI.showLoader();
-                const res = await fetch('/api/exams/submit', {
+                const res = await fetch(`${Auth.apiBase}/exams/submit`, {
                     method: 'POST',
                     headers: Auth.getHeaders(),
                     body: JSON.stringify({
@@ -455,6 +511,11 @@
                 });
 
                 const data = await res.json();
+
+                console.log('[EXAM] Submission result:', data);
+                console.log('[EXAM] Status:', data.status);
+                console.log('[EXAM] Score:', data.score);
+                console.log('[EXAM] Certificate ID:', data.certificateID);
 
                 document.getElementById('exam-content').style.display = 'none';
                 document.getElementById('exam-result').style.display = 'block';
@@ -467,12 +528,14 @@
                 scoreDisplay.textContent = `${data.score}%`;
 
                 if (data.status === 'Pass') {
+                    console.log('[EXAM] Student passed! Showing certificate download option');
                     icon.className = 'fas fa-trophy';
                     icon.style.color = '#FFC300';
                     document.getElementById('resultTitle').textContent = 'Congratulations!';
                     resultText.textContent = `You have passed with ${data.score}%. Your certificate is ready!`;
 
                     if (data.certificateID) {
+                        console.log('[EXAM] Certificate ID found, creating download button');
                         const actionsDiv = document.getElementById('resultActions');
                         actionsDiv.innerHTML = `
                             <button onclick="downloadCertificate('${data.certificateID}')" class="certificate-btn">
@@ -482,10 +545,13 @@
                             <button onclick="window.location.href='student-dashboard.html'" class="btn-primary"
                                 style="padding: 15px 40px; border-radius: 30px; margin-top: 10px;">RETURN TO DASHBOARD</button>
                         `;
+                    } else {
+                        console.warn('[EXAM] No certificate ID in response');
                     }
 
                     UI.success('Congratulations on passing!');
                 } else {
+                    console.log('[EXAM] Student did not pass');
                     icon.className = 'fas fa-redo';
                     icon.style.color = '#999';
                     document.getElementById('resultTitle').textContent = 'Keep Learning';
@@ -500,10 +566,58 @@
             }
         }
 
-        function downloadCertificate(certID) {
-            window.open(`/api/certificates/download/${certID}`, '_blank');
-            UI.success('Certificate download started!');
+        async function downloadCertificate(certID) {
+            try {
+                console.log('[EXAM] Downloading certificate:', certID);
+                UI.showLoader();
+
+                // Fetch certificate with auth headers (window.open doesn't send headers)
+                const res = await fetch(`${Auth.apiBase}/certificates/download/${certID}`, {
+                    headers: Auth.getHeaders()
+                });
+
+                if (!res.ok) {
+                    const errorData = await res.json().catch(() => ({ message: 'Download failed' }));
+                    throw new Error(errorData.message || 'Failed to download certificate');
+                }
+
+                // Get the PDF blob from response
+                const blob = await res.blob();
+                console.log('[EXAM] Certificate blob received, size:', blob.size);
+
+                // Get certificate details for filename
+                const certRes = await fetch(`${Auth.apiBase}/certificates/${certID}`, {
+                    headers: Auth.getHeaders()
+                });
+                const cert = await certRes.json();
+
+                // Create download link
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `InnerSpark_Certificate_${cert.studentID?.name?.replace(/\s+/g, '_') || 'Student'}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+
+                // Cleanup
+                setTimeout(() => {
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                }, 100);
+
+                console.log('[EXAM] Certificate download complete');
+                UI.success('Your certificate has been downloaded!');
+
+            } catch (err) {
+                console.error('[EXAM] Certificate download error:', err);
+                UI.error(err.message || 'Failed to download certificate. Please try again from your dashboard.');
+            } finally {
+                UI.hideLoader();
+            }
         }
+
+        // Expose to global scope for onclick handlers
+        window.downloadCertificate = downloadCertificate;
     </script>
 </body>
 

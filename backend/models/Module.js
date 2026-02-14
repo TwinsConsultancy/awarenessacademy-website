@@ -41,9 +41,9 @@ const moduleSchema = new mongoose.Schema({
         duration: Number, // for videos, in seconds (optional)
         uploadedAt: Date
     },
-    duration: {
+    minDuration: {
         type: Number,
-        default: 10, // Default duration in minutes if not specified
+        default: 10, // Required minimum viewing time in minutes (not video duration!)
         min: [1, 'Duration must be at least 1 minute']
     },
     order: {

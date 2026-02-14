@@ -4,6 +4,8 @@
 
 let examData = null;
 let currentExamID = null;
+let currentAttemptID = null; // Track attempt ID for submission
+let questionOrder = []; // Randomized question order from backend
 let timerInterval = null;
 let timeRemaining = 0;
 
@@ -24,15 +26,39 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function loadExam() {
     try {
-        const res = await fetch(`${Auth.apiBase}/exams/${currentExamID}`, {
+        // STEP 1: Create exam attempt first (FIX for BUG #1)
+        const attemptRes = await fetch(`${Auth.apiBase}/exams/attempt/start`, {
+            method: 'POST',
+            headers: Auth.getHeaders(),
+            body: JSON.stringify({ examID: currentExamID })
+        });
+
+        if (!attemptRes.ok) {
+            const errorData = await attemptRes.json();
+            alert(errorData.message || 'Unable to start exam attempt.');
+            window.location.href = 'student-dashboard.html';
+            return;
+        }
+
+        const attemptData = await attemptRes.json();
+
+        // Store attempt ID and question order
+        currentAttemptID = attemptData.attemptID;
+        questionOrder = attemptData.questionOrder || [];
+
+        console.log('Exam attempt created:', currentAttemptID);
+        console.log('Question order:', questionOrder);
+
+        // STEP 2: Fetch full exam details with questions
+        const examRes = await fetch(`${Auth.apiBase}/exams/${currentExamID}`, {
             headers: Auth.getHeaders()
         });
 
-        if (!res.ok) {
-            throw new Error(`HTTP error! status: ${res.status}`);
+        if (!examRes.ok) {
+            throw new Error(`HTTP error! status: ${examRes.status}`);
         }
 
-        examData = await res.json();
+        examData = await examRes.json();
 
         if (!examData || !examData.questions) {
             alert('Assessment not found or unavailable.');
@@ -40,9 +66,15 @@ async function loadExam() {
             return;
         }
 
+        // STEP 3: Render questions in randomized order
         document.getElementById('examTitle').textContent = examData.title;
-        renderQuestions(examData.questions);
-        startTimer(examData.duration);
+
+        // Apply randomized order to questions before rendering
+        const randomizedQuestions = questionOrder.map(index => examData.questions[index]);
+        renderQuestions(randomizedQuestions);
+
+        // Use duration from attempt response (more reliable)
+        startTimer(attemptData.duration || examData.duration);
 
     } catch (err) {
         console.error('Failed to load exam:', err);
@@ -105,18 +137,32 @@ async function submitExam(auto = false) {
     });
 
     try {
+        // FIX for BUG #1: Send attemptID instead of examID
+        if (!currentAttemptID) {
+            alert('Exam session expired. Please reload and try again.');
+            window.location.href = 'student-dashboard.html';
+            return;
+        }
+
         const res = await fetch(`${Auth.apiBase}/exams/submit`, {
             method: 'POST',
             headers: Auth.getHeaders(),
             body: JSON.stringify({
-                examID: examData._id,
+                attemptID: currentAttemptID, // Changed from examID to attemptID
                 answers: answers
             })
         });
 
+        if (!res.ok) {
+            const errorData = await res.json();
+            alert(errorData.message || 'Submission failed. Please try again.');
+            return;
+        }
+
         const result = await res.json();
         showResult(result);
     } catch (err) {
+        console.error('Submission error:', err);
         alert('Submission error. Please contact sanctuary support.');
     }
 }

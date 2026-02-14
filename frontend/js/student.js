@@ -631,7 +631,14 @@ async function loadCertificates() {
                 </div>
                 <h4 style="font-family: var(--font-heading);">${c.courseID?.title || 'Course Completion'}</h4>
                 <p style="font-size: 0.8rem; color: var(--color-text-secondary); margin: 10px 0;">Awarded on cosmic date ${new Date(c.issueDate).toLocaleDateString()}</p>
-                <button onclick="downloadCertificate('${c._id}')" class="btn-primary" style="width: 100%; padding: 8px; font-size: 0.8rem;">Download PDF</button>
+                <div style="display: flex; gap: 8px; margin-top: 12px;">
+                    <button onclick="viewCertificate('${c._id}')" class="btn-secondary" style="flex: 1; padding: 8px; font-size: 0.8rem;">
+                        <i class="fas fa-eye"></i> View
+                    </button>
+                    <button onclick="downloadCertificate('${c._id}')" class="btn-primary" style="flex: 1; padding: 8px; font-size: 0.8rem;">
+                        <i class="fas fa-download"></i> Download
+                    </button>
+                </div>
             </div>
         `).join('');
     } catch (err) {
@@ -641,111 +648,71 @@ async function loadCertificates() {
     }
 }
 
+// View certificate in browser (new tab)
+async function viewCertificate(certID) {
+    try {
+        // Open certificate in new tab using view endpoint (inline display)
+        const viewUrl = `${Auth.apiBase}/certificates/view/${certID}`;
+        const token = localStorage.getItem('authToken');
+
+        // Create form and submit to new tab (to pass auth headers)
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = viewUrl;
+        form.target = '_blank';
+
+        // Add token as hidden input (backend will need to accept this)
+        // Alternative: open with token in query param
+        window.open(`${viewUrl}?token=${token}`, '_blank');
+
+        UI.info('Opening certificate in new tab...');
+
+    } catch (err) {
+        console.error('Certificate view error:', err);
+        UI.error('Could not view certificate. Please try again.');
+    }
+}
+
 async function downloadCertificate(certID) {
     try {
         UI.showLoader();
-        const res = await fetch(`${Auth.apiBase}/certificates/${certID}`, { headers: Auth.getHeaders() });
-        const cert = await res.json();
 
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF('landscape', 'mm', 'a4');
+        // FIX for BUG #2: Use backend professional certificate generation instead of client-side jsPDF
+        // Backend endpoint: /certificates/download/:id (certificateController.js:32)
+        const res = await fetch(`${Auth.apiBase}/certificates/download/${certID}`, {
+            headers: Auth.getHeaders()
+        });
 
-        // PREMIUM BACKGROUND
-        doc.setFillColor(255, 252, 248); // Paper texture substitute
-        doc.rect(0, 0, 297, 210, 'F');
-
-        // ORNATE BORDER
-        doc.setDrawColor(255, 153, 51); // Saffron
-        doc.setLineWidth(1.5);
-        doc.rect(10, 10, 277, 190);
-        doc.setDrawColor(255, 195, 0); // Golden inner
-        doc.setLineWidth(0.5);
-        doc.rect(12, 12, 273, 186);
-
-        // CORNER ACCENTS (Simulated)
-        doc.setFillColor(255, 153, 51);
-        doc.triangle(10, 10, 30, 10, 10, 30, 'F');
-        doc.triangle(287, 10, 267, 10, 287, 30, 'F');
-        doc.triangle(10, 200, 30, 200, 10, 180, 'F');
-        doc.triangle(287, 200, 267, 200, 287, 180, 'F');
-
-        // HEADER
-        doc.setTextColor(255, 153, 51);
-        doc.setFont('times', 'bold');
-        doc.setFontSize(28);
-        doc.text('INNERSPARK SANCTUARY', 148.5, 35, { align: 'center' });
-
-        doc.setFontSize(12);
-        doc.setTextColor(150, 150, 150);
-        doc.text('WHERE TECHNOLOGY MEETS TRADITION', 148.5, 42, { align: 'center' });
-
-        // MAIN TITLE
-        doc.setTextColor(51, 51, 51);
-        doc.setFontSize(42);
-        doc.text('CERTIFICATE OF ENLIGHTENMENT', 148.5, 75, { align: 'center' });
-
-        // DESCRIPTION
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(18);
-        doc.text('Thus it is decreed that', 148.5, 95, { align: 'center' });
-
-        // STUDENT NAME - HIGH FIDELITY
-        doc.setFont('times', 'italic');
-        doc.setFontSize(48);
-        doc.setTextColor(255, 153, 51);
-        doc.text(cert.studentID.name.toUpperCase(), 148.5, 115, { align: 'center' });
-
-        // GOLD FOIL DECOR UNDER NAME
-        doc.setDrawColor(255, 195, 0);
-        doc.setLineWidth(0.8);
-        doc.line(70, 120, 227, 120);
-
-        // COMPLETION TEXT
-        doc.setTextColor(51, 51, 51);
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(18);
-        doc.text(`has successfully transcended the challenges of`, 148.5, 135, { align: 'center' });
-
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(22);
-        doc.text(cert.courseID.title, 148.5, 150, { align: 'center' });
-
-        // GOLD FOIL SEAL
-        const sealX = 245, sealY = 165, sealR = 20;
-        doc.setFillColor(255, 195, 0);
-        doc.circle(sealX, sealY, sealR, 'F');
-
-        // SEAL RAYS
-        doc.setDrawColor(255, 153, 51);
-        for (let i = 0; i < 360; i += 15) {
-            const rad = i * Math.PI / 180;
-            doc.line(
-                sealX + Math.cos(rad) * sealR,
-                sealY + Math.sin(rad) * sealR,
-                sealX + Math.cos(rad) * (sealR + 3),
-                sealY + Math.sin(rad) * (sealR + 3)
-            );
+        if (!res.ok) {
+            throw new Error('Failed to download certificate');
         }
 
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(9);
-        doc.text('AUTHENTIC', sealX, sealY - 4, { align: 'center' });
-        doc.setFontSize(14);
-        doc.text('IS', sealX, sealY + 2, { align: 'center' });
-        doc.setFontSize(9);
-        doc.text('SANCTUARY', sealX, sealY + 8, { align: 'center' });
+        // Get the PDF blob from response
+        const blob = await res.blob();
 
-        // FOOTER INFO
-        doc.setTextColor(100, 100, 100);
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`Date of Ascension: ${new Date(cert.issueDate).toLocaleDateString()}`, 40, 175);
-        doc.text(`Verification ID: ${cert.uniqueCertID || cert._id}`, 40, 182);
+        // Get certificate details for filename
+        const certRes = await fetch(`${Auth.apiBase}/certificates/${certID}`, {
+            headers: Auth.getHeaders()
+        });
+        const cert = await certRes.json();
 
-        doc.save(`InnerSpark_Enlightenment_${cert.studentID.name.replace(' ', '_')}.pdf`);
-        UI.success('Your certification has materialized.');
+        // Create download link
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `InnerSpark_Certificate_${cert.studentID?.name?.replace(/\s+/g, '_') || 'Student'}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+
+        // Cleanup
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        UI.success('Your certificate has been downloaded.');
+
     } catch (err) {
-        UI.error('Could not generate certificate.');
+        console.error('Certificate download error:', err);
+        UI.error('Could not download certificate. Please try again.');
     } finally {
         UI.hideLoader();
     }

@@ -360,7 +360,7 @@ async function loadModuleContent(module) {
     // Initialize timer state
     timeSpentInModule = 0;
     unsavedTime = 0;
-    moduleTotalDuration = (module.duration || 10) * 60; // Duration in seconds
+    moduleTotalDuration = (module.minDuration || module.duration || 10) * 60; // Duration in seconds (FIX for BUG #4: use minDuration)
 
     // Fetch existing progress for this module to resume timer
     try {
@@ -522,8 +522,6 @@ const handleVisibilityChange = () => {
 async function syncProgress(isUnload = false) {
     if (unsavedTime > 0) {
         const timeToSend = unsavedTime;
-        // Reset immediately to prevent double sending if multiple events trigger rapidly
-        unsavedTime = 0;
 
         try {
             const payload = JSON.stringify({
@@ -543,32 +541,47 @@ async function syncProgress(isUnload = false) {
                     body: payload,
                     keepalive: true
                 });
+                // FIX for BUG #3: Reset after sending (best effort for unload)
+                unsavedTime = 0;
             } else {
                 const res = await fetch(`${Auth.apiBase}/progress/update-progress`, {
                     method: 'POST',
                     headers: Auth.getHeaders(),
                     body: payload
                 });
-                const data = await res.json();
 
-                if (data.moduleCompleted) {
-                    const markBtn = document.getElementById('markCompleteBtn');
-                    if (markBtn) {
-                        markBtn.innerHTML = '<i class="fas fa-check-circle"></i> Completed';
-                        markBtn.style.background = 'var(--color-success)';
-                        markBtn.disabled = true;
+                // FIX for BUG #3: Only reset unsavedTime AFTER successful response
+                if (res.ok) {
+                    const data = await res.json();
+
+                    // Reset only on success - prevents data loss on network failure
+                    unsavedTime = 0;
+
+                    if (data.moduleCompleted) {
+                        const markBtn = document.getElementById('markCompleteBtn');
+                        if (markBtn) {
+                            markBtn.innerHTML = '<i class="fas fa-check-circle"></i> Completed';
+                            markBtn.style.background = 'var(--color-success)';
+                            markBtn.disabled = true;
+                        }
+
+                        // Unlock next module in UI without full reload if possible
+                        updateCurriculumWithCompletion(data.nextModuleID);
+                        UI.success('Module successfully completed!');
                     }
 
-                    // Unlock next module in UI without full reload if possible
-                    updateCurriculumWithCompletion(data.nextModuleID);
-                    UI.success('Module successfully completed!');
+                    console.log(`Synced ${timeToSend}s successfully`);
+                } else {
+                    // On failure, keep unsavedTime so it will be retried
+                    console.error('Sync failed with status:', res.status);
+                    console.log(`Will retry ${timeToSend}s on next sync`);
                 }
             }
-            console.log(`Synced ${timeToSend}s`);
         } catch (err) {
+            // FIX for BUG #3: On error, keep unsavedTime for retry
             console.error('Sync failed', err);
-            // Put time back if failed? Tricky because of async. 
-            // For now, assume best effort.
+            console.log(`Will retry ${timeToSend}s on next sync`);
+            // Do NOT reset unsavedTime here - let it accumulate for next sync attempt
         }
     }
 }

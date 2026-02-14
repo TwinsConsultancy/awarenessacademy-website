@@ -56,10 +56,15 @@ exports.updateProgress = async (req, res) => {
             modProgress = newEntry;
         }
 
-        // Check Completion Rule: > 90% of duration (Stricter rule for real completion)
-        // Or 50% as per previous logic. Let's stick to 90% for "Watching" status or 50%?
-        // Let's use 80% to be safe but fair.
-        const requiredSeconds = (module.duration || 10) * 60 * 0.8;
+        // FIX for BUG #5: Document completion threshold with constant
+        // Students must watch 80% of required viewing time to complete a module
+        // This balances learning engagement with reasonable completion criteria
+        // TODO: Consider making this configurable per course/module in future
+        const COMPLETION_THRESHOLD = 0.8; // 80% of module duration required
+
+        // FIX for BUG #4: Use minDuration field (required viewing time in minutes)
+        // Note: module.minDuration is in minutes, fileMetadata.duration is video length in seconds
+        const requiredSeconds = (module.minDuration || module.duration || 10) * 60 * COMPLETION_THRESHOLD;
 
         let newlyCompleted = false;
         if (!modProgress.completed && modProgress.timeSpent >= requiredSeconds) {

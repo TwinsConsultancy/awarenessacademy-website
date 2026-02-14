@@ -28,12 +28,54 @@ exports.getCertificateDetails = async (req, res) => {
     }
 };
 
+// View Certificate PDF (inline in browser)
+exports.viewCertificate = async (req, res) => {
+    try {
+        const cert = await Certificate.findById(req.params.id)
+            .populate('studentID', 'name studentID profilePhoto')
+            .populate('courseID', 'title description');
+
+        if (!cert) {
+            return res.status(404).json({ message: 'Certificate not found' });
+        }
+
+        // Verify ownership
+        if (cert.studentID._id.toString() !== req.user.id && req.user.role !== 'Admin') {
+            return res.status(403).json({ message: 'Unauthorized' });
+        }
+
+        // Use the same PDF generation logic but with inline disposition
+        const doc = new PDFDocument({
+            layout: 'landscape',
+            size: 'A4',
+            margins: { top: 30, bottom: 30, left: 40, right: 40 }
+        });
+
+        // Set response headers for inline viewing (not download)
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader(
+            'Content-Disposition',
+            `inline; filename=Certificate_${cert.uniqueCertID}.pdf`
+        );
+
+        // Pipe the PDF to the response
+        doc.pipe(res);
+
+        // Generate certificate using shared logic
+        generateCertificatePDF(doc, cert);
+
+    } catch (err) {
+        console.error('Certificate view error:', err);
+        res.status(500).json({ message: 'Certificate view failed', error: err.message });
+    }
+};
+
 // Generate and Download Certificate PDF
 exports.downloadCertificate = async (req, res) => {
     try {
         const cert = await Certificate.findById(req.params.id)
-            .populate('studentID', 'name studentID')
-            .populate('courseID', 'title');
+            .populate('studentID', 'name studentID profilePhoto')
+            .populate('courseID', 'title description');
 
         if (!cert) {
             return res.status(404).json({ message: 'Certificate not found' });
@@ -48,7 +90,7 @@ exports.downloadCertificate = async (req, res) => {
         const doc = new PDFDocument({
             layout: 'landscape',
             size: 'A4',
-            margins: { top: 40, bottom: 40, left: 50, right: 50 }
+            margins: { top: 30, bottom: 30, left: 40, right: 40 }
         });
 
         // Set response headers for PDF download
@@ -61,128 +103,268 @@ exports.downloadCertificate = async (req, res) => {
         // Pipe the PDF to the response
         doc.pipe(res);
 
-        // Certificate Design
+        // Page dimensions
         const pageWidth = doc.page.width;
         const pageHeight = doc.page.height;
 
-        // Draw decorative border
-        doc.rect(30, 30, pageWidth - 60, pageHeight - 60)
-            .lineWidth(3)
+        // ======= PREMIUM BACKGROUND =======
+        // Subtle gradient effect using overlapping rectangles
+        doc.rect(0, 0, pageWidth, pageHeight).fill('#FFFEF9');
+
+        // Decorative corner elements
+        const cornerSize = 80;
+        doc.save()
+            .fillColor('#FF9933', 0.08)
+            .moveTo(0, 0)
+            .lineTo(cornerSize, 0)
+            .lineTo(0, cornerSize)
+            .fill()
+            .moveTo(pageWidth, 0)
+            .lineTo(pageWidth - cornerSize, 0)
+            .lineTo(pageWidth, cornerSize)
+            .fill()
+            .moveTo(0, pageHeight)
+            .lineTo(cornerSize, pageHeight)
+            .lineTo(0, pageHeight - cornerSize)
+            .fill()
+            .moveTo(pageWidth, pageHeight)
+            .lineTo(pageWidth - cornerSize, pageHeight)
+            .lineTo(pageWidth, pageHeight - cornerSize)
+            .fill()
+            .restore();
+
+        // ======= ORNATE BORDERS =======
+        // Outer border - Saffron
+        doc.rect(20, 20, pageWidth - 40, pageHeight - 40)
+            .lineWidth(4)
             .strokeColor('#FF9933')
             .stroke();
 
-        doc.rect(35, 35, pageWidth - 70, pageHeight - 70)
+        // Middle border - Gold
+        doc.rect(26, 26, pageWidth - 52, pageHeight - 52)
             .lineWidth(1)
             .strokeColor('#FFC300')
             .stroke();
 
-        // Academy Logo (placeholder - replace with actual logo if available)
-        doc.fontSize(36)
+        // Inner border - Dark accent
+        doc.rect(30, 30, pageWidth - 60, pageHeight - 60)
+            .lineWidth(0.5)
+            .strokeColor('#CC7722')
+            .stroke();
+
+        // ======= LOGO AND HEADER =======
+        const logoPath = path.join(__dirname, '../../frontend/assets/logo.png');
+        const logoSize = 50;
+        const logoX = (pageWidth - logoSize) / 2;
+
+        // Insert Academy Logo
+        if (fs.existsSync(logoPath)) {
+            doc.image(logoPath, logoX, 45, { width: logoSize, height: logoSize });
+        }
+
+        // Academy Name
+        doc.fontSize(32)
             .fillColor('#FF9933')
             .font('Helvetica-Bold')
-            .text('AWARENESS ACADEMY', 0, 60, { align: 'center' });
+            .text('INNERSPARK SANCTUARY', 0, 105, { align: 'center' });
 
-        // Contact Details
-        doc.fontSize(9)
-            .fillColor('#666666')
-            .font('Helvetica')
-            .text('Email: contact@awarenessacademy.com | Phone: +91-XXXX-XXXXXX', 0, 105, {
+        // Tagline
+        doc.fontSize(10)
+            .fillColor('#888888')
+            .font('Helvetica-Oblique')
+            .text('Where Technology Meets Tradition', 0, 140, { align: 'center' });
+
+        // Decorative line under header
+        const lineY = 155;
+        doc.moveTo(150, lineY)
+            .lineTo(pageWidth - 150, lineY)
+            .lineWidth(1.5)
+            .strokeColor('#FFC300')
+            .stroke();
+
+        // Decorative dots
+        for (let i = 0; i < 5; i++) {
+            const x = 150 + ((pageWidth - 300) / 4) * i;
+            doc.circle(x, lineY, 3).fill('#FF9933');
+        }
+
+        // ======= CERTIFICATE TITLE =======
+        doc.fontSize(40)
+            .fillColor('#CC7722')
+            .font('Times-Bold')
+            .text('CERTIFICATE OF COMPLETION', 0, 175, {
                 align: 'center'
             });
 
-        // Certificate Title
-        doc.fontSize(48)
-            .fillColor('#FFC300')
-            .font('Times-Bold')
-            .text('Certificate of Completion', 0, 150, {
-                align: 'center',
-                underline: false
-            });
+        // ======= STUDENT PHOTO (IF AVAILABLE) =======
+        const photoSize = 80;
+        const photoX = 60;
+        const photoY = 220;
 
-        // Decorative Line
-        doc.moveTo(200, 215)
-            .lineTo(pageWidth - 200, 215)
-            .lineWidth(2)
-            .strokeColor('#FF9933')
-            .stroke();
+        if (cert.studentID.profilePhoto) {
+            const photoPath = path.join(__dirname, '../../', cert.studentID.profilePhoto);
 
-        // "This is to certify that"
-        doc.fontSize(14)
-            .fillColor('#333333')
-            .font('Helvetica')
-            .text('This is to certify that', 0, 240, { align: 'center' });
+            if (fs.existsSync(photoPath)) {
+                // Draw decorative border around photo
+                doc.circle(photoX + photoSize / 2, photoY + photoSize / 2, photoSize / 2 + 3)
+                    .lineWidth(2)
+                    .strokeColor('#FFC300')
+                    .stroke();
 
-        // Student Name
-        doc.fontSize(28)
-            .fillColor('#000000')
-            .font('Times-Bold')
-            .text(cert.studentID.name.toUpperCase(), 0, 270, { align: 'center' });
+                // Clip to circle and insert photo
+                doc.save()
+                    .circle(photoX + photoSize / 2, photoY + photoSize / 2, photoSize / 2)
+                    .clip();
 
-        // Student ID
-        doc.fontSize(11)
-            .fillColor('#666666')
-            .font('Helvetica-Oblique')
-            .text(`Student ID: ${cert.studentID.studentID}`, 0, 305, { align: 'center' });
+                doc.image(photoPath, photoX, photoY, {
+                    width: photoSize,
+                    height: photoSize,
+                    align: 'center',
+                    valign: 'center'
+                });
 
-        // Course Details
-        doc.fontSize(14)
-            .fillColor('#333333')
-            .font('Helvetica')
-            .text('has successfully completed the course', 0, 335, { align: 'center' });
+                doc.restore();
+            }
+        } else {
+            // Empty ornate frame if no photo (no placeholder image)
+            doc.circle(photoX + photoSize / 2, photoY + photoSize / 2, photoSize / 2 + 3)
+                .lineWidth(2)
+                .strokeColor('#FFC300')
+                .stroke();
 
-        doc.fontSize(20)
-            .fillColor('#FF9933')
-            .font('Helvetica-Bold')
-            .text(cert.courseID.title, 0, 360, {
-                align: 'center',
-                width: pageWidth - 100
-            });
-
-        // Mentor Name
-        if (cert.mentorName) {
-            doc.fontSize(13)
-                .fillColor('#666666')
-                .font('Helvetica')
-                .text(`Mentored by ${cert.mentorName}`, 0, 395, { align: 'center' });
+            doc.circle(photoX + photoSize / 2, photoY + photoSize / 2, photoSize / 2)
+                .lineWidth(1)
+                .strokeColor('#E0E0E0')
+                .stroke();
         }
 
-        // Score
-        doc.fontSize(14)
+        // ======= CERTIFICATION TEXT =======
+        const textStartY = 230;
+
+        doc.fontSize(13)
+            .fillColor('#444444')
+            .font('Helvetica')
+            .text('This is to certify that', 180, textStartY, {
+                align: 'left',
+                width: pageWidth - 240
+            });
+
+        // Student Name - Prominent
+        doc.fontSize(30)
+            .fillColor('#000000')
+            .font('Times-Bold')
+            .text(cert.studentID.name.toUpperCase(), 180, textStartY + 25, {
+                align: 'left',
+                width: pageWidth - 240
+            });
+
+        // Decorative underline
+        const nameUnderlineY = textStartY + 62;
+        doc.moveTo(180, nameUnderlineY)
+            .lineTo(pageWidth - 60, nameUnderlineY)
+            .lineWidth(1)
+            .strokeColor('#FFC300')
+            .stroke();
+
+        // Student ID
+        doc.fontSize(10)
+            .fillColor('#777777')
+            .font('Helvetica-Oblique')
+            .text(`Student ID: ${cert.studentID.studentID}`, 180, nameUnderlineY + 8, {
+                align: 'left'
+            });
+
+        // Course completion text
+        doc.fontSize(13)
+            .fillColor('#444444')
+            .font('Helvetica')
+            .text('has successfully completed the transformative course', 180, nameUnderlineY + 30, {
+                align: 'left',
+                width: pageWidth - 240
+            });
+
+        // Course Title - Highlighted
+        doc.fontSize(22)
+            .fillColor('#FF9933')
+            .font('Helvetica-Bold')
+            .text(`"${cert.courseID.title}"`, 180, nameUnderlineY + 53, {
+                align: 'left',
+                width: pageWidth - 240
+            });
+
+        // Course description (if available, truncated)
+        if (cert.courseID.description) {
+            const desc = cert.courseID.description.length > 150
+                ? cert.courseID.description.substring(0, 150) + '...'
+                : cert.courseID.description;
+
+            doc.fontSize(9)
+                .fillColor('#666666')
+                .font('Helvetica-Oblique')
+                .text(desc, 180, nameUnderlineY + 82, {
+                    align: 'left',
+                    width: pageWidth - 240,
+                    height: 30
+                });
+        }
+
+        // Mentor acknowledgment
+        const mentorY = nameUnderlineY + (cert.courseID.description ? 118 : 115);
+        if (cert.mentorName) {
+            doc.fontSize(11)
+                .fillColor('#555555')
+                .font('Helvetica')
+                .text(`Mentored by: ${cert.mentorName}`, 180, mentorY, { align: 'left' });
+        }
+
+        // Score badge (decorative)
+        const scoreY = mentorY + (cert.mentorName ? 25 : 18);
+        doc.fontSize(13)
             .fillColor('#333333')
             .font('Helvetica-Bold')
-            .text(`with a score of ${cert.percentage}%`, 0, 420, { align: 'center' });
+            .text(`Assessment Score: `, 180, scoreY, { continued: true })
+            .fillColor('#FF9933')
+            .text(`${cert.percentage}%`);
 
-        // Appreciation Text
-        doc.fontSize(11)
-            .fillColor('#555555')
+        // ======= APPRECIATION MESSAGE =======
+        const appreciationY = scoreY + 30;
+        doc.fontSize(10)
+            .fillColor('#666666')
             .font('Helvetica-Oblique')
             .text(
-                'We commend your dedication to learning and personal growth. May this achievement',
-                0,
-                450,
-                { align: 'center', width: pageWidth - 100 }
+                'We commend your dedication to personal growth and spiritual enlightenment. May this achievement',
+                180,
+                appreciationY,
+                { align: 'left', width: pageWidth - 240 }
             );
 
         doc.text(
-            'inspire you to continue your journey towards enlightenment and self-awareness.',
-            0,
-            468,
-            { align: 'center', width: pageWidth - 100 }
+            'inspire you to continue your journey towards self-awareness and inner transformation.',
+            180,
+            appreciationY + 15,
+            { align: 'left', width: pageWidth - 240 }
         );
 
-        // Bottom Section - Certificate Number and Date
-        const bottomY = pageHeight - 80;
+        // ======= VERIFICATION SECTION (BOTTOM) =======
+        const bottomY = pageHeight - 70;
 
-        // Certificate Number (Left)
-        doc.fontSize(10)
+        // Certificate Number with decorative box
+        doc.rect(45, bottomY - 5, 200, 30)
+            .lineWidth(1)
+            .strokeColor('#E0E0E0')
+            .stroke();
+
+        doc.fontSize(8)
+            .fillColor('#888888')
+            .font('Helvetica')
+            .text('CERTIFICATE NO.', 50, bottomY, { width: 190 });
+
+        doc.fontSize(11)
             .fillColor('#333333')
             .font('Helvetica-Bold')
-            .text(`Certificate No: ${cert.uniqueCertID}`, 60, bottomY, {
-                align: 'left',
-                width: 250
-            });
+            .text(cert.uniqueCertID, 50, bottomY + 10, { width: 190 });
 
-        // Completion Date (Right)
+        // Date of Completion
         const completionDate = cert.completedAt || cert.issueDate;
         const formattedDate = new Date(completionDate).toLocaleDateString('en-IN', {
             day: '2-digit',
@@ -190,22 +372,96 @@ exports.downloadCertificate = async (req, res) => {
             year: 'numeric'
         });
 
-        doc.fontSize(10)
-            .fillColor('#333333')
-            .font('Helvetica-Bold')
-            .text(`Completed on: ${formattedDate}`, pageWidth - 310, bottomY, {
-                align: 'right',
-                width: 250
+        // Issue date with decorative box
+        doc.rect(pageWidth - 245, bottomY - 5, 200, 30)
+            .lineWidth(1)
+            .strokeColor('#E0E0E0')
+            .stroke();
+
+        doc.fontSize(8)
+            .fillColor('#888888')
+            .font('Helvetica')
+            .text('DATE OF COMPLETION', pageWidth - 240, bottomY, {
+                width: 190,
+                align: 'right'
             });
 
-        // Watermark (Background)
-        doc.fontSize(120)
-            .fillColor('#FF9933', 0.03)
+        doc.fontSize(11)
+            .fillColor('#333333')
             .font('Helvetica-Bold')
-            .text('AWARENESS', pageWidth / 2 - 200, pageHeight / 2 - 60, {
-                rotate: 45,
-                opacity: 0.03
+            .text(formattedDate, pageWidth - 240, bottomY + 10, {
+                width: 190,
+                align: 'right'
             });
+
+        // ======= VERIFICATION QR CODE PLACEHOLDER =======
+        // Center bottom - could be enhanced with actual QR code generation
+        const qrSize = 40;
+        const qrX = (pageWidth - qrSize) / 2;
+        const qrY = bottomY - 3;
+
+        doc.rect(qrX, qrY, qrSize, qrSize)
+            .lineWidth(0.5)
+            .strokeColor('#999999')
+            .stroke();
+
+        doc.fontSize(7)
+            .fillColor('#999999')
+            .font('Helvetica')
+            .text('VERIFY', qrX, qrY + 14, { width: qrSize, align: 'center' });
+
+        doc.fontSize(6)
+            .text('ONLINE', qrX, qrY + 22, { width: qrSize, align: 'center' });
+
+        // ======= SUBTLE WATERMARK =======
+        doc.fontSize(100)
+            .fillColor('#FF9933', 0.02)
+            .font('Helvetica-Bold')
+            .text('INNERSPARK', pageWidth / 2 - 180, pageHeight / 2 - 40, {
+                rotate: 45,
+                opacity: 0.02
+            });
+
+        // ======= DECORATIVE SEAL (TOP RIGHT) =======
+        const sealX = pageWidth - 80;
+        const sealY = 60;
+        const sealRadius = 30;
+
+        // Outer golden ring
+        doc.circle(sealX, sealY, sealRadius)
+            .lineWidth(3)
+            .strokeColor('#FFC300')
+            .stroke();
+
+        // Inner saffron fill
+        doc.circle(sealX, sealY, sealRadius - 5)
+            .fillColor('#FF9933', 0.15)
+            .fill();
+
+        // Seal rays
+        for (let angle = 0; angle < 360; angle += 30) {
+            const rad = (angle * Math.PI) / 180;
+            const x1 = sealX + Math.cos(rad) * (sealRadius - 2);
+            const y1 = sealY + Math.sin(rad) * (sealRadius - 2);
+            const x2 = sealX + Math.cos(rad) * (sealRadius + 4);
+            const y2 = sealY + Math.sin(rad) * (sealRadius + 4);
+
+            doc.moveTo(x1, y1)
+                .lineTo(x2, y2)
+                .lineWidth(1.5)
+                .strokeColor('#FFC300')
+                .stroke();
+        }
+
+        // Seal text
+        doc.fontSize(7)
+            .fillColor('#FF9933')
+            .font('Helvetica-Bold')
+            .text('CERTIFIED', sealX - 20, sealY - 9, { width: 40, align: 'center' });
+
+        doc.fontSize(6)
+            .fillColor('#CC7722')
+            .text('AUTHENTIC', sealX - 20, sealY + 1, { width: 40, align: 'center' });
 
         // Finalize the PDF
         doc.end();

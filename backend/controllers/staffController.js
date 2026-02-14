@@ -294,11 +294,12 @@ exports.submitExam = async (req, res) => {
 
         let certificateID = null;
 
-        // If Passed, Issue Certificate
+        // If Passed, Issue or Update Certificate
         if (status === 'Pass') {
             let certificate = await Certificate.findOne({ studentID, courseID: exam.courseID });
 
             if (!certificate) {
+                // Create new certificate
                 // Get student and mentor info
                 const student = await User.findById(studentID).select('studentID');
                 const course = attempt.courseID;
@@ -327,6 +328,21 @@ exports.submitExam = async (req, res) => {
                     percentage: finalScore
                 });
                 await certificate.save();
+            } else {
+                // FIX for BUG #6: Update certificate if new score is higher
+                if (finalScore > certificate.examScore) {
+                    console.log(`[CERTIFICATE UPDATE] Student ${studentID} achieved higher score: ${finalScore}% (previous: ${certificate.examScore}%)`);
+
+                    certificate.examScore = finalScore;
+                    certificate.percentage = finalScore;
+                    certificate.issueDate = new Date(); // Update issue date to reflect improved achievement
+                    // Keep original completedAt to preserve first completion date
+
+                    await certificate.save();
+                    console.log(`[CERTIFICATE UPDATE] Certificate updated with new score`);
+                } else {
+                    console.log(`[CERTIFICATE] Student ${studentID} passed again with ${finalScore}%, but existing certificate has higher score: ${certificate.examScore}%`);
+                }
             }
             certificateID = certificate._id;
         }
