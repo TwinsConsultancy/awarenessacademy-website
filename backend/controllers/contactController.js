@@ -43,7 +43,7 @@ exports.submitContactMessage = catchAsync(async (req, res, next) => {
     let priority = 'Medium';
     const urgentKeywords = ['urgent', 'asap', 'emergency', 'critical', 'immediately'];
     const highKeywords = ['important', 'problem', 'issue', 'help', 'support'];
-    
+
     const combinedText = `${subject} ${message}`.toLowerCase();
     if (urgentKeywords.some(keyword => combinedText.includes(keyword))) {
         priority = 'Urgent';
@@ -81,15 +81,15 @@ exports.getAllMessages = catchAsync(async (req, res, next) => {
 
     // Build query
     const query = {};
-    
+
     if (status) {
         query.status = status;
     }
-    
+
     if (priority) {
         query.priority = priority;
     }
-    
+
     if (search) {
         query.$or = [
             { name: { $regex: search, $options: 'i' } },
@@ -193,7 +193,7 @@ exports.updateMessage = catchAsync(async (req, res, next) => {
     if (priority) message.priority = priority;
     if (adminNotes !== undefined) message.adminNotes = adminNotes;
 
-    // Track when replied
+    // Track when replied manually from status updates
     if (status === 'Replied' && message.status !== 'Replied') {
         message.repliedAt = new Date();
         message.repliedBy = userId;
@@ -204,6 +204,61 @@ exports.updateMessage = catchAsync(async (req, res, next) => {
     res.json({
         status: 'success',
         message: 'Message updated successfully',
+        data: message
+    });
+});
+
+/**
+ * Reply to a contact message and send an email automatically (Admin only)
+ * POST /api/contact/admin/:id/reply
+ */
+const emailService = require('../utils/emailService');
+exports.replyToMessage = catchAsync(async (req, res, next) => {
+    const { replyMessage } = req.body;
+    const userId = req.user._id;
+
+    if (!replyMessage || replyMessage.trim().length === 0) {
+        return next(new AppError('Reply message cannot be empty', 400));
+    }
+
+    const message = await ContactMessage.findById(req.params.id);
+
+    if (!message) {
+        return next(new AppError('Message not found', 404));
+    }
+
+    // Attempt to send email using the Email Service
+    try {
+        await emailService.sendMail({
+            to: message.email,
+            subject: `Re: ${message.subject}`,
+            html: `
+                <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+                    <h2 style="color: #D97706;">Reply to your message: "${message.subject}"</h2>
+                    <p style="margin: 20px 0; line-height: 1.6;">${replyMessage.replace(/\\n/g, '<br>')}</p>
+                    <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;" />
+                    <p style="font-size: 0.85em; color: #777;"><strong>Your original message:</strong><br/>${message.message}</p>
+                </div>
+            `
+        });
+    } catch (err) {
+        console.error('Email sending failed in replyToMessage: ', err);
+        return next(new AppError('Failed to send the email reply via SMTP. Check server configuration.', 500));
+    }
+
+    // Update message status
+    message.status = 'Replied';
+    message.repliedAt = new Date();
+    message.repliedBy = userId;
+
+    // Auto-append to admin notes
+    message.adminNotes = (message.adminNotes || '') + '\\n[E-MAIL REPLY SENT]: ' + replyMessage;
+
+    await message.save();
+
+    res.json({
+        status: 'success',
+        message: 'Reply sent successfully to ' + message.email,
         data: message
     });
 });

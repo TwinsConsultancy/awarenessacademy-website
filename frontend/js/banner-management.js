@@ -39,7 +39,7 @@ async function loadBannersList() {
             ? Auth.apiBase.slice(0, -4)
             : Auth.apiBase;
 
-        gridContainer.innerHTML = banners.map(banner => {
+        gridContainer.innerHTML = banners.map((banner, index) => {
             // Ensure proper image path construction
             let imageUrl = banner.imageUrl;
             if (imageUrl && !imageUrl.startsWith('http')) {
@@ -70,7 +70,7 @@ async function loadBannersList() {
                         onerror="this.onerror=null; this.src='${fallbackImage}'">
                     
                     <div style="position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.6); color: white; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">
-                        #${banner.order || 0}
+                        #${index + 1}
                     </div>
 
                      <!-- Kebab Menu -->

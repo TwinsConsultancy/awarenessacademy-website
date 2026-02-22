@@ -55,16 +55,16 @@ exports.getPendingContent = async (req, res) => {
         const allExams = await Exam.find({});
         console.log('[DEBUG] Total exams in database:', allExams.length);
         if (allExams.length > 0) {
-            console.log('[DEBUG] Sample exam approvalStatus values:', allExams.map(e => ({ 
-                id: e._id, 
-                title: e.title, 
+            console.log('[DEBUG] Sample exam approvalStatus values:', allExams.map(e => ({
+                id: e._id,
+                title: e.title,
                 approvalStatus: e.approvalStatus,
                 hasApprovalStatus: e.hasOwnProperty('approvalStatus')
             })));
         }
 
         // Get pending exams/assessments - only truly pending ones
-        const pendingExams = await Exam.find({ 
+        const pendingExams = await Exam.find({
             approvalStatus: 'Pending'
         })
             .populate('courseID', 'title')
@@ -72,27 +72,27 @@ exports.getPendingContent = async (req, res) => {
             .sort({ updatedAt: -1, createdAt: -1 }); // Sort by most recently updated first
 
         console.log('[PENDING EXAMS] Raw pending exams found:', pendingExams.length);
-        
+
         // Advanced deduplication: Remove true duplicates based on course, title, and creator
         const examMap = new Map();
         const uniquePendingExams = [];
-        
+
         for (let exam of pendingExams) {
             const courseId = exam.courseID?._id?.toString();
             const examTitle = (exam.title || '').trim();
             const creatorId = exam.createdBy?._id?.toString();
             const dedupeKey = `${courseId}_${examTitle}_${creatorId}`;
-            
+
             console.log(`[DEDUPE CHECK] Exam: ${exam.title} | Course: ${courseId} | Creator: ${creatorId} | Key: ${dedupeKey}`);
-            
+
             // Check if we already have this exact assessment
             if (examMap.has(dedupeKey)) {
                 const existing = examMap.get(dedupeKey);
                 const examUpdateDate = new Date(exam.updatedAt || exam.createdAt);
                 const existingUpdateDate = new Date(existing.updatedAt || existing.createdAt);
-                
+
                 console.log(`[DEDUPE] Found duplicate - Exam: ${examUpdateDate.toISOString()} vs Existing: ${existingUpdateDate.toISOString()}`);
-                
+
                 // Keep the more recently updated one
                 if (examUpdateDate > existingUpdateDate) {
                     console.log(`[DEDUPE] Replacing older assessment '${existing.title}' (${existing._id}) with newer version (${exam._id})`);
@@ -105,12 +105,12 @@ exports.getPendingContent = async (req, res) => {
                 examMap.set(dedupeKey, exam);
             }
         }
-        
+
         // Convert map back to array
         for (let exam of examMap.values()) {
             uniquePendingExams.push(exam);
         }
-        
+
         console.log('[DEDUPLICATION] Reduced from', pendingExams.length, 'to', uniquePendingExams.length, 'unique assessments');
 
         // If createdBy population failed, try to get course creator as fallback
@@ -134,7 +134,7 @@ exports.getPendingContent = async (req, res) => {
         }
 
         console.log('[STATS] Found:', pendingModules.length, 'modules,', pendingCourses.length, 'courses,', uniquePendingExams.length, 'unique exams');
-        
+
         if (uniquePendingExams.length > 0) {
             console.log('[EXAMS] Pending exams detailed info:');
             uniquePendingExams.forEach((e, index) => {
@@ -161,7 +161,7 @@ exports.getPendingContent = async (req, res) => {
 
         const response = { content: allPendingContent, exams: uniquePendingExams };
         console.log('[SUCCESS] Sending response to frontend');
-        
+
         res.status(200).json(response);
     } catch (err) {
         console.error('[ERROR] getPendingContent error:', err);
@@ -310,30 +310,35 @@ exports.getAdvancedAnalytics = async (req, res) => {
         const { Payment, Impression, Progress, User, Course, Enrollment, Schedule, Attendance, Module, Ticket } = require('../models/index');
 
         // === 1. USER & GROWTH ANALYTICS ===
-        
+
         // Total Users Overview (KPI Cards)
         const totalStudents = await User.countDocuments({ role: 'Student' });
         const totalStaff = await User.countDocuments({ role: 'Staff' });
         const totalAdmins = await User.countDocuments({ role: 'Admin' });
-        
+
         // Active/Inactive based on account status (active field)
         const activeUsers = await User.countDocuments({ active: true });
         const inactiveUsers = await User.countDocuments({ active: { $ne: true } });
-        
+
         // Recently active based on login activity (last 7 days)
         const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
         const recentlyActiveUsers = await User.countDocuments({ lastLogin: { $gte: sevenDaysAgo } });
-        const dormantUsers = await User.countDocuments({ 
+        const dormantUsers = await User.countDocuments({
             $or: [
                 { lastLogin: { $lt: sevenDaysAgo } },
                 { lastLogin: { $exists: false } }
             ]
         });
 
-        // Student Growth Over Time (Last 30 days)
-        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+        const filterDays = parseInt(req.query.days);
+        // If filterDays is 0, it means 'All Time', so we set the start date to 1970
+        const filterStartDate = filterDays > 0 ? new Date(Date.now() - filterDays * 24 * 60 * 60 * 1000) : new Date(0);
+
+        const dateFilter = { createdAt: { $gte: filterStartDate } };
+
+        // Student Growth Over Time
         const studentGrowth = await User.aggregate([
-            { $match: { role: 'Student', createdAt: { $gte: thirtyDaysAgo } } },
+            { $match: { role: 'Student', createdAt: { $gte: filterStartDate } } },
             {
                 $group: {
                     _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
@@ -346,15 +351,16 @@ exports.getAdvancedAnalytics = async (req, res) => {
         // Active vs Inactive Students (Based on account status)
         const activeStudents = await User.countDocuments({ role: 'Student', active: true });
         const inactiveStudents = await User.countDocuments({ role: 'Student', active: { $ne: true } });
-        
+
         // Recently Active vs Dormant (Based on login activity)
         const recentlyActiveStudents = await User.countDocuments({ role: 'Student', lastLogin: { $gte: sevenDaysAgo } });
         const dormantStudents = totalStudents - recentlyActiveStudents;
 
         // === 2. COURSE PERFORMANCE ANALYTICS ===
-        
+
         // Course Enrollment Distribution
         const courseEnrollments = await Enrollment.aggregate([
+            { $match: dateFilter },
             {
                 $group: {
                     _id: "$courseID",
@@ -413,13 +419,13 @@ exports.getAdvancedAnalytics = async (req, res) => {
         const freeCourses = await Course.countDocuments({ price: 0 });
 
         // === 3. REVENUE & PAYMENT ANALYTICS ===
-        
+
         // Revenue Growth (Monthly)
         const revenueGrowth = await Payment.aggregate([
-            { $match: { status: 'Success' } },
+            { $match: { status: 'Success', createdAt: { $gte: filterStartDate } } },
             {
                 $group: {
-                    _id: { 
+                    _id: {
                         year: { $year: "$createdAt" },
                         month: { $month: "$createdAt" }
                     },
@@ -432,13 +438,13 @@ exports.getAdvancedAnalytics = async (req, res) => {
 
         // Total Revenue
         const totalRevenue = await Payment.aggregate([
-            { $match: { status: 'Success' } },
+            { $match: { status: 'Success', createdAt: { $gte: filterStartDate } } },
             { $group: { _id: null, total: { $sum: "$amount" } } }
         ]);
 
         // Revenue by Course
         const revenueByCourse = await Payment.aggregate([
-            { $match: { status: 'Success' } },
+            { $match: { status: 'Success', createdAt: { $gte: filterStartDate } } },
             {
                 $group: {
                     _id: "$courseID",
@@ -467,18 +473,18 @@ exports.getAdvancedAnalytics = async (req, res) => {
         ]);
 
         // Payment Success vs Failure
-        const successPayments = await Payment.countDocuments({ status: 'Success' });
-        const failedPayments = await Payment.countDocuments({ status: { $in: ['Failed', 'Pending'] } });
+        const successPayments = await Payment.countDocuments({ status: 'Success', createdAt: { $gte: filterStartDate } });
+        const failedPayments = await Payment.countDocuments({ status: { $in: ['Failed', 'Pending'] }, createdAt: { $gte: filterStartDate } });
 
         // === 4. CONTENT & STAFF ANALYTICS ===
-        
+
         // Content Status Distribution (Modules + Courses + Exams)
         const { Exam } = require('../models/index');
-        
+
         // Count pending content from all sources
         const pendingModules = await Module.countDocuments({ status: 'Pending' });
         const pendingCourses = await Course.countDocuments({ status: 'Pending' });
-        const pendingExams = await Exam.countDocuments({ 
+        const pendingExams = await Exam.countDocuments({
             $or: [
                 { approvalStatus: 'Pending' },
                 { approvalStatus: { $exists: false } },
@@ -486,13 +492,13 @@ exports.getAdvancedAnalytics = async (req, res) => {
             ]
         });
         const pendingContent = pendingModules + pendingCourses + pendingExams;
-        
+
         // Count approved content from all sources
         const approvedModules = await Module.countDocuments({ status: { $in: ['Approved', 'Published'] } });
         const approvedCourses = await Course.countDocuments({ status: { $in: ['Approved', 'Published'] } });
         const approvedExams = await Exam.countDocuments({ approvalStatus: 'Approved' });
         const approvedContent = approvedModules + approvedCourses + approvedExams;
-        
+
         // Count rejected content from all sources
         const rejectedModules = await Module.countDocuments({ status: 'Rejected' });
         const rejectedCourses = await Course.countDocuments({ status: 'Rejected' });
@@ -552,10 +558,10 @@ exports.getAdvancedAnalytics = async (req, res) => {
         ]);
 
         // === 5. LIVE CLASS & ATTENDANCE ANALYTICS ===
-        
-        // Live Class Attendance Rate (Last 30 days)
+
+        // Live Class Attendance Rate
         const attendanceRate = await Attendance.aggregate([
-            { $match: { timestamp: { $gte: thirtyDaysAgo } } },
+            { $match: { timestamp: { $gte: filterStartDate } } },
             {
                 $group: {
                     _id: { $dateToString: { format: "%Y-%m-%d", date: "$timestamp" } },
@@ -568,8 +574,8 @@ exports.getAdvancedAnalytics = async (req, res) => {
             {
                 $project: {
                     date: "$_id",
-                    attendanceRate: { 
-                        $multiply: [{ $divide: ["$present", "$total"] }, 100] 
+                    attendanceRate: {
+                        $multiply: [{ $divide: ["$present", "$total"] }, 100]
                     }
                 }
             },
@@ -577,7 +583,7 @@ exports.getAdvancedAnalytics = async (req, res) => {
         ]);
 
         // === 6. STUDENT ENGAGEMENT ANALYTICS ===
-        
+
         // Video Completion Rate
         const videoCompletion = await Progress.aggregate([
             {
@@ -610,10 +616,10 @@ exports.getAdvancedAnalytics = async (req, res) => {
         ]);
 
         // === 7. SUPPORT & FEEDBACK ANALYTICS ===
-        
+
         // Support Requests Over Time
         const supportRequests = await Ticket.aggregate([
-            { $match: { createdAt: { $gte: thirtyDaysAgo } } },
+            { $match: { createdAt: { $gte: filterStartDate } } },
             {
                 $group: {
                     _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
@@ -624,15 +630,15 @@ exports.getAdvancedAnalytics = async (req, res) => {
         ]);
 
         // Ticket Status Distribution
-        const openTickets = await Ticket.countDocuments({ status: 'Open' });
-        const resolvedTickets = await Ticket.countDocuments({ status: 'Resolved' });
-        const closedTickets = await Ticket.countDocuments({ status: 'Closed' });
+        const openTickets = await Ticket.countDocuments({ status: 'Open', createdAt: { $gte: filterStartDate } });
+        const resolvedTickets = await Ticket.countDocuments({ status: 'Resolved', createdAt: { $gte: filterStartDate } });
+        const closedTickets = await Ticket.countDocuments({ status: 'Closed', createdAt: { $gte: filterStartDate } });
 
         // === 8. SYSTEM HEALTH & SECURITY ===
-        
-        // Login Activity Trend (Last 30 days)
+
+        // Login Activity Trend
         const loginActivity = await User.aggregate([
-            { $match: { lastLogin: { $gte: thirtyDaysAgo, $exists: true } } },
+            { $match: { lastLogin: { $gte: filterStartDate, $exists: true } } },
             {
                 $group: {
                     _id: { $dateToString: { format: "%Y-%m-%d", date: "$lastLogin" } },
@@ -664,34 +670,34 @@ exports.getAdvancedAnalytics = async (req, res) => {
             studentGrowth,
             activeVsInactive: { active: activeStudents, inactive: inactiveStudents },
             recentlyActiveVsDormant: { recentlyActive: recentlyActiveStudents, dormant: dormantStudents },
-            
+
             // Course Performance
             courseEnrollments,
             courseCompletion,
             paidVsFree: { paid: paidCourses, free: freeCourses },
-            
+
             // Revenue & Payment
             revenueGrowth,
             totalRevenue: totalRevenue[0]?.total || 0,
             revenueByCourse,
             paymentStatus: { success: successPayments, failed: failedPayments },
-            
+
             // Content & Staff
             contentStatus: { pending: pendingContent, approved: approvedContent, rejected: rejectedContent },
             staffContributions,
             liveClassesByStaff,
-            
+
             // Live Class & Attendance
             attendanceRate,
-            
+
             // Student Engagement
             videoCompletion,
             avgEngagement: avgTimeSpent[0]?.overallAvg || 0,
-            
+
             // Support
             supportRequests,
             ticketStatus: { open: openTickets, resolved: resolvedTickets, closed: closedTickets },
-            
+
             // System Health
             loginActivity,
             roleDistribution
@@ -730,13 +736,46 @@ exports.getBanners = async (req, res) => {
 
 exports.getCertificates = async (req, res) => {
     try {
-        const { Certificate } = require('../models/index');
+        const { Certificate, Enrollment, Course } = require('../models/index');
         const certs = await Certificate.find()
             .populate('studentID', 'name email')
             .populate('courseID', 'title')
-            .sort({ issueDate: -1 });
-        res.status(200).json(certs);
+            .sort({ issueDate: -1 })
+            .lean();
+
+        // Get coarse-grained stats per course for analytics
+        const statsAggregation = await Enrollment.aggregate([
+            {
+                $group: {
+                    _id: "$courseID",
+                    enrolled: { $sum: 1 },
+                    completed: { $sum: { $cond: ["$completed", 1, 0] } }
+                }
+            },
+            {
+                $lookup: {
+                    from: "courses",
+                    localField: "_id",
+                    foreignField: "_id",
+                    as: "courseInfo"
+                }
+            },
+            { $unwind: "$courseInfo" },
+            {
+                $project: {
+                    courseTitle: "$courseInfo.title",
+                    enrolled: 1,
+                    completed: 1
+                }
+            }
+        ]);
+
+        res.status(200).json({
+            certificates: certs,
+            stats: statsAggregation
+        });
     } catch (err) {
+        console.error('Certificate Stats Error:', err);
         res.status(500).json({ message: 'Failed to fetch certificates' });
     }
 };
@@ -776,7 +815,28 @@ exports.getUsers = async (req, res) => {
             if (status === 'inactive') filter.active = false;
         }
 
-        const users = await User.find(filter).select('-password').sort({ createdAt: -1 });
+        let users = await User.find(filter)
+            .populate({ path: 'enrolledCourses', select: 'title _id' })
+            .select('-password')
+            .sort({ createdAt: -1 })
+            .lean();
+
+        const { Payment, Course } = require('../models/index');
+        for (let u of users) {
+            if (u.role === 'Student') {
+                u.registeredCoursesCount = Array.isArray(u.enrolledCourses) ? u.enrolledCourses.length : 0;
+                const userPayments = await Payment.aggregate([
+                    { $match: { studentID: u._id, status: 'Success' } },
+                    { $group: { _id: null, total: { $sum: "$amount" } } }
+                ]);
+                u.totalPayments = userPayments.length > 0 ? userPayments[0].total : 0;
+            } else if (u.role === 'Staff') {
+                const mappedCourses = await Course.find({ mentors: u._id }).select('title _id').lean();
+                u.mappedCoursesCount = mappedCourses.length;
+                u.enrolledCourses = mappedCourses; // Mapped for uniformity in modal parser
+            }
+        }
+
         res.status(200).json(users);
     } catch (err) {
         res.status(500).json({ message: 'Failed to fetch users', error: err.message });
@@ -890,7 +950,7 @@ exports.deleteUser = async (req, res) => {
 
         // Prevent deletion of default admin
         if (user.role === 'Admin' && user.isDefaultAdmin) {
-            return res.status(403).json({ 
+            return res.status(403).json({
                 message: 'Cannot delete default admin. Please set another admin as default first.',
                 isDefaultAdmin: true
             });
@@ -899,7 +959,7 @@ exports.deleteUser = async (req, res) => {
         // Only default admin can delete other admins
         if (user.role === 'Admin') {
             if (!req.user.isDefaultAdmin) {
-                return res.status(403).json({ 
+                return res.status(403).json({
                     message: 'Only the default admin can delete other admins.',
                     requiresDefaultAdmin: true
                 });
@@ -928,7 +988,7 @@ exports.toggleUserStatus = async (req, res) => {
 
         // Prevent disabling default admin
         if (user.role === 'Admin' && user.isDefaultAdmin && user.active) {
-            return res.status(403).json({ 
+            return res.status(403).json({
                 message: 'Cannot disable the default admin. Please set another admin as default first.',
                 isDefaultAdmin: true
             });
@@ -936,7 +996,7 @@ exports.toggleUserStatus = async (req, res) => {
 
         // Prevent admin from disabling themselves
         if (req.user.id === id && user.active) {
-            return res.status(403).json({ 
+            return res.status(403).json({
                 message: 'You cannot disable your own account.',
                 isSelf: true
             });
@@ -945,7 +1005,7 @@ exports.toggleUserStatus = async (req, res) => {
         // Only default admin can disable other admins
         if (user.role === 'Admin' && user.active) {
             if (!req.user.isDefaultAdmin) {
-                return res.status(403).json({ 
+                return res.status(403).json({
                     message: 'Only the default admin can disable other admins.',
                     requiresDefaultAdmin: true
                 });
@@ -970,7 +1030,7 @@ exports.toggleUserStatus = async (req, res) => {
         });
 
         await user.save();
-        res.status(200).json({ 
+        res.status(200).json({
             message: `User ${newStatus ? 'activated' : 'deactivated'}`,
             wasActive: wasActive, // Previous status
             newActive: newStatus  // New status
@@ -984,35 +1044,35 @@ exports.toggleUserStatus = async (req, res) => {
 exports.setDefaultAdmin = async (req, res) => {
     try {
         const { id } = req.params;
-        
+
         // Only current default admin can change default status
         if (!req.user.isDefaultAdmin) {
-            return res.status(403).json({ 
+            return res.status(403).json({
                 message: 'Only the current default admin can transfer default admin privileges.',
                 requiresDefaultAdmin: true
             });
         }
-        
+
         // Find the target admin
         const targetAdmin = await User.findById(id);
         if (!targetAdmin) return res.status(404).json({ message: 'Admin not found' });
-        
+
         // Verify it's an admin
         if (targetAdmin.role !== 'Admin') {
             return res.status(400).json({ message: 'User must be an Admin to be set as default' });
         }
-        
+
         // Remove default status from all other admins
         await User.updateMany(
             { role: 'Admin', isDefaultAdmin: true },
             { $set: { isDefaultAdmin: false } }
         );
-        
+
         // Set this admin as default
         targetAdmin.isDefaultAdmin = true;
         await targetAdmin.save();
-        
-        res.status(200).json({ 
+
+        res.status(200).json({
             message: 'Default admin updated successfully',
             defaultAdmin: {
                 id: targetAdmin._id,

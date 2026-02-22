@@ -7,6 +7,8 @@ const settingsSchema = new Schema({
     disableRightClick: { type: Boolean, default: false },
     siteTitle: { type: String, default: 'InnerSpark' },
     supportEmail: { type: String, default: 'support@innerspark.com' },
+    emailNotifications: { type: Boolean, default: true },
+    strictVerification: { type: Boolean, default: false },
     lastUpdatedBy: { type: Schema.Types.ObjectId, ref: 'User' },
     updatedAt: { type: Date, default: Date.now }
 });

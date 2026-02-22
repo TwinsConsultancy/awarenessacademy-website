@@ -7,7 +7,9 @@
     <title>Course Preview - AWARENESS ACADEMY</title>
     <link rel="stylesheet" href="../css/variables.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;600&display=swap"
+        rel="stylesheet">
     <style>
         body {
             background-color: #fdfaf7;
@@ -485,6 +487,7 @@
                 transform: translateY(-50px);
                 opacity: 0;
             }
+
             to {
                 transform: translateY(0);
                 opacity: 1;
@@ -582,6 +585,7 @@
                 opacity: 0;
                 transform: translateY(-8px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -669,7 +673,8 @@
     <div class="top-header">
         <div class="top-header-left">
             <div class="top-header-brand" style="display: flex; align-items: center; gap: 10px;">
-                <img src="../assets/logo.png" alt="AWARENESS ACADEMY" style="height: 40px;"> <span style="font-family: var(--font-heading); font-weight: bold;">AWARENESS ACADEMY</span>
+                <img src="../assets/logo.png" alt="AWARENESS ACADEMY" style="height: 40px;"> <span
+                    style="font-family: var(--font-heading); font-weight: bold;">AWARENESS ACADEMY</span>
             </div>
             <a href="#" id="backLink" class="back-btn">
                 <i class="fas fa-arrow-left"></i> Back to Dashboard
@@ -698,21 +703,25 @@
     <div id="rejectionModal" class="modal-overlay" style="display: none;">
         <div class="modal-dialog">
             <div class="modal-header">
-                <h3><i class="fas fa-exclamation-triangle" style="color: #dc3545;"></i> Reject Assessment</h3>
+                <h3 id="rejectionModalTitle"><i class="fas fa-exclamation-triangle" style="color: #dc3545;"></i> Reject
+                    Content</h3>
                 <button class="modal-close" onclick="closeRejectionModal()">×</button>
             </div>
             <div class="modal-body">
-                <label for="rejectionReasonInput" style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
+                <label for="rejectionReasonInput"
+                    style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
                     Please provide a reason for rejection:
                 </label>
-                <textarea id="rejectionReasonInput" rows="4" placeholder="Enter the reason for rejecting this assessment..." 
+                <textarea id="rejectionReasonInput" rows="4"
+                    placeholder="Enter the reason for rejecting this content..."
                     style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-family: inherit; font-size: 0.95rem; resize: vertical;"></textarea>
                 <p style="font-size: 0.85rem; color: #666; margin-top: 8px;">
-                    <i class="fas fa-info-circle"></i> This feedback will be sent to the staff member who created the assessment.
+                    <i class="fas fa-info-circle"></i> This feedback will be sent to the staff member who created it.
                 </p>
             </div>
             <div class="modal-footer">
-                <button onclick="closeRejectionModal()" class="btn" style="background: #f8f9fa; color: #666; border: 1px solid #ddd;">
+                <button onclick="closeRejectionModal()" class="btn"
+                    style="background: #f8f9fa; color: #666; border: 1px solid #ddd;">
                     <i class="fas fa-times"></i> Cancel
                 </button>
                 <button onclick="confirmRejection()" class="btn btn-reject">

@@ -321,8 +321,9 @@ exports.login = catchAsync(async (req, res, next) => {
         });
     }
 
-    // Check Verification Status
-    if (!user.isVerified) {
+    // Check Verification Status (allow Admins through even if unverified)
+    const strictVerification = settings && settings.strictVerification === true;
+    if (strictVerification && !user.isVerified && user.role !== 'Admin') {
         return next(new AppError('Please verify your email address to login.', 403));
     }
 

@@ -298,7 +298,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function switchSection(section) {
     try {
         // Hide all sections
-        ['overview', 'analytics', 'users', 'courses', 'content', 'finance', 'tickets', 'messages', 'subscribers', 'gallery', 'bannerManagement', 'settings'].forEach(s => {
+        ['overview', 'analytics', 'users', 'courses', 'content', 'finance', 'tickets', 'messages', 'subscribers', 'gallery', 'bannerManagement', 'settings', 'certificates'].forEach(s => {
             const el = document.getElementById(s + 'Section');
             if (el) el.style.display = 'none';
 
@@ -372,6 +372,9 @@ function switchSection(section) {
         if (section === 'settings') {
             loadSettings();
         }
+        if (section === 'certificates') {
+            loadCertificates();
+        }
 
         // Auto-close sidebar after clicking a tab (both desktop and mobile)
         const sidebar = document.querySelector('.sidebar');
@@ -387,16 +390,73 @@ function switchSection(section) {
     }
 }
 
-function loadSettings() {
-    // Determine user role and load appropriate settings
-    const auth = Auth.checkAuth(['Admin']);
-    if (auth && auth.user) {
-        // Populate profile form (Mock or from User object)
-        const nameInput = document.querySelector('#adminProfileForm input[value="Admin User"]');
-        if (nameInput) nameInput.value = auth.user.name || 'Admin User';
+async function loadSettings() {
+    try {
+        // 1. Load System Settings
+        const settingsRes = await fetch(`${Auth.apiBase}/settings`, { headers: Auth.getHeaders() });
+        if (settingsRes.ok) {
+            const settings = await settingsRes.json();
 
-        const emailInput = document.querySelector('#adminProfileForm input[type="email"]');
-        if (emailInput) emailInput.value = auth.user.email || 'admin@innerspark.com';
+            // Populate checkboxes
+            if (document.getElementById('maintenanceToggle'))
+                document.getElementById('maintenanceToggle').checked = settings.isMaintenanceMode || false;
+
+            if (document.getElementById('rightClickToggle'))
+                document.getElementById('rightClickToggle').checked = settings.disableRightClick || false;
+
+            if (document.getElementById('emailNotifToggle'))
+                document.getElementById('emailNotifToggle').checked = settings.emailNotifications !== false;
+
+            if (document.getElementById('strictVerificationToggle'))
+                document.getElementById('strictVerificationToggle').checked = settings.strictVerification || false;
+
+            // Populate text inputs
+            if (document.getElementById('siteTitleInput'))
+                document.getElementById('siteTitleInput').value = settings.siteTitle || '';
+
+            if (document.getElementById('supportEmailInput'))
+                document.getElementById('supportEmailInput').value = settings.supportEmail || '';
+
+            if (document.getElementById('maintenanceMessageInput'))
+                document.getElementById('maintenanceMessageInput').value = settings.maintenanceMessage || '';
+        }
+
+        // 2. Load User Profile
+        const profileRes = await fetch(`${Auth.apiBase}/auth/profile`, { headers: Auth.getHeaders() });
+        if (profileRes.ok) {
+            const result = await profileRes.json();
+            const user = result.data.user || result.data;
+
+            if (document.getElementById('profileDisplayName'))
+                document.getElementById('profileDisplayName').value = user.name || '';
+
+            if (document.getElementById('profileEmail'))
+                document.getElementById('profileEmail').value = user.email || '';
+
+            // Update profile picture preview
+            const previewImg = document.getElementById('profilePreviewImg');
+            const placeholderIcon = document.getElementById('profilePlaceholderIcon');
+            if (user.profilePic) {
+                const apiBaseUrl = Auth.apiBase.endsWith('/api') ? Auth.apiBase.slice(0, -4) : Auth.apiBase;
+                if (previewImg) {
+                    previewImg.src = user.profilePic.startsWith('http') ? user.profilePic : `${apiBaseUrl}${user.profilePic}`;
+                    previewImg.style.display = 'block';
+                }
+                if (placeholderIcon) placeholderIcon.style.display = 'none';
+            } else {
+                if (previewImg) previewImg.style.display = 'none';
+                if (placeholderIcon) placeholderIcon.style.display = 'block';
+            }
+
+            // Update profile section header info
+            const profHeaderName = document.querySelector('#s-prof h3');
+            if (profHeaderName) profHeaderName.textContent = user.name || 'Admin Account';
+
+            const profHeaderEmail = document.querySelector('#s-prof p');
+            if (profHeaderEmail) profHeaderEmail.textContent = user.email || '';
+        }
+    } catch (err) {
+        console.error('Error loading settings:', err);
     }
 }
 
@@ -762,6 +822,8 @@ async function loadUserManagement(role) {
             return;
         }
 
+        const isStudent = role === 'Student';
+        const isStaff = role === 'Staff';
         container.innerHTML = `
             <table class="data-table" style="width: 100%; border-collapse: separate; border-spacing: 0;">
                 <thead>
@@ -771,6 +833,8 @@ async function loadUserManagement(role) {
                         <th style="padding: 15px;">Name</th>
                         <th style="padding: 15px;">ID</th>
                         <th style="padding: 15px;">Email</th>
+                        ${isStudent ? '<th style="padding: 15px; text-align: center;">Courses</th><th style="padding: 15px; text-align: center;">Payments</th>' : ''}
+                        ${isStaff ? '<th style="padding: 15px; text-align: center;">Mapped Courses</th>' : ''}
                         <th style="padding: 15px;">Status</th>
                         <th style="padding: 15px; text-align: right;">Actions</th>
                     </tr>
@@ -786,7 +850,7 @@ async function loadUserManagement(role) {
                 });
             }
             return `
-                        <tr>
+                        <tr ${['Student', 'Staff'].includes(u.role) ? `style="cursor: pointer; transition: 0.2s;" onmouseover="this.style.background='rgba(0,123,255,0.05)'" onmouseout="this.style.background='transparent'" onclick='if(!event.target.closest("button")) { openUserDetailsModal(${JSON.stringify(u).replace(/'/g, "&#39;")}); }'` : ''}>
                             <td style="padding: 15px; color: #666;">${index + 1}</td>
                             <td style="padding: 15px;">
                                 <div style="width: 40px; height: 40px; border-radius: 50%; overflow: hidden; background: #eee; display: flex; align-items: center; justify-content: center;">
@@ -803,6 +867,8 @@ async function loadUserManagement(role) {
                             </td>
                             <td style="padding: 15px; font-family: monospace;">${u.studentID || '-'}</td>
                             <td style="padding: 15px;">${u.email}</td>
+                            ${u.role === 'Student' ? `<td style="padding: 15px; text-align: center; font-weight: bold; font-size: 0.95rem;">${u.registeredCoursesCount || 0}</td><td style="padding: 15px; text-align: center; color: var(--color-saffron); font-weight: bold; font-size: 0.95rem;">₹${u.totalPayments || 0}</td>` : ''}
+                            ${u.role === 'Staff' ? `<td style="padding: 15px; text-align: center; font-weight: bold; font-size: 0.95rem;">${u.mappedCoursesCount || 0}</td>` : ''}
                             <td style="padding: 15px;">
                                 <span class="badge ${u.active ? 'badge-active' : 'badge-inactive'}">
                                     ${u.active ? 'Active' : 'Inactive'}
@@ -1431,7 +1497,68 @@ async function setDefaultAdmin(adminId, adminName) {
         UI.hideLoader();
     }
 }
+function openUserDetailsModal(user) {
+    const modal = document.getElementById('userDetailsModal');
+    if (!modal) return;
 
+    document.getElementById('udmProfilePic').src = user.profilePic || 'https://via.placeholder.com/80?text=User';
+    document.getElementById('udmName').textContent = user.name || 'N/A';
+    document.getElementById('udmSystemID').textContent = user.studentID || 'N/A';
+    document.getElementById('udmEmail').textContent = user.email || 'N/A';
+    document.getElementById('udmRole').textContent = user.role || 'User';
+    document.getElementById('udmJoined').textContent = new Date(user.createdAt).toLocaleDateString() || 'N/A';
+    document.getElementById('udmLastLogin').textContent = user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() + ' at ' + new Date(user.lastLogin).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Never';
+    document.getElementById('udmStatus').textContent = user.active ? 'Active' : 'Inactive';
+    document.getElementById('udmStatus').className = `badge ${user.active ? 'badge-active' : 'badge-inactive'}`;
+
+    const grid = document.getElementById('udmStatsGrid');
+    grid.innerHTML = ''; // reset
+
+    if (user.role === 'Student') {
+        grid.innerHTML = `
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 12px; text-align: center; border: 1px solid #ebebeb;">
+                <div style="font-size: 0.85rem; color: #666; font-weight: 500; margin-bottom: 5px;"><i class="fas fa-book-open" style="color: #007bff; margin-right: 5px;"></i>Courses</div>
+                <div style="font-size: 1.5rem; font-weight: 700; color: #333;">${user.registeredCoursesCount || 0}</div>
+            </div>
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 12px; text-align: center; border: 1px solid #ebebeb;">
+                <div style="font-size: 0.85rem; color: #666; font-weight: 500; margin-bottom: 5px;"><i class="fas fa-rupee-sign" style="color: var(--color-saffron); margin-right: 5px;"></i>Payments</div>
+                <div style="font-size: 1.5rem; font-weight: 700; color: #333;">₹${user.totalPayments || 0}</div>
+            </div>
+        `;
+    } else if (user.role === 'Staff') {
+        grid.innerHTML = `
+            <div style="background: #fff0f5; padding: 15px; border-radius: 12px; text-align: center; border: 1px solid #ffccdd; grid-column: span 2;">
+                <div style="font-size: 0.85rem; color: #666; font-weight: 500; margin-bottom: 5px;"><i class="fas fa-chalkboard-teacher" style="color: #e83e8c; margin-right: 5px;"></i>Mapped Courses assigned for moderation</div>
+                <div style="font-size: 1.7rem; font-weight: 700; color: #e83e8c;">${user.mappedCoursesCount || 0}</div>
+            </div>
+        `;
+    }
+
+    const courseListContainer = document.getElementById('udmCourseListContainer');
+    const courseListDiv = document.getElementById('udmCourseList');
+    const courseListTitle = document.getElementById('udmCourseListTitle');
+
+    if (user.enrolledCourses && user.enrolledCourses.length > 0) {
+        courseListContainer.style.display = 'block';
+        courseListTitle.innerHTML = `<i class="fas fa-list-ul" style="color: #4a90e2; margin-right: 5px;"></i> ${user.role === 'Staff' ? 'Assigned Courses' : 'Active Enrollments'}`;
+        courseListDiv.innerHTML = user.enrolledCourses.map(course => `
+            <div style="background: #f8f9fa; padding: 10px 15px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #ebebeb; display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-weight: 500; font-size: 0.9rem; color: #444;">${course.title || 'Unknown Course'}</span>
+                <i class="fas fa-check-circle" style="color: #2ecc71; font-size: 0.9rem;"></i>
+            </div>
+        `).join('');
+    } else {
+        courseListContainer.style.display = 'none';
+        courseListDiv.innerHTML = '';
+    }
+
+    modal.style.display = 'flex';
+}
+
+function closeUserDetailsModal() {
+    const modal = document.getElementById('userDetailsModal');
+    if (modal) modal.style.display = 'none';
+}
 
 /* --- SUB SECTIONS --- */
 function showCourseSubSection(sub) {
@@ -1462,36 +1589,198 @@ function showCourseSubSection(sub) {
     if (sub === 'override') loadOverrideCourses();
 }
 
+let certAnalyticsChartInstance = null;
+
 async function loadCertificates() {
     const list = document.getElementById('certificatesList');
     try {
         const res = await fetch(`${Auth.apiBase}/admin/certificates`, { headers: Auth.getHeaders() });
-        const certs = await res.json();
+        const data = await res.json();
+        const certs = data.certificates || [];
+        const stats = data.stats || [];
 
         if (certs.length === 0) {
             list.innerHTML = '<p>No certificates issued.</p>';
             return;
         }
 
-        // Re-using the table structure for consistency
-        list.innerHTML = `
-            <table style="width: 100%; border-collapse: collapse; text-align: left;">
-                <thead style="background: rgba(0,0,0,0.02);">
-                    <tr><th>Seeker</th><th>Path</th><th>Date</th><th>Action</th></tr>
-                </thead>
-                <tbody>
-                    ${certs.map(c => `
-                        <tr style="border-bottom: 1px solid #eee;">
-                            <td style="padding: 10px;">${c.studentID?.name}</td>
-                            <td style="padding: 10px;">${c.courseID?.title}</td>
-                            <td style="padding: 10px;">${new Date(c.issueDate).toLocaleDateString()}</td>
-                            <td style="padding: 10px;"><button onclick="revokeCert('${c._id}')" class="btn-primary" style="background:#d9534f; padding:4px 8px; font-size:0.7rem;">Revoke</button></td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
-         `;
-    } catch (err) { UI.error('Certificates load failed.'); }
+        window.allCertificates = certs;
+        window.allCertStats = stats;
+
+        // Populate dropdown if not already
+        const filterSelect = document.getElementById('certCourseFilter');
+        if (filterSelect && filterSelect.options.length <= 1) {
+            const courses = [...new Set(certs.map(c => c.courseID?.title).filter(Boolean))];
+            courses.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c;
+                opt.textContent = c;
+                filterSelect.appendChild(opt);
+            });
+        }
+
+        filterCertificates();
+    } catch (err) {
+        UI.error('Certificates load failed.');
+        console.error(err);
+    }
+}
+
+function filterCertificates() {
+    if (!window.allCertificates || !window.allCertStats) return;
+    const search = document.getElementById('certSearchInput')?.value.toLowerCase() || '';
+    const courseFilter = document.getElementById('certCourseFilter')?.value || '';
+
+    // Filter Table Data
+    const filteredCerts = window.allCertificates.filter(c => {
+        const studentName = (c.studentID?.name || '').toLowerCase();
+        const courseTitle = (c.courseID?.title || '');
+
+        const matchesSearch = studentName.includes(search) || courseTitle.toLowerCase().includes(search);
+        const matchesCourse = courseFilter ? courseTitle === courseFilter : true;
+        return matchesSearch && matchesCourse;
+    });
+
+    renderCertificates(filteredCerts);
+
+    // Calculate Dynamic KPIs based on filter
+    let totalEnrolled = 0;
+    let totalCompleted = 0;
+    let totalCertificates = filteredCerts.length;
+
+    let chartLabels = [];
+    let chartEnrolled = [];
+    let chartCompleted = [];
+    let chartCerts = [];
+
+    if (courseFilter) {
+        // Find specific course stats
+        const courseStat = window.allCertStats.find(s => s.courseTitle === courseFilter);
+        if (courseStat) {
+            totalEnrolled = courseStat.enrolled;
+            totalCompleted = courseStat.completed;
+            chartLabels.push(courseStat.courseTitle);
+            chartEnrolled.push(courseStat.enrolled);
+            chartCompleted.push(courseStat.completed);
+            chartCerts.push(totalCertificates); // total verified certs for this course
+        }
+    } else {
+        // Sum all course stats
+        window.allCertStats.forEach(s => {
+            totalEnrolled += s.enrolled;
+            totalCompleted += s.completed;
+            // Build arrays for chart limited to top 10 populated courses for visual clarity
+            chartLabels.push(s.courseTitle);
+            chartEnrolled.push(s.enrolled);
+            chartCompleted.push(s.completed);
+            const courseCertCount = window.allCertificates.filter(c => c.courseID?.title === s.courseTitle).length;
+            chartCerts.push(courseCertCount);
+        });
+    }
+
+    // Update KPI Dom Elements
+    const enrolledEl = document.getElementById('certEnrolledKPI');
+    if (enrolledEl) enrolledEl.innerText = totalEnrolled;
+
+    const completedEl = document.getElementById('certCompletedKPI');
+    if (completedEl) completedEl.innerText = totalCompleted;
+
+    const issuedEl = document.getElementById('certIssuedKPI');
+    if (issuedEl) issuedEl.innerText = totalCertificates;
+
+    // Load Chart.js securely
+    if (window.Chart) {
+        renderCertChart(chartLabels, chartEnrolled, chartCompleted, chartCerts);
+    }
+}
+
+function renderCertChart(labels, enrolled, completed, certs) {
+    const ctx = document.getElementById('certAnalyticsChart');
+    if (!ctx) return;
+
+    if (certAnalyticsChartInstance) {
+        certAnalyticsChartInstance.destroy();
+    }
+
+    certAnalyticsChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Enrolled',
+                    data: enrolled,
+                    backgroundColor: 'rgba(46, 204, 113, 0.7)',
+                    borderRadius: 4
+                },
+                {
+                    label: 'Completed',
+                    data: completed,
+                    backgroundColor: 'rgba(255, 153, 51, 0.7)',
+                    borderRadius: 4
+                },
+                {
+                    label: 'Certified',
+                    data: certs,
+                    backgroundColor: 'rgba(52, 152, 219, 0.7)',
+                    borderRadius: 4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { precision: 0 }
+                },
+                x: {
+                    grid: { display: false }
+                }
+            },
+            plugins: {
+                legend: { position: 'top' }
+            }
+        }
+    });
+}
+
+function renderCertificates(certs) {
+    const list = document.getElementById('certificatesList');
+    if (!list) return;
+
+    if (!certs || certs.length === 0) {
+        list.innerHTML = '<p style="padding: 20px; text-align: center; color: #999;">No certificates found matching criteria.</p>';
+        return;
+    }
+
+    list.innerHTML = `
+        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+            <thead style="background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); position: sticky; top: 0; border-bottom: 2px solid #eee; z-index: 10;">
+                <tr>
+                    <th style="padding: 15px; color: #555; font-size: 0.95rem;">Student</th>
+                    <th style="padding: 15px; color: #555; font-size: 0.95rem;">Course</th>
+                    <th style="padding: 15px; color: #555; font-size: 0.95rem;">Percentage</th>
+                    <th style="padding: 15px; color: #555; font-size: 0.95rem;">Issue Date</th>
+                    <th style="padding: 15px; color: #555; font-size: 0.95rem; text-align: right;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${certs.map(c => `
+                    <tr style="border-bottom: 1px solid #eee; transition: background 0.2s;" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='white'">
+                        <td style="padding: 15px; font-weight: 500;">${c.studentID?.name || 'Unknown User'}</td>
+                        <td style="padding: 15px; color: #666; font-size: 0.9rem;"><i class="fas fa-certificate" style="color:var(--color-saffron); margin-right:5px;"></i> ${c.courseID?.title || 'Unknown Course'}</td>
+                        <td style="padding: 15px; font-weight: 600;">${c.percentage || c.examScore || 0}%</td>
+                        <td style="padding: 15px; color: #555; font-size: 0.9rem;">${new Date(c.issueDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</td>
+                        <td style="padding: 15px; text-align: right;">
+                            <button onclick="revokeCert('${c._id}')" class="btn-primary" style="background: #fff; border: 1px solid #d9534f; color: #d9534f; padding: 6px 10px; font-size: 0.8rem;" title="Revoke Certificate"><i class="fas fa-trash"></i> Revoke</button>
+                        </td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
 }
 
 function getThumbnail(url) {
@@ -1591,17 +1880,74 @@ async function loadLedger() {
         UI.showLoader();
         const res = await fetch(`${Auth.apiBase}/admin/ledger`, { headers: Auth.getHeaders() });
         const ledger = await res.json();
-        list.innerHTML = ledger.map(p => `
-            <tr style="border-bottom: 1px solid #eee;">
-                <td style="padding: 15px;">${p.transactionID}</td>
-                <td style="padding: 15px;">${p.studentID?.name}</td>
-                <td style="padding: 15px;">${p.courseID?.title}</td>
-                <td style="padding: 15px; color: var(--color-saffron);">$${p.amount}</td>
-                <td style="padding: 15px;">${p.status}</td>
+        list.innerHTML = ledger.map(p => {
+            const dateStr = p.createdAt ? new Date(p.createdAt).toLocaleString('en-US', {
+                year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+            }) : 'N/A';
+            const statusIcon = p.status === 'Completed' || p.status === 'Success' ? '<i class="fas fa-check-circle" style="color:var(--color-success)"></i>' :
+                (p.status === 'Pending' ? '<i class="fas fa-clock" style="color:var(--color-warning)"></i>' : '<i class="fas fa-times-circle" style="color:var(--color-error)"></i>');
+            return `
+            <tr style="border-bottom: 1px solid #eee; transition: background 0.2s; cursor: pointer;" onclick='openTransactionDetailsModal(${JSON.stringify(p).replace(/'/g, "&#39;")})' onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='white'">
+                <td style="padding: 15px; font-family: monospace; font-size: 0.9rem;">${p.transactionID || 'N/A'}</td>
+                <td style="padding: 15px; color: #555; font-size: 0.9rem;">${dateStr}</td>
+                <td style="padding: 15px; font-weight: 500;">${p.studentID?.name || 'Unknown User'}</td>
+                <td style="padding: 15px; color: #666; font-size: 0.9rem;"><i class="fas fa-book-open" style="color:#999; margin-right:5px;"></i> ${p.courseID?.title || 'Unknown Course'}</td>
+                <td style="padding: 15px; font-weight: bold; color: var(--color-saffron);">₹${p.amount || 0}</td>
+                <td style="padding: 15px;">
+                    <span style="display:inline-flex; align-items:center; gap:6px; padding: 4px 10px; border-radius: 20px; background: #f8f8f8; font-size: 0.85rem; font-weight: 600;">
+                        ${statusIcon} ${p.status || 'Pending'}
+                    </span>
+                </td>
             </tr>
-        `).join('');
-    } catch (err) { list.innerHTML = '<tr><td colspan="5">Ledger empty.</td></tr>'; }
+            `;
+        }).join('');
+    } catch (err) { list.innerHTML = '<tr><td colspan="6" style="padding: 20px; text-align: center; color: #999;">Ledger empty or failed to load.</td></tr>'; }
     finally { UI.hideLoader(); }
+}
+
+function openTransactionDetailsModal(p) {
+    const modal = document.getElementById('transactionDetailsModal');
+    if (!modal) return;
+
+    const dateStr = p.createdAt ? new Date(p.createdAt).toLocaleString('en-US', {
+        year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+    }) : 'N/A';
+
+    document.getElementById('tdmID').textContent = p.transactionID || 'N/A';
+    document.getElementById('tdmDate').textContent = dateStr;
+    document.getElementById('tdmStudent').textContent = p.studentID?.name || 'Unknown User';
+    document.getElementById('tdmCourse').textContent = p.courseID?.title || 'Unknown Course';
+    document.getElementById('tdmAmount').textContent = `₹${p.amount || 0}`;
+
+    const statusBadgeColors = {
+        'Success': { bg: 'var(--color-success)', text: '#fff' },
+        'Completed': { bg: 'var(--color-success)', text: '#fff' },
+        'Pending': { bg: 'var(--color-warning)', text: '#000' },
+        'Failed': { bg: 'var(--color-error)', text: '#fff' },
+        'Refunded': { bg: '#9E9E9E', text: '#fff' },
+    };
+
+    const statusStyle = statusBadgeColors[p.status] || { bg: '#eee', text: '#333' };
+    const statusEl = document.getElementById('tdmStatus');
+    statusEl.textContent = p.status || 'Pending';
+    statusEl.style.backgroundColor = statusStyle.bg;
+    statusEl.style.color = statusStyle.text;
+
+    const failureBlock = document.getElementById('tdmFailureBlock');
+    if (p.status !== 'Success' && p.status !== 'Completed') {
+        failureBlock.style.display = 'block';
+        document.getElementById('tdmFailureReason').textContent = p.failureReason || p.paymentData?.error?.message || 'Payment interrupted or declined by gateway.';
+    } else {
+        failureBlock.style.display = 'none';
+        document.getElementById('tdmFailureReason').textContent = '-';
+    }
+
+    modal.style.display = 'flex';
+}
+
+function closeTransactionDetailsModal() {
+    const modal = document.getElementById('transactionDetailsModal');
+    if (modal) modal.style.display = 'none';
 }
 
 /* --- ANALYTICS --- */
@@ -1632,11 +1978,116 @@ function switchAnalyticsCategory(category) {
     }
 }
 
+function getMockAnalyticsData() {
+    return {
+        userOverview: { totalStudents: 1250, totalStaff: 45, totalAdmins: 3, activeUsers: 890, inactiveUsers: 408 },
+        studentGrowth: [
+            { _id: '2023-10-01', count: 12 }, { _id: '2023-10-08', count: 25 }, { _id: '2023-10-15', count: 18 }, { _id: '2023-10-22', count: 42 }, { _id: '2023-10-29', count: 35 }, { _id: '2023-11-05', count: 68 }
+        ],
+        activeVsInactive: { active: 890, inactive: 408 },
+        recentlyActive: [
+            { name: 'John Doe', role: 'Student', lastLogin: new Date().toISOString() },
+            { name: 'Jane Smith', role: 'Staff', lastLogin: new Date(Date.now() - 3600000).toISOString() }
+        ],
+        courseEnrollment: [
+            { title: 'Meditation Basics', enrollments: 450 }, { title: 'Advanced Yoga', enrollments: 320 }, { title: 'Spiritual Healing', enrollments: 280 }
+        ],
+        courseCompletion: [
+            { title: 'Meditation', completionRate: 75 }, { title: 'Yoga', completionRate: 60 }, { title: 'Healing', completionRate: 85 }
+        ],
+        paidVsFree: [
+            { type: 'Paid', count: 15 }, { type: 'Free', count: 8 }
+        ],
+        totalRevenue: 25400,
+        revenueGrowth: [
+            { _id: 'Oct', revenue: 4500 }, { _id: 'Nov', revenue: 5200 }, { _id: 'Dec', revenue: 7800 }
+        ],
+        paymentStatus: [
+            { status: 'Completed', count: 320 }, { status: 'Pending', count: 45 }, { status: 'Failed', count: 12 }
+        ],
+        revenueByCourse: [
+            { title: 'Meditation', revenue: 12000 }, { title: 'Yoga', revenue: 8400 }, { title: 'Healing', revenue: 5000 }
+        ],
+        contentStatus: [
+            { status: 'Published', count: 45 }, { status: 'Draft', count: 12 }, { status: 'Pending', count: 8 }
+        ],
+        staffContribution: [
+            { name: 'Master Chen', courseCount: 12 }, { name: 'Sarah Yogi', courseCount: 8 }
+        ],
+        liveClassesByStaff: [
+            { name: 'Master Chen', classCount: 24 }, { name: 'Sarah Yogi', classCount: 18 }
+        ],
+        courseAttendance: [
+            { title: 'Morning Yoga', attendanceRate: 88 }, { title: 'Meditation', attendanceRate: 92 }
+        ],
+        videoCompletion: [
+            { title: 'Intro Chakras', completionRate: 65 }, { title: 'Breathing', completionRate: 82 }
+        ],
+        supportRequestsByCourse: [
+            { title: 'Meditation', requestCount: 24 }, { title: 'Yoga', requestCount: 12 }
+        ],
+        ticketStatus: [
+            { status: 'Open', count: 15 }, { status: 'In Progress', count: 8 }, { status: 'Resolved', count: 142 }
+        ],
+        loginActivity: [
+            { _id: '08:00', count: 120 }, { _id: '12:00', count: 250 }, { _id: '18:00', count: 380 }, { _id: '20:00', count: 420 }
+        ],
+        roleDistribution: { students: 1250, staff: 45, admins: 3 }
+    };
+}
+
+window.currentAnalyticsDays = 30;
+
+window.setAnalyticsTimeframe = function (days, btnElement) {
+    // Update active UI
+    document.querySelectorAll('.tf-btn').forEach(btn => {
+        btn.classList.remove('active');
+        btn.style.background = 'transparent';
+        btn.style.color = 'var(--text-secondary)';
+        btn.style.boxShadow = 'none';
+        btn.style.fontWeight = '500';
+    });
+
+    if (btnElement) {
+        btnElement.classList.add('active');
+        btnElement.style.background = 'var(--primary-gradient)';
+        btnElement.style.color = 'white';
+        btnElement.style.boxShadow = '0 4px 10px rgba(255, 153, 51, 0.2)';
+        btnElement.style.fontWeight = '600';
+    }
+
+    window.currentAnalyticsDays = days;
+    loadAnalytics();
+};
+
 async function loadAnalytics() {
     try {
         UI.showLoader();
-        const res = await fetch(`${Auth.apiBase}/admin/analytics`, { headers: Auth.getHeaders() });
-        const data = await res.json();
+        // Get filter value from global state
+        const days = window.currentAnalyticsDays || 30;
+
+        // Update all chart titles
+        let labelText = `(Last ${days} Days)`;
+        if (days == 365) labelText = "(Last 1 Year)";
+        if (days == 90) labelText = "(Last 3 Months)";
+        if (days == 0) labelText = "(All Time)";
+
+        document.querySelectorAll('.timeframe-label').forEach(el => {
+            el.textContent = labelText;
+        });
+
+        let data;
+        try {
+            const res = await fetch(`${Auth.apiBase}/admin/analytics?days=${days}`, { headers: Auth.getHeaders() });
+            if (!res.ok) throw new Error('API request failed');
+            data = await res.json();
+            if (!data || !data.userOverview) throw new Error('Data empty');
+        } catch (err) {
+            console.error('Analytics API unavailable/empty:', err);
+            UI.error('Failed to load analytics data.');
+            UI.hideLoader();
+            return;
+        }
 
         // Destroy existing charts
         if (window.analyticsCharts) {
@@ -1662,6 +2113,21 @@ async function loadAnalytics() {
                     titleFont: { size: 14, weight: 'bold' },
                     bodyFont: { size: 13 },
                     cornerRadius: 8
+                },
+                zoom: {
+                    pan: {
+                        enabled: true,
+                        mode: 'x'
+                    },
+                    zoom: {
+                        wheel: {
+                            enabled: true
+                        },
+                        pinch: {
+                            enabled: true
+                        },
+                        mode: 'x'
+                    }
                 }
             },
             animation: {
@@ -2462,10 +2928,10 @@ function renderCourses(courses) {
                             <td style="padding:15px; text-align: center;">
                                 <a href="course-preview.html?id=${c._id}" class="btn-primary" 
                                     title="Preview Course Content" 
-                                    style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center; padding:8px 16px; font-size:1rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 8px; transition: all 0.3s;" 
-                                    onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 4px 12px rgba(102,126,234,0.4)'"
-                                    onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none'">
-                                    <i class="fas fa-eye" style="margin-right:5px;"></i> Preview
+                                    style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center; padding:6px 14px; font-size:0.85rem; background: #fffaf0; color: #d35400; border: 1px solid #d35400; border-radius: 20px; font-weight: 600; transition: all 0.3s;" 
+                                    onmouseover="this.style.background='#d35400'; this.style.color='white'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 8px rgba(211,84,0,0.2)'"
+                                    onmouseout="this.style.background='#fffaf0'; this.style.color='#d35400'; this.style.transform='none'; this.style.boxShadow='none'">
+                                    <i class="fas fa-play-circle" style="margin-right:6px;"></i> Preview
                                 </a>
                             </td>
                             <td style="padding:15px; text-align: center;">
@@ -2474,7 +2940,9 @@ function renderCourses(courses) {
                                 </span>
                             </td>
                             <td style="padding:15px; text-align:right;">
-                                <button class="btn-primary" title="View Details" style="padding:6px 10px; font-size:0.8rem; margin-right:5px; background: #17a2b8;" 
+                                <button class="btn-primary" title="View Details" style="padding:6px 10px; font-size:0.8rem; margin-right:5px; background: #e0f2f1; color: #00897b; border: none; border-radius: 6px; transition: all 0.2s;" 
+                                    onmouseover="this.style.background='#00897b'; this.style.color='white'" 
+                                    onmouseout="this.style.background='#e0f2f1'; this.style.color='#00897b'"
                                     onclick="viewCourseDetails('${c._id}')">
                                     <i class="fas fa-eye"></i>
                                 </button>
@@ -3980,9 +4448,11 @@ async function viewMessage(messageId) {
         });
 
         // Set reply email link
-        const subject = encodeURIComponent(`Re: ${msg.subject} `);
+        const subject = encodeURIComponent(`Re: ${msg.subject}`);
         const replyLink = document.getElementById('replyEmailLink');
-        replyLink.href = `mailto:${msg.email}?subject = ${subject} `;
+        if (replyLink) {
+            replyLink.href = `mailto:${msg.email}?subject=${subject}`;
+        }
 
         // Show modal
         document.getElementById('messageDetailsModal').style.display = 'flex';
@@ -3999,6 +4469,8 @@ async function viewMessage(messageId) {
 function closeMessageModal() {
     document.getElementById('messageDetailsModal').style.display = 'none';
     currentMessageId = null;
+    const container = document.getElementById('emailReplyContainer');
+    if (container) container.style.display = 'none';
 }
 
 async function updateMessageStatus() {
@@ -4014,6 +4486,61 @@ async function updateMessagePriority() {
 async function saveMessageNotes() {
     const adminNotes = document.getElementById('modalAdminNotes').value;
     await updateMessage({ adminNotes });
+}
+
+function toggleEmailReply() {
+    const container = document.getElementById('emailReplyContainer');
+    if (container) {
+        if (container.style.display === 'none' || !container.style.display) {
+            container.style.display = 'block';
+        } else {
+            container.style.display = 'none';
+            document.getElementById('emailReplyBody').value = ''; // clear
+        }
+    }
+}
+
+async function sendEmailReply() {
+    if (!currentMessageId) return;
+
+    const replyMessage = document.getElementById('emailReplyBody').value;
+    if (!replyMessage || replyMessage.trim() === '') {
+        showToast('Reply message cannot be empty', 'error');
+        return;
+    }
+
+    try {
+        const res = await fetch(`${Auth.apiBase}/contact/admin/${currentMessageId}/reply`, {
+            method: 'POST',
+            headers: Auth.getHeaders(),
+            body: JSON.stringify({ replyMessage })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            throw new Error(data.message || 'Failed to send reply');
+        }
+
+        showToast('Email reply sent successfully!', 'success');
+
+        // Hide container, clear msg
+        const container = document.getElementById('emailReplyContainer');
+        if (container) {
+            container.style.display = 'none';
+        }
+        document.getElementById('emailReplyBody').value = '';
+
+        // Refresh modal
+        viewMessage(currentMessageId);
+
+        // Load messages view in background
+        loadMessages(currentPage);
+
+    } catch (error) {
+        console.error('Send Email Reply error:', error);
+        showToast('Failed to send email reply: ' + error.message, 'error');
+    }
 }
 
 async function updateMessage(updates) {
@@ -4816,3 +5343,230 @@ function switchImageTab(tab) {
     }
 }
 window.switchImageTab = switchImageTab;
+
+/* --- SETTINGS FUNCTIONS --- */
+async function toggleSetting(key, value) {
+    try {
+        const res = await fetch(`${Auth.apiBase}/settings`, {
+            method: 'PUT',
+            headers: Auth.getHeaders(),
+            body: JSON.stringify({ [key]: value })
+        });
+        const data = await res.json();
+        if (res.ok) {
+            UI.success(`${key} updated successfully`);
+        } else {
+            throw new Error(data.message || 'Failed to update setting');
+        }
+    } catch (err) {
+        console.error('Toggle setting error:', err);
+        UI.error(err.message);
+    }
+}
+
+async function updatePlatformInfo() {
+    const siteTitle = document.getElementById('siteTitleInput').value.trim();
+    const supportEmail = document.getElementById('supportEmailInput').value.trim();
+
+    if (!siteTitle || !supportEmail) {
+        UI.error('Site Title and Support Email are required');
+        return;
+    }
+
+    try {
+        UI.showLoader();
+        const res = await fetch(`${Auth.apiBase}/settings`, {
+            method: 'PUT',
+            headers: Auth.getHeaders(),
+            body: JSON.stringify({ siteTitle, supportEmail })
+        });
+        const data = await res.json();
+        if (res.ok) {
+            UI.success('Platform information updated');
+        } else {
+            throw new Error(data.message || 'Failed to update platform info');
+        }
+    } catch (err) {
+        console.error('Update platform info error:', err);
+        UI.error(err.message);
+    } finally {
+        UI.hideLoader();
+    }
+}
+
+async function updateMaintenanceMessage() {
+    const maintenanceMessage = document.getElementById('maintenanceMessageInput').value.trim();
+
+    try {
+        UI.showLoader();
+        const res = await fetch(`${Auth.apiBase}/settings`, {
+            method: 'PUT',
+            headers: Auth.getHeaders(),
+            body: JSON.stringify({ maintenanceMessage })
+        });
+        const data = await res.json();
+        if (res.ok) {
+            UI.success('Maintenance message updated');
+        } else {
+            throw new Error(data.message || 'Failed to update maintenance message');
+        }
+    } catch (err) {
+        console.error('Update maintenance message error:', err);
+        UI.error(err.message);
+    } finally {
+        UI.hideLoader();
+    }
+}
+
+// Global expose
+window.toggleSetting = toggleSetting;
+window.updatePlatformInfo = updatePlatformInfo;
+window.updateMaintenanceMessage = updateMaintenanceMessage;
+
+async function previewAndUploadProfilePic(input) {
+    if (!input.files || !input.files[0]) return;
+
+    const file = input.files[0];
+
+    // Preview locally
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const previewImg = document.getElementById('profilePreviewImg');
+        const placeholderIcon = document.getElementById('profilePlaceholderIcon');
+        if (previewImg) {
+            previewImg.src = e.target.result;
+            previewImg.style.display = 'block';
+        }
+        if (placeholderIcon) placeholderIcon.style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+
+    // Upload to server
+    try {
+        UI.showLoader();
+        const formData = new FormData();
+        formData.append('profilePic', file);
+
+        const res = await fetch(`${Auth.apiBase}/auth/profile`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: formData
+        });
+
+        const result = await res.json();
+        if (res.ok) {
+            UI.success('Profile picture updated');
+            // Update localStorage
+            const user = result.data.user || result.data;
+            const currentUser = JSON.parse(localStorage.getItem('user'));
+            if (currentUser) {
+                currentUser.profilePic = user.profilePic;
+                localStorage.setItem('user', JSON.stringify(currentUser));
+            }
+        } else {
+            throw new Error(result.message || 'Failed to upload profile picture');
+        }
+    } catch (err) {
+        UI.error(err.message);
+    } finally {
+        UI.hideLoader();
+    }
+}
+window.previewAndUploadProfilePic = previewAndUploadProfilePic;
+
+// Add form listeners for Settings
+document.addEventListener('DOMContentLoaded', () => {
+    // Password Update Form
+    const passwordForm = document.getElementById('adminPasswordForm');
+    if (passwordForm) {
+        passwordForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+
+            if (newPassword !== confirmNewPassword) {
+                UI.error('New passwords do not match');
+                return;
+            }
+
+            if (newPassword.length < 6) {
+                UI.error('Password must be at least 6 characters');
+                return;
+            }
+
+            try {
+                UI.showLoader();
+                const res = await fetch(`${Auth.apiBase}/auth/change-password`, {
+                    method: 'PUT',
+                    headers: Auth.getHeaders(),
+                    body: JSON.stringify({ currentPassword, newPassword })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    UI.success('Password updated successfully');
+                    passwordForm.reset();
+                } else {
+                    throw new Error(data.message || 'Failed to change password');
+                }
+            } catch (err) {
+                UI.error(err.message);
+            } finally {
+                UI.hideLoader();
+            }
+        });
+    }
+
+    // Profile Update Form
+    const profileForm = document.getElementById('adminProfileForm');
+    if (profileForm) {
+        profileForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('profileDisplayName').value.trim();
+
+            if (!name) {
+                UI.error('Name is required');
+                return;
+            }
+
+            try {
+                UI.showLoader();
+                const res = await fetch(`${Auth.apiBase}/auth/profile`, {
+                    method: 'PUT',
+                    headers: Auth.getHeaders(),
+                    body: JSON.stringify({ name })
+                });
+                const result = await res.json();
+                if (res.ok) {
+                    UI.success('Profile updated successfully');
+                    // Update header if exists
+                    const user = result.data.user || result.data;
+                    const profHeaderName = document.querySelector('#s-prof h3');
+                    if (profHeaderName) profHeaderName.textContent = user.name || name;
+
+                    // Update top header admin name
+                    const adminNameHeader = document.getElementById('adminName');
+                    if (adminNameHeader) adminNameHeader.textContent = user.name || name;
+
+                    const adminAvatar = document.getElementById('adminAvatar');
+                    if (adminAvatar) adminAvatar.textContent = (user.name || name).charAt(0).toUpperCase();
+
+                    // Update localStorage
+                    const currentUser = JSON.parse(localStorage.getItem('user'));
+                    if (currentUser) {
+                        currentUser.name = user.name;
+                        localStorage.setItem('user', JSON.stringify(currentUser));
+                    }
+                } else {
+                    throw new Error(result.message || 'Failed to update profile');
+                }
+            } catch (err) {
+                UI.error(err.message);
+            } finally {
+                UI.hideLoader();
+            }
+        });
+    }
+});

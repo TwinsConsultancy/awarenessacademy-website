@@ -11,6 +11,7 @@ router.get('/admin/stats', authorize(['Admin']), contactController.getStats);
 router.get('/admin/:id', authorize(['Admin']), contactController.getMessage);
 router.get('/admin', authorize(['Admin']), contactController.getAllMessages);
 router.patch('/admin/:id', authorize(['Admin']), contactController.updateMessage);
+router.post('/admin/:id/reply', authorize(['Admin']), contactController.replyToMessage);
 router.delete('/admin/:id', authorize(['Admin']), contactController.deleteMessage);
 
 module.exports = router;

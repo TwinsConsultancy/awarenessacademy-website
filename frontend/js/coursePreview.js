@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (currentUser) {
         const userNameEl = document.getElementById('userName');
         const userAvatarEl = document.getElementById('userAvatar');
-        
+
         if (userNameEl && userAvatarEl) {
             userNameEl.textContent = currentUser.firstName || currentUser.name || currentUser.email || 'User';
             const initials = (currentUser.firstName || currentUser.name || currentUser.email || 'U').charAt(0).toUpperCase();
@@ -157,7 +157,7 @@ function renderSidebar() {
         // Use m.status properly
         const displayStatus = m.status || 'Draft';
         const role = (currentUser.role || '').toLowerCase();
-        
+
         // Build action menu for admin
         let actionMenu = '';
         if (role === 'admin') {
@@ -170,17 +170,20 @@ function renderSidebar() {
                     </div>
                 `;
             } else {
-                // Pending/Draft - show approve and delete
+                // Pending/Draft - show approve, reject and delete
                 menuItems = `
                     <div class="assessment-dropdown-item approve" onclick="event.stopPropagation(); approveModuleFromMenu('${m._id}'); closeAssessmentMenu();">
                         <i class="fas fa-check"></i> Approve Module
                     </div>
-                    <div class="assessment-dropdown-item reject" onclick="event.stopPropagation(); deleteModuleFromMenu('${m._id}'); closeAssessmentMenu();">
+                    <div class="assessment-dropdown-item reject" onclick="event.stopPropagation(); rejectModuleFromMenu('${m._id}'); closeAssessmentMenu();">
+                        <i class="fas fa-times"></i> Reject Module
+                    </div>
+                    <div class="assessment-dropdown-item" onclick="event.stopPropagation(); deleteModuleFromMenu('${m._id}'); closeAssessmentMenu();" style="color: #6c757d;">
                         <i class="fas fa-trash"></i> Delete Module
                     </div>
                 `;
             }
-            
+
             actionMenu = `
                 <div style="position: relative;">
                     <button class="assessment-menu-btn" onclick="event.stopPropagation(); toggleAssessmentMenu(event, 'mod-${m._id}');" title="Actions">
@@ -228,7 +231,7 @@ function renderSidebar() {
 
             const displayStatus = exam.approvalStatus || 'Draft';
             const role = (currentUser.role || '').toLowerCase();
-            
+
             // Build action menu for admin
             let actionMenu = '';
             if (role === 'admin') {
@@ -255,7 +258,7 @@ function renderSidebar() {
                         </div>
                     `;
                 }
-                
+
                 actionMenu = `
                     <div style="position: relative;">
                         <button class="assessment-menu-btn" onclick="event.stopPropagation(); toggleAssessmentMenu(event, '${exam._id}');" title="Actions">
@@ -556,16 +559,16 @@ function formatFileSize(bytes) {
 async function loadAndDisplayExam(examId) {
     try {
         UI.showLoader();
-        
+
         console.log('[EXAM LOAD] Attempting to load exam:', examId);
         console.log('[EXAM LOAD] API Base:', Auth.apiBase);
-        
+
         const res = await fetch(`${Auth.apiBase}/exams/${examId}`, {
             headers: Auth.getHeaders()
         });
-        
+
         console.log('[EXAM LOAD] Response status:', res.status);
-        
+
         if (!res.ok) {
             if (res.status === 404) {
                 throw new Error(`Assessment not found (ID: ${examId}). It may have been removed or doesn't exist.`);
@@ -575,33 +578,33 @@ async function loadAndDisplayExam(examId) {
                 throw new Error(`Failed to load assessment: ${res.statusText}`);
             }
         }
-        
+
         const exam = await res.json();
         console.log('[EXAM LOAD] Successfully loaded exam:', exam.title);
         currentExamData = exam;
-        
+
         // Only hide sidebar if coming from external link (no assessments loaded yet)
         if (assessmentsData.length === 0) {
             document.querySelector('.sidebar').style.display = 'none';
             document.querySelector('.content-area').style.width = '100%';
         }
-        
+
         // Hide action panel for assessments (actions are now in sidebar menu)
         const actionPanel = document.getElementById('moduleActionPanel');
         actionPanel.style.display = 'none';
-        
+
         // Display exam details
         document.getElementById('emptyState').style.display = 'none';
         document.getElementById('contentDisplay').style.display = 'block';
-        
+
         document.getElementById('moduleTitle').textContent = exam.title;
         document.getElementById('moduleAuthor').textContent = exam.createdBy?.name || 'Staff Member';
         document.getElementById('moduleDate').textContent = new Date(exam.createdAt).toLocaleDateString();
-        
+
         const statusBadge = document.getElementById('moduleStatusBadge');
         statusBadge.textContent = exam.approvalStatus;
         statusBadge.className = `status-badge status-${exam.approvalStatus}`;
-        
+
         // Show rejection reason if rejected
         if (exam.approvalStatus === 'Rejected' && exam.rejectionReason) {
             document.getElementById('rejectionAlert').style.display = 'block';
@@ -609,7 +612,7 @@ async function loadAndDisplayExam(examId) {
         } else {
             document.getElementById('rejectionAlert').style.display = 'none';
         }
-        
+
         // Render exam content
         const moduleBody = document.getElementById('moduleBody');
         moduleBody.innerHTML = `
@@ -647,8 +650,8 @@ async function loadAndDisplayExam(examId) {
                         </div>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-left: 45px;">
                             ${q.options.map((opt, i) => {
-                                const isCorrect = q.correctOptionIndices.includes(i);
-                                return `
+            const isCorrect = q.correctOptionIndices.includes(i);
+            return `
                                     <div style="display: flex; align-items: center; gap: 12px; padding: 14px; background: ${isCorrect ? 'linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%)' : '#f8f9fa'}; border-radius: 8px; ${isCorrect ? 'border: 2px solid #28a745; box-shadow: 0 2px 6px rgba(40, 167, 69, 0.2);' : 'border: 1px solid #e0e0e0;'}">
                                         <span style="background: ${isCorrect ? '#28a745' : '#6c757d'}; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; font-size: 0.95rem;">
                                             ${String.fromCharCode(65 + i)}
@@ -657,16 +660,16 @@ async function loadAndDisplayExam(examId) {
                                         ${isCorrect ? '<i class="fas fa-check-circle" style="color: #28a745; font-size: 1.3rem;"></i>' : ''}
                                     </div>
                                 `;
-                            }).join('')}
+        }).join('')}
                         </div>
                     </div>
                 `).join('')}
             </div>
         `;
-        
+
     } catch (err) {
         console.error('Error loading assessment:', err);
-        
+
         // Show user-friendly error message
         const errorContainer = document.getElementById('contentDisplay');
         if (errorContainer) {
@@ -710,37 +713,37 @@ async function handleExamAction(action, rejectionReason = null) {
         showRejectionModal();
         return;
     }
-    
+
     try {
         UI.showLoader();
         const endpoint = `${Auth.apiBase}/exams/${currentExamId}/approve`;
-        
+
         console.log('[EXAM ACTION] Processing:', {
             action,
             examId: currentExamId,
             endpoint,
             rejectionReason
         });
-        
+
         // Backend expects { action: 'approve' } or { action: 'reject', rejectionReason: '...' }
         const requestBody = {
             action: action === 'Approved' ? 'approve' : 'reject'
         };
-        
+
         if (action === 'Rejected') {
             requestBody.rejectionReason = rejectionReason;
         }
-        
+
         console.log('[EXAM ACTION] Request body:', requestBody);
-            
+
         const res = await fetch(endpoint, {
             method: 'POST',
             headers: { ...Auth.getHeaders(), 'Content-Type': 'application/json' },
             body: JSON.stringify(requestBody)
         });
-        
+
         console.log('[EXAM ACTION] Response status:', res.status);
-        
+
         if (!res.ok) {
             const errorData = await res.json().catch(() => ({ message: 'Unknown error' }));
             console.error('[EXAM ACTION] Full error response:', errorData);
@@ -749,20 +752,20 @@ async function handleExamAction(action, rejectionReason = null) {
             const errorMsg = errorData.error ? `${errorData.message}: ${errorData.error}` : errorData.message;
             throw new Error(errorMsg || 'Action failed');
         }
-        
+
         const result = await res.json();
         console.log('[EXAM ACTION] Success:', result);
-        
+
         UI.success(`Assessment ${action === 'Approved' ? 'approved' : 'rejected'} successfully`);
-        
+
         // Reload course data and refresh sidebar
         await loadCourseData();
-        
+
         // Refresh the assessment display if it's currently selected
         if (currentExamId) {
             await loadAndDisplayExam(currentExamId);
         }
-        
+
     } catch (err) {
         console.error('[EXAM ACTION] Error processing assessment action:', err);
         UI.error(err.message || 'Failed to process action');
@@ -771,12 +774,11 @@ async function handleExamAction(action, rejectionReason = null) {
     }
 }
 
-async function handleModuleAction(action) {
-    // Original module approval logic
-    let remarks = '';
-    if (action === 'Rejected') {
-        remarks = prompt('Enter reason for rejection:');
-        if (!remarks) return;
+async function handleModuleAction(action, rejectionReason = null) {
+    // If rejecting and no reason provided, show modal
+    if (action === 'Rejected' && !rejectionReason) {
+        showRejectionModal('Module');
+        return;
     }
 
     try {
@@ -788,7 +790,7 @@ async function handleModuleAction(action) {
                 contentType: 'Module',
                 contentID: currentModuleId,
                 status: action,
-                remarks: remarks
+                remarks: rejectionReason || ''
             })
         });
 
@@ -810,9 +812,18 @@ async function handleModuleAction(action) {
 /**
  * Modal control functions for rejection reason
  */
-function showRejectionModal() {
+let rejectionContext = 'Exam'; // 'Exam' or 'Module'
+
+function showRejectionModal(context = 'Exam') {
+    rejectionContext = context;
     const modal = document.getElementById('rejectionModal');
     const input = document.getElementById('rejectionReasonInput');
+    const title = document.getElementById('rejectionModalTitle');
+
+    if (title) {
+        title.innerHTML = `<i class="fas fa-exclamation-triangle" style="color: #dc3545;"></i> Reject ${context}`;
+    }
+
     if (modal && input) {
         input.value = '';
         modal.style.display = 'flex';
@@ -830,14 +841,18 @@ function closeRejectionModal() {
 async function confirmRejection() {
     const input = document.getElementById('rejectionReasonInput');
     const reason = input?.value?.trim();
-    
+
     if (!reason) {
         UI.error('Please provide a reason for rejection');
         return;
     }
-    
+
     closeRejectionModal();
-    await handleExamAction('Rejected', reason);
+    if (rejectionContext === 'Exam') {
+        await handleExamAction('Rejected', reason);
+    } else {
+        await handleModuleAction('Rejected', reason);
+    }
 }
 
 /**
@@ -847,7 +862,15 @@ async function approveModuleFromMenu(moduleId) {
     currentModuleId = moduleId;
     const module = modulesData.find(m => m._id === moduleId);
     if (module) {
-        await toggleModuleStatus('Approved');
+        await handleModuleAction('Approved');
+    }
+}
+
+async function rejectModuleFromMenu(moduleId) {
+    currentModuleId = moduleId;
+    const module = modulesData.find(m => m._id === moduleId);
+    if (module) {
+        await handleModuleAction('Rejected');
     }
 }
 
@@ -864,14 +887,14 @@ async function deleteModuleFromMenu(moduleId) {
  */
 function toggleAssessmentMenu(event, examId) {
     event.stopPropagation();
-    
+
     // Close all other open menus
     document.querySelectorAll('.assessment-dropdown').forEach(menu => {
         if (menu.id !== `menu-${examId}`) {
             menu.classList.remove('show');
         }
     });
-    
+
     // Toggle current menu
     const menu = document.getElementById(`menu-${examId}`);
     if (menu) {
@@ -886,7 +909,7 @@ function closeAssessmentMenu() {
 }
 
 // Close dropdown when clicking outside
-document.addEventListener('click', function(event) {
+document.addEventListener('click', function (event) {
     if (!event.target.closest('.assessment-menu-btn') && !event.target.closest('.assessment-dropdown')) {
         closeAssessmentMenu();
     }
