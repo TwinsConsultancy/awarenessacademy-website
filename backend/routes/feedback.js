@@ -78,4 +78,43 @@ router.get('/module/:moduleId', authorize(['Admin', 'Staff']), async (req, res) 
     }
 });
 
+// GET /api/feedback/course/:courseId
+// Get all feedback for a course (admin/staff only)
+router.get('/course/:courseId', authorize(['Admin', 'Staff']), async (req, res) => {
+    try {
+        const feedbacks = await Feedback.find({ courseId: req.params.courseId })
+            .populate('studentId', 'name email studentID profileImage')
+            .sort({ createdAt: -1 });
+
+        // Overall course averages
+        const avgRatings = feedbacks.length ? {
+            videoQuality: (feedbacks.reduce((s, f) => s + f.ratings.videoQuality, 0) / feedbacks.length).toFixed(1),
+            contentQuality: (feedbacks.reduce((s, f) => s + f.ratings.contentQuality, 0) / feedbacks.length).toFixed(1),
+            contentRelevance: (feedbacks.reduce((s, f) => s + f.ratings.contentRelevance, 0) / feedbacks.length).toFixed(1),
+            expectations: (feedbacks.reduce((s, f) => s + f.ratings.expectations, 0) / feedbacks.length).toFixed(1),
+            recommendation: (feedbacks.reduce((s, f) => s + f.ratings.recommendation, 0) / feedbacks.length).toFixed(1),
+            overall: (feedbacks.reduce((s, f) => s + f.overallRating, 0) / feedbacks.length).toFixed(1),
+        } : null;
+
+        // Rating distribution (1-5 stars)
+        const distribution = [0, 0, 0, 0, 0];
+        feedbacks.forEach(f => {
+            const rounded = Math.round(f.overallRating);
+            if (rounded >= 1 && rounded <= 5) distribution[rounded - 1]++;
+        });
+
+        res.json({
+            success: true,
+            data: {
+                feedbacks,
+                avgRatings,
+                total: feedbacks.length,
+                distribution
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
 module.exports = router;
