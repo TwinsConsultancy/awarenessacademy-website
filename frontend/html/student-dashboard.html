@@ -51,8 +51,8 @@
         };
 
         // Open feedback modal for a specific module
-        function openFeedbackModal(moduleId, moduleName) {
-            console.log('openFeedbackModal called with:', { moduleId, moduleName });
+        function openFeedbackModal(moduleId, moduleName, courseId) {
+            console.log('openFeedbackModal called with:', { moduleId, moduleName, courseId });
 
             // Validate inputs
             if (!moduleId) {
@@ -66,7 +66,11 @@
                 moduleName = 'Unknown Module';
             }
 
-            currentFeedbackModule = { id: moduleId, name: moduleName };
+            currentFeedbackModule = { id: moduleId, name: moduleName, courseId: courseId || null };
+
+            // Set hidden courseId input
+            const courseIdInput = document.getElementById('feedbackCourseId');
+            if (courseIdInput) courseIdInput.value = courseId || '';
             console.log('currentFeedbackModule set to:', currentFeedbackModule);
 
             document.getElementById('feedbackModuleTitle').textContent = `Module: ${moduleName}`;
@@ -273,7 +277,7 @@
         async function loadPaymentAnalytics() {
             try {
                 console.log('Loading payment analytics...');
-                
+
                 // Get auth token
                 const token = localStorage.getItem('token') || localStorage.getItem('authToken');
                 if (!token) {
@@ -324,11 +328,11 @@
                     console.error('Payment analytics API failed:', response.status, response.statusText);
                     const errorText = await response.text().catch(() => 'No error details');
                     console.error('Error response:', errorText);
-                    
+
                     if (response.status === 401) {
                         console.warn('Authentication failed for payment analytics, user may need to log in again');
                     }
-                    
+
                     // Fallback to mock data
                     loadMockPaymentData();
                 }
@@ -411,7 +415,7 @@
             if (paymentsSection) {
                 paymentsObserver.observe(paymentsSection, { attributes: true });
                 console.log('Payment analytics observer set up successfully');
-                
+
                 // Check if payments section is already visible and load analytics
                 if (paymentsSection.style.display !== 'none') {
                     console.log('Payments section is already visible, loading analytics immediately');

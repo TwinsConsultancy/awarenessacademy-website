@@ -3,17 +3,17 @@
  */
 
 // Global Error Handler
-window.addEventListener('error', function(e) {
+window.addEventListener('error', function (e) {
     console.error('JavaScript Error:', e.error);
     // Don't show technical errors to users
     e.preventDefault();
     return true; // Suppress default error behavior
 });
 
-window.addEventListener('unhandledrejection', function(e) {
+window.addEventListener('unhandledrejection', function (e) {
     console.error('Unhandled Promise Rejection:', e.reason);
     e.preventDefault(); // Suppress default behavior
-    
+
     // Show user-friendly message only for critical failures
     if (e.reason && e.reason.message && !e.reason.message.includes('Session terminated')) {
         // Only show notification for non-auth related errors
@@ -28,28 +28,28 @@ window.addEventListener('unhandledrejection', function(e) {
 // Enhanced API Error Handler with retry logic
 async function safeApiCall(apiFunction, fallbackData = null, showUserError = false, retries = 1) {
     let lastError;
-    
+
     for (let attempt = 0; attempt <= retries; attempt++) {
         try {
             return await apiFunction();
         } catch (error) {
             lastError = error;
             console.error(`API Error (attempt ${attempt + 1}):`, error);
-            
+
             // If it's the last attempt and we want to show user errors
             if (attempt === retries && showUserError) {
                 if (typeof UI !== 'undefined' && UI.showNotification) {
                     UI.showNotification('Unable to load data. Please check your connection.', 'error');
                 }
             }
-            
+
             // Add delay between retries
             if (attempt < retries) {
                 await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
             }
         }
     }
-    
+
     return fallbackData;
 }
 
@@ -108,19 +108,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // 8. Setup Continue Learning buttons
     const continueBtn = document.getElementById('continuelearningBtn');
     const continueBtn2 = document.getElementById('continuelearningBtn2');
-    
+
     const handleContinuelearning = async () => {
         try {
             // Get student's progress to find where they left off
             const progressRes = await fetch(`${Auth.apiBase}/progress/my`, { headers: Auth.getHeaders() });
             const progressData = await progressRes.json();
-            
+
             if (progressData && progressData.length > 0) {
                 // Find the most recently accessed course with incomplete progress
                 let latestCourse = null;
                 let latestModule = null;
                 let latestTimestamp = 0;
-                
+
                 progressData.forEach(progress => {
                     if (progress.lastAccessed && new Date(progress.lastAccessed).getTime() > latestTimestamp) {
                         if (progress.completedAt === null || progress.completedString === null) {
@@ -130,18 +130,18 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
                 });
-                
+
                 if (latestCourse && latestModule) {
                     // Go to the specific module where they left off
                     window.location.href = `player.html?course=${latestCourse}&module=${latestModule}`;
                     return;
                 }
             }
-            
+
             // Fallback: get enrolled courses and go to first one
             const coursesRes = await fetch(`${Auth.apiBase}/courses/enrolled`, { headers: Auth.getHeaders() });
             const courses = await coursesRes.json();
-            
+
             if (courses && courses.length > 0) {
                 // Go to the first enrolled course
                 window.location.href = `player.html?course=${courses[0]._id}&content=first`;
@@ -156,7 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
             switchSection('marketplace');
         }
     };
-    
+
     if (continueBtn) {
         continueBtn.addEventListener('click', handleContinuelearning);
     }
@@ -269,32 +269,32 @@ async function loadStats() {
         const courses = await res.json();
         return courses.length || 0;
     };
-    
+
     const updateAttendanceRate = async () => {
         const attRes = await fetch(`${Auth.apiBase}/attendance/my`, { headers: Auth.getHeaders() });
         const attendance = await attRes.json();
         return attendance.length || 0;
     };
-    
+
     // Safe API calls with fallbacks
     const enrolledCount = await safeApiCall(updateEnrolledCount, 3);
     const attendanceCount = await safeApiCall(updateAttendanceRate, 12);
-    
+
     // Update UI elements safely
     const enrolledEl = document.getElementById('enrolledCount');
     if (enrolledEl) enrolledEl.textContent = enrolledCount;
-    
+
     const heroEnrolledEl = document.getElementById('heroEnrolled');
     if (heroEnrolledEl) heroEnrolledEl.textContent = enrolledCount;
-    
+
     const attendanceEl = document.getElementById('attendanceRate');
     if (attendanceEl) attendanceEl.textContent = attendanceCount;
-    
+
     // Calculate and update average progress
     const avgProgressEl = document.getElementById('avgProgress');
     const heroProgressEl = document.getElementById('heroProgress');
     const progressPercent = Math.floor(Math.random() * 30 + 50); // 50-80% realistic progress
-    
+
     if (avgProgressEl) avgProgressEl.textContent = `${progressPercent}%`;
     if (heroProgressEl) heroProgressEl.textContent = `${progressPercent}%`;
 }
@@ -304,7 +304,7 @@ async function loadAnalytics() {
         // Try to load real data first, fallback to mock if needed
         const res = await fetch(`${Auth.apiBase}/courses/enrolled`, { headers: Auth.getHeaders() });
         const courses = await res.json();
-        
+
         // Populate analytics stats with real or mock data
         const enrolledCount = courses.length || 3;
         const overallProgress = Math.floor(Math.random() * 40 + 45); // 45-85%
@@ -319,11 +319,11 @@ async function loadAnalytics() {
         // Load charts with Chart.js
         await loadChartJS();
         loadAnalyticsCharts();
-        
+
         // Load upcoming exams and achievements
         loadUpcomingExams();
         loadAchievements();
-        
+
     } catch (error) {
         console.error('Error loading analytics:', error);
         loadMockAnalytics();
@@ -336,7 +336,7 @@ function loadMockAnalytics() {
     document.getElementById('analyticsProgress').textContent = '67%';
     document.getElementById('analyticsCertificates').textContent = '2';
     document.getElementById('analyticsStreak').textContent = '12';
-    
+
     // Load charts with mock data
     loadChartJS().then(() => {
         loadAnalyticsCharts();
@@ -374,7 +374,7 @@ function loadAnalyticsCharts() {
                     y: {
                         beginAtZero: true,
                         ticks: {
-                            callback: function(value) {
+                            callback: function (value) {
                                 return value + 'h';
                             }
                         }
@@ -383,7 +383,7 @@ function loadAnalyticsCharts() {
             }
         });
     }
-    
+
     // Course Distribution Chart
     const distCtx = document.getElementById('courseDistributionChart');
     if (distCtx) {
@@ -395,7 +395,7 @@ function loadAnalyticsCharts() {
                     data: [35, 25, 25, 15],
                     backgroundColor: [
                         '#FF9933',
-                        '#FFC300', 
+                        '#FFC300',
                         '#FFD700',
                         '#FF6B35'
                     ],
@@ -423,7 +423,7 @@ function loadAnalyticsCharts() {
 function loadUpcomingExams() {
     const widget = document.getElementById('upcomingExamsWidget');
     const examsList = document.getElementById('upcomingExamsList');
-    
+
     // Mock upcoming exams data
     const upcomingExams = [
         {
@@ -439,7 +439,7 @@ function loadUpcomingExams() {
             duration: '90 minutes'
         }
     ];
-    
+
     if (upcomingExams.length > 0) {
         widget.style.display = 'block';
         examsList.innerHTML = upcomingExams.map(exam => `
@@ -464,7 +464,7 @@ function loadUpcomingExams() {
 function loadAchievements() {
     const section = document.getElementById('achievementsSection');
     const badges = document.getElementById('achievementsBadges');
-    
+
     // Mock achievements data
     const achievements = [
         { name: 'First Steps', icon: 'fas fa-baby', description: 'Completed your first course', earned: true },
@@ -474,7 +474,7 @@ function loadAchievements() {
         { name: 'Community Member', icon: 'fas fa-users', description: 'Participate in forum discussions', earned: false },
         { name: 'Perfect Attendance', icon: 'fas fa-award', description: 'Attended all live sessions for a month', earned: false }
     ];
-    
+
     if (achievements.length > 0) {
         section.style.display = 'block';
         badges.innerHTML = achievements.map(achievement => `
@@ -553,9 +553,9 @@ async function loadEnrolledCourses() {
 
         container.innerHTML = coursesWithModules.map(c => {
             // Create module feedback buttons
-            const moduleButtons = c.modules && c.modules.length > 0 
+            const moduleButtons = c.modules && c.modules.length > 0
                 ? c.modules.slice(0, 3).map(module => `
-                    <button onclick="openFeedbackModal('${module._id}', '${(module.title || 'Module').replace(/'/g, '\\\'')}')" 
+                    <button onclick="openFeedbackModal('${module._id}', '${(module.title || 'Module').replace(/'/g, '\\\'')}', '${c._id}')" 
                             class="btn-secondary" 
                             style="width: 100%; padding: 6px; margin: 2px 0; font-size: 0.75rem; background: linear-gradient(135deg, #10B981, #059669); color: white; border: none;">
                         <i class="fas fa-star" style="font-size: 0.7rem;"></i> Rate: ${module.title || 'Module'}
@@ -563,7 +563,7 @@ async function loadEnrolledCourses() {
                   `).join('')
                 : '<p style="font-size: 0.75rem; color: #666; margin: 4px 0;">No modules available for feedback</p>';
 
-            const showMoreModules = c.modules && c.modules.length > 3 
+            const showMoreModules = c.modules && c.modules.length > 3
                 ? `<button onclick="showModuleFeedbackList('${c._id}', '${c.title.replace(/'/g, '\\\'')}')" 
                            class="btn-secondary" 
                            style="width: 100%; padding: 6px; margin: 2px 0; font-size: 0.75rem; background: #6366f1; color: white; border: none;">
@@ -596,7 +596,7 @@ async function loadEnrolledCourses() {
                 </div>
             `;
         }).join('');
-        
+
         console.log('Courses with modules loaded successfully:', coursesWithModules.length);
     } catch (err) {
         console.error('Failed to load courses:', err);
@@ -610,7 +610,7 @@ function showModuleFeedbackList(courseId, courseTitle) {
     // Get the course data from localStorage
     const enrolledCourses = JSON.parse(localStorage.getItem('enrolledCourses') || '[]');
     const course = enrolledCourses.find(c => c._id === courseId);
-    
+
     if (!course || !course.modules || course.modules.length === 0) {
         alert('No modules found for this course.');
         return;
@@ -637,7 +637,7 @@ function showModuleFeedbackList(courseId, courseTitle) {
                 
                 <div style="display: flex; flex-direction: column; gap: 8px;">
                     ${course.modules.map((module, index) => `
-                        <button onclick="openFeedbackModal('${module._id}', '${(module.title || 'Module').replace(/'/g, '\\\'')}')" 
+                        <button onclick="openFeedbackModal('${module._id}', '${(module.title || 'Module').replace(/'/g, '\\\'')}', '${course._id}')" 
                                 style="
                                     padding: 12px; border: 1px solid #e0e0e0; border-radius: 8px;
                                     background: linear-gradient(135deg, #10B981, #059669); 
@@ -705,13 +705,13 @@ async function generateIDCard(paramUser) {
     try {
         // First check profile completion
         const profilePercent = getProfileCompletionPercent();
-        
+
         if (profilePercent < 100) {
             UI.showNotification(
-                `Profile completion required: ${profilePercent}%. Complete your profile to download ID card.`, 
+                `Profile completion required: ${profilePercent}%. Complete your profile to download ID card.`,
                 'warning'
             );
-            
+
             // Show completion modal and redirect to profile
             const modal = UI.createPopup({
                 title: 'Profile Incomplete',
