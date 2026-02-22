@@ -555,7 +555,7 @@ async function loadEnrolledCourses() {
             // Create module feedback buttons
             const moduleButtons = c.modules && c.modules.length > 0
                 ? c.modules.slice(0, 3).map(module => `
-                    <button onclick="openFeedbackModal('${module._id}', '${(module.title || 'Module').replace(/'/g, '\\\'')}', '${c._id}')" 
+                    <button onclick="checkAndOpenFeedbackModal('${module._id}', '${(module.title || 'Module').replace(/'/g, '\\\'')}', '${c._id}')" 
                             class="btn-secondary" 
                             style="width: 100%; padding: 6px; margin: 2px 0; font-size: 0.75rem; background: linear-gradient(135deg, #10B981, #059669); color: white; border: none;">
                         <i class="fas fa-star" style="font-size: 0.7rem;"></i> Rate: ${module.title || 'Module'}
@@ -605,6 +605,53 @@ async function loadEnrolledCourses() {
     }
 }
 
+// Check if feedback exists before opening modal for manual submissions
+async function checkAndOpenFeedbackModal(moduleId, moduleName, courseId) {
+    try {
+        // Check if feedback already submitted
+        const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+        if (!token) {
+            alert('Please log in to submit feedback.');
+            return;
+        }
+
+        const apiBase = (typeof Auth !== 'undefined' && Auth.apiBase) ? Auth.apiBase : 'http://localhost:5001/api';
+        const response = await fetch(`${apiBase}/feedback/check/${moduleId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data.hasSubmitted) {
+                // Show already submitted message
+                if (typeof UI !== 'undefined' && UI.showNotification) {
+                    UI.showNotification('Thank you! You have already provided feedback for this module.', 'info');
+                } else {
+                    alert('Thank you! You have already provided feedback for this module.');
+                }
+                return;
+            }
+        }
+
+        // If no existing feedback, show modal
+        if (typeof openFeedbackModal === 'function') {
+            openFeedbackModal(moduleId, moduleName, courseId);
+        } else {
+            console.error('openFeedbackModal function not available');
+        }
+    } catch (error) {
+        console.error('Error checking feedback status:', error);
+        // On error, still allow feedback (better UX)
+        if (typeof openFeedbackModal === 'function') {
+            openFeedbackModal(moduleId, moduleName, courseId);
+        }
+    }
+}
+
 // Show all modules for feedback when there are many modules
 function showModuleFeedbackList(courseId, courseTitle) {
     // Get the course data from localStorage
@@ -637,7 +684,7 @@ function showModuleFeedbackList(courseId, courseTitle) {
                 
                 <div style="display: flex; flex-direction: column; gap: 8px;">
                     ${course.modules.map((module, index) => `
-                        <button onclick="openFeedbackModal('${module._id}', '${(module.title || 'Module').replace(/'/g, '\\\'')}', '${course._id}')" 
+                        <button onclick="checkAndOpenFeedbackModal('${module._id}', '${(module.title || 'Module').replace(/'/g, '\\\'')}', '${course._id}')" 
                                 style="
                                     padding: 12px; border: 1px solid #e0e0e0; border-radius: 8px;
                                     background: linear-gradient(135deg, #10B981, #059669); 

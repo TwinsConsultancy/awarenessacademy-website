@@ -43,6 +43,21 @@ router.post('/submit', authorize(['Student', 'Staff', 'Admin']), async (req, res
 
         console.log('Using user ID for feedback:', userId);
 
+        // Check for duplicate feedback submission
+        const existingFeedback = await Feedback.findOne({ 
+            moduleId: moduleId, 
+            studentId: userId 
+        });
+
+        if (existingFeedback) {
+            console.log('Duplicate feedback attempt for module:', moduleId, 'user:', userId);
+            return res.status(400).json({ 
+                success: false, 
+                message: 'You have already submitted feedback for this module',
+                duplicate: true
+            });
+        }
+
         const feedbackData = {
             moduleId,
             moduleName: moduleName || 'Unknown Module',
@@ -108,6 +123,32 @@ router.post('/submit', authorize(['Student', 'Staff', 'Admin']), async (req, res
             success: false, 
             message: 'Failed to submit feedback', 
             error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+        });
+    }
+});
+
+// GET /api/feedback/check/:moduleId
+// Check if current user has already submitted feedback for a module
+router.get('/check/:moduleId', authorize(['Student', 'Staff', 'Admin']), async (req, res) => {
+    try {
+        const userId = req.user.id || req.user._id;
+        const moduleId = req.params.moduleId;
+
+        const existingFeedback = await Feedback.findOne({ 
+            moduleId: moduleId, 
+            studentId: userId 
+        });
+
+        res.json({ 
+            success: true, 
+            hasSubmitted: !!existingFeedback,
+            feedback: existingFeedback 
+        });
+    } catch (error) {
+        console.error('Error checking feedback status:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Failed to check feedback status' 
         });
     }
 });
