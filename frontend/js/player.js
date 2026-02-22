@@ -375,6 +375,7 @@ async function loadModuleContent(module) {
     } catch (e) { console.error('Error fetching module progress', e); }
 
     const video = document.getElementById('mainVideo');
+    const videoWrapper = document.getElementById('videoWrapper');
     const overlay = document.getElementById('previewOverlay');
     const title = document.getElementById('contentTitle');
     const downloadBtn = document.getElementById('downloadNotesBtn');
@@ -423,6 +424,7 @@ async function loadModuleContent(module) {
     }
 
     // Reset all displays
+    if (videoWrapper) videoWrapper.style.display = 'none';
     video.style.display = 'none';
     video.pause();
     video.removeAttribute('src');
@@ -440,7 +442,8 @@ async function loadModuleContent(module) {
     console.log('Content type:', contentType, 'File URL:', fileUrl);
 
     if (contentType === 'video' && fileUrl) {
-        // VIDEO MODULE - Direct Static URL
+        // VIDEO MODULE — show wrapper + video element
+        if (videoWrapper) videoWrapper.style.display = 'block';
         video.src = fileUrl;
         video.style.display = 'block';
         video.load();
@@ -448,7 +451,7 @@ async function loadModuleContent(module) {
         // Disable right-click on video to prevent easy download
         video.addEventListener('contextmenu', e => e.preventDefault());
 
-        // Show description if available
+        // Show description below video if available
         if (module.content) {
             contentDisplay.innerHTML = UI.fixContentUrls(module.content);
             contentDisplay.style.display = 'block';
@@ -477,10 +480,10 @@ async function loadModuleContent(module) {
         contentDisplay.style.display = 'block';
     }
 
-    // Mark Complete Button
-    markBtn.style.display = 'block';
-    markBtn.innerHTML = 'Mark as Complete';
-    markBtn.style.background = '#ccc'; // initially disabled
+    // Mark Complete Button — restore icon + responsive text spans
+    markBtn.style.display = 'flex';
+    markBtn.innerHTML = '<i class="fas fa-check-circle"></i><span class="btn-text-full">Mark as Complete</span><span class="btn-text-short">Done</span>';
+    markBtn.style.background = '#9ca3af'; // grey while locked
     markBtn.disabled = true;
 
     // Check existing progress
@@ -506,9 +509,10 @@ function updateTimerDisplay() {
 
     // Enable button if threshold reached and not already completed
     const markBtn = document.getElementById('markCompleteBtn');
-    if (markBtn && isReady && !markBtn.innerHTML.includes('Completed')) {
+    if (markBtn && isReady && markBtn.disabled) {
         markBtn.disabled = false;
-        markBtn.style.background = 'var(--color-saffron)';
+        markBtn.style.background = 'linear-gradient(135deg, var(--color-saffron, #FF9933), var(--color-golden, #FFC300))';
+        markBtn.style.boxShadow = '0 4px 16px rgba(255,153,51,0.35)';
     }
 }
 
@@ -560,14 +564,33 @@ async function syncProgress(isUnload = false) {
                     if (data.moduleCompleted) {
                         const markBtn = document.getElementById('markCompleteBtn');
                         if (markBtn) {
-                            markBtn.innerHTML = '<i class="fas fa-check-circle"></i> Completed';
-                            markBtn.style.background = 'var(--color-success)';
+                            markBtn.innerHTML = '<i class="fas fa-check-circle"></i><span>Completed!</span>';
+                            markBtn.style.background = 'linear-gradient(135deg,#10b981,#059669)';
+                            markBtn.style.boxShadow = '0 4px 14px rgba(16,185,129,0.30)';
                             markBtn.disabled = true;
                         }
 
                         // Unlock next module in UI without full reload if possible
                         updateCurriculumWithCompletion(data.nextModuleID);
                         UI.success('Module successfully completed!');
+
+                        // Automatically show feedback modal after module completion
+                        setTimeout(() => {
+                            if (typeof window.showModuleCompletionFeedback === 'function') {
+                                // Try to get module name from current data
+                                let moduleName = 'Module';
+                                if (window.cachedCourseData && window.cachedCourseData.modules) {
+                                    const currentModule = window.cachedCourseData.modules.find(m => m._id === currentModuleID);
+                                    if (currentModule) {
+                                        moduleName = currentModule.title || 'Module';
+                                    }
+                                }
+                                console.log('Auto-triggering feedback for completed module:', currentModuleID, moduleName);
+                                window.showModuleCompletionFeedback(currentModuleID, moduleName);
+                            } else {
+                                console.warn('showModuleCompletionFeedback function not available');
+                            }
+                        }, 1500); // Small delay after success message
                     }
 
                     console.log(`Synced ${timeToSend}s successfully`);
@@ -604,10 +627,10 @@ async function checkCompletionStatus(moduleId) {
         const isCompleted = progress.completedModules && progress.completedModules.includes(moduleId);
 
         if (isCompleted) {
-            markBtn.innerHTML = '<i class="fas fa-check-circle"></i> Completed';
-            markBtn.style.background = 'var(--color-success)';
+            markBtn.innerHTML = '<i class="fas fa-check-circle"></i><span>Completed!</span>';
+            markBtn.style.background = 'linear-gradient(135deg,#10b981,#059669)';
+            markBtn.style.boxShadow = '0 4px 14px rgba(16,185,129,0.30)';
             markBtn.disabled = true;
-
             // If already completed, user can move freely
             userHasControl = true;
         } else {
@@ -760,6 +783,8 @@ function loadIntroIframe(course) {
     const contentDisplay = document.getElementById('htmlContentDisplay');
 
     // Reset Display
+    const vw = document.getElementById('videoWrapper');
+    if (vw) vw.style.display = 'none';
     video.style.display = 'none';
     overlay.style.display = 'none';
     markBtn.style.display = 'none';
@@ -769,11 +794,13 @@ function loadIntroIframe(course) {
     document.getElementById('contentDescription').innerHTML = '<p>Welcome to the course. Watch the introduction to get started.</p>';
 
     if (course?.introVideo) {
+        const vw2 = document.getElementById('videoWrapper');
+        if (vw2) vw2.style.display = 'block';
         video.src = course.introVideo;
         video.style.display = 'block';
         video.load();
     } else {
-        UI.info('No introduction video available.');
+        UI.info('No introduction video available for this course.');
     }
 }
 

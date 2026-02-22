@@ -148,6 +148,24 @@
                 return;
             }
 
+            // Check if feedback already submitted before allowing submission
+            console.log('Checking if feedback already exists for module:', currentFeedbackModule.id);
+            try {
+                const hasAlreadySubmitted = await checkFeedbackExists(currentFeedbackModule.id);
+                if (hasAlreadySubmitted) {
+                    closeFeedbackModal();
+                    if (typeof UI !== 'undefined' && UI.showNotification) {
+                        UI.showNotification('You have already submitted feedback for this module.', 'info');
+                    } else {
+                        alert('You have already submitted feedback for this module.');
+                    }
+                    return;
+                }
+            } catch (error) {
+                console.error('Error checking existing feedback:', error);
+                // Continue with submission if check fails
+            }
+
             // Check authentication
             const token = localStorage.getItem('token') || localStorage.getItem('authToken') || '';
             if (!token) {
@@ -268,6 +286,72 @@
                 }
             }
         }
+
+        // === FEEDBACK CHECKING FUNCTIONS ===
+        
+        // Check if student has already submitted feedback for a module
+        async function checkFeedbackExists(moduleId) {
+            try {
+                const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+                if (!token) {
+                    console.error('No authentication token found');
+                    return false;
+                }
+
+                const apiBase = (typeof Auth !== 'undefined' && Auth.apiBase) ? Auth.apiBase : 'http://localhost:5001/api';
+                const response = await fetch(`${apiBase}/feedback/check/${moduleId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    return data.hasSubmitted;
+                } else {
+                    console.error('Failed to check feedback status:', response.status);
+                    return false;
+                }
+            } catch (error) {
+                console.error('Error checking feedback status:', error);
+                return false;
+            }
+        }
+
+        // Show feedback modal after module completion (called from player.js)
+        function showModuleCompletionFeedback(moduleId, moduleName) {
+            console.log('showModuleCompletionFeedback called:', { moduleId, moduleName });
+            
+            if (!moduleId) {
+                console.error('Module ID required for feedback');
+                return;
+            }
+
+            // Check if feedback already submitted
+            checkFeedbackExists(moduleId).then(hasSubmitted => {
+                if (hasSubmitted) {
+                    // Show already submitted message
+                    if (typeof UI !== 'undefined' && UI.showNotification) {
+                        UI.showNotification('Thank you! You have already provided feedback for this module.', 'info');
+                    } else {
+                        alert('Thank you! You have already provided feedback for this module.');
+                    }
+                    return;
+                }
+
+                // Show feedback modal
+                openFeedbackModal(moduleId, moduleName || 'Module');
+            }).catch(error => {
+                console.error('Error checking feedback status:', error);
+                // If check fails, still show the modal (better UX)
+                openFeedbackModal(moduleId, moduleName || 'Module');
+            });
+        }
+
+        // Make function globally available for player.js
+        window.showModuleCompletionFeedback = showModuleCompletionFeedback;
 
         // === PAYMENT ANALYTICS === 
         async function loadPaymentAnalytics() {
