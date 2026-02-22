@@ -356,7 +356,7 @@ function switchSection(section) {
         }
         if (section === 'tickets') {
             loadTickets();
-            loadUnreadTicketCount();
+            markAllTicketsRead(); // Clear unread badge when viewing tickets
         }
         if (section === 'messages') {
             loadMessages();
@@ -536,7 +536,7 @@ function renderQueueList(data, containerId, isOverview) {
         if (badge) {
             if (totalPending > 0) {
                 badge.textContent = totalPending;
-                badge.style.display = 'inline-block';
+                badge.style.display = 'flex';
                 console.log('[SUCCESS] Badge updated:', totalPending);
             } else {
                 badge.style.display = 'none';
@@ -1874,42 +1874,91 @@ document.getElementById('bannerForm')?.addEventListener('submit', async (e) => {
 });
 
 /* --- FINANCE --- */
+window.allLedger = [];
+
 async function loadLedger() {
     const list = document.getElementById('ledgerList');
     try {
         UI.showLoader();
         const res = await fetch(`${Auth.apiBase}/admin/ledger`, { headers: Auth.getHeaders() });
         const ledger = await res.json();
-        list.innerHTML = ledger.map(p => {
-            const dateStr = p.createdAt ? new Date(p.createdAt).toLocaleString('en-US', {
-                year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-            }) : 'N/A';
-            const statusIcon = p.status === 'Completed' || p.status === 'Success' ? '<i class="fas fa-check-circle" style="color:var(--color-success)"></i>' :
-                (p.status === 'Pending' ? '<i class="fas fa-clock" style="color:var(--color-warning)"></i>' : '<i class="fas fa-times-circle" style="color:var(--color-error)"></i>');
-            return `
-            <tr style="border-bottom: 1px solid #eee; transition: background 0.2s; cursor: pointer;" onclick='openTransactionDetailsModal(${JSON.stringify(p).replace(/'/g, "&#39;")})' onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='white'">
-                <td style="padding: 15px; font-family: monospace; font-size: 0.9rem;">${p.transactionID || 'N/A'}</td>
-                <td style="padding: 15px; color: #555; font-size: 0.9rem;">${dateStr}</td>
-                <td style="padding: 15px; font-weight: 500;">${p.studentID?.name || 'Unknown User'}</td>
-                <td style="padding: 15px; color: #666; font-size: 0.9rem;"><i class="fas fa-book-open" style="color:#999; margin-right:5px;"></i> ${p.courseID?.title || 'Unknown Course'}</td>
-                <td style="padding: 15px; font-weight: bold; color: var(--color-saffron);">₹${p.amount || 0}</td>
-                <td style="padding: 15px;">
-                    <span style="display:inline-flex; align-items:center; gap:6px; padding: 4px 10px; border-radius: 20px; background: #f8f8f8; font-size: 0.85rem; font-weight: 600;">
-                        ${statusIcon} ${p.status || 'Pending'}
-                    </span>
-                </td>
-            </tr>
-            `;
-        }).join('');
+        window.allLedger = ledger;
+        filterFinanceLedger(); // Render with current filters if any
     } catch (err) { list.innerHTML = '<tr><td colspan="6" style="padding: 20px; text-align: center; color: #999;">Ledger empty or failed to load.</td></tr>'; }
     finally { UI.hideLoader(); }
 }
 
-function openTransactionDetailsModal(p) {
+function filterFinanceLedger() {
+    if (!window.allLedger) return;
+    const search = document.getElementById('financeSearchInput')?.value.toLowerCase() || '';
+    const statusFilter = document.getElementById('financeStatusFilter')?.value || '';
+
+    const filtered = window.allLedger.filter(p => {
+        const tId = (p.transactionID || '').toLowerCase();
+        const student = (p.studentID?.name || '').toLowerCase();
+        const course = (p.courseID?.title || '').toLowerCase();
+
+        const matchesSearch = tId.includes(search) || student.includes(search) || course.includes(search);
+
+        let matchesStatus = true;
+        if (statusFilter) {
+            const stat = p.status || 'Pending';
+            if (statusFilter === 'Success') {
+                matchesStatus = (stat === 'Success' || stat === 'Completed');
+            } else {
+                matchesStatus = (stat === statusFilter);
+            }
+        }
+
+        return matchesSearch && matchesStatus;
+    });
+
+    renderLedger(filtered);
+}
+
+function renderLedger(ledger) {
+    const list = document.getElementById('ledgerList');
+    if (!ledger || ledger.length === 0) {
+        list.innerHTML = '<tr><td colspan="6" style="padding: 20px; text-align: center; color: #999;">No transactions found.</td></tr>';
+        return;
+    }
+    list.innerHTML = ledger.map((p, index) => {
+        const dateRaw = p.date || p.createdAt || p.initiatedAt;
+        const dateStr = dateRaw ? new Date(dateRaw).toLocaleString('en-US', {
+            year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+        }) : 'N/A';
+        const statusIcon = p.status === 'Completed' || p.status === 'Success' ? '<i class="fas fa-check-circle" style="color:var(--color-success)"></i>' :
+            (p.status === 'Pending' ? '<i class="fas fa-clock" style="color:var(--color-warning)"></i>' : '<i class="fas fa-times-circle" style="color:var(--color-error)"></i>');
+
+        // Safe identifier for onclick
+        const txId = p._id;
+
+        return `
+        <tr style="border-bottom: 1px solid #eee; transition: background 0.2s; cursor: pointer;" onclick="openTransactionDetailsModal('${txId}')" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='white'">
+            <td style="padding: 15px; font-family: monospace; font-size: 0.9rem;">${p.transactionID || 'N/A'}</td>
+            <td style="padding: 15px; color: #555; font-size: 0.9rem;">${dateStr}</td>
+            <td style="padding: 15px; font-weight: 500;">${p.studentID?.name || 'Unknown User'}</td>
+            <td style="padding: 15px; color: #666; font-size: 0.9rem;"><i class="fas fa-book-open" style="color:#999; margin-right:5px;"></i> ${p.courseID?.title || 'Unknown Course'}</td>
+            <td style="padding: 15px; font-weight: bold; color: var(--color-saffron);">₹${p.amount || 0}</td>
+            <td style="padding: 15px;">
+                <span style="display:inline-flex; align-items:center; gap:6px; padding: 4px 10px; border-radius: 20px; background: #f8f8f8; font-size: 0.85rem; font-weight: 600;">
+                    ${statusIcon} ${p.status || 'Pending'}
+                </span>
+            </td>
+        </tr>
+        `;
+    }).join('');
+}
+
+function openTransactionDetailsModal(txId) {
+    const p = window.allLedger.find(item => item._id === txId);
+    if (!p) return;
+
     const modal = document.getElementById('transactionDetailsModal');
     if (!modal) return;
 
-    const dateStr = p.createdAt ? new Date(p.createdAt).toLocaleString('en-US', {
+    const dateRaw = p.date || p.createdAt || p.initiatedAt;
+    const dateStr = dateRaw ? new Date(dateRaw).toLocaleString('en-US', {
         year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
     }) : 'N/A';
 
@@ -3875,7 +3924,6 @@ async function loadTickets() {
                         <th style="padding: 15px; text-align: center;">Priority</th>
                         <th style="padding: 15px; text-align: center;">Status</th>
                         <th style="padding: 15px; text-align: center;">Last Updated</th>
-                        <th style="padding: 15px; text-align: center;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -3886,7 +3934,7 @@ async function loadTickets() {
             const creator = ticket.createdBy || { name: 'Unknown', role: 'N/A', studentID: null };
 
             return `
-                            <tr style="border-bottom: 1px solid #f0f0f0; ${isUnread ? 'background: #f8f9ff;' : ''}">
+                            <tr style="border-bottom: 1px solid #f0f0f0; cursor: pointer; ${isUnread ? 'background: #f8f9ff;' : ''}" onclick="viewTicketDetail('${ticket._id}')" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='${isUnread ? '#f8f9ff' : ''}'">
                                 <td style="padding: 15px;">
                                     <div style="font-weight: 600; color: var(--color-primary); font-family: monospace;">
                                         ${ticket.ticketID}
@@ -3916,11 +3964,6 @@ async function loadTickets() {
                                     <small style="color: #666;">${new Date(ticket.lastUpdated).toLocaleDateString()}</small>
                                     <br>
                                     <small style="color: #999;">${new Date(ticket.lastUpdated).toLocaleTimeString()}</small>
-                                </td>
-                                <td style="padding: 15px; text-align: center;">
-                                    <button class="btn-primary" onclick="viewTicketDetail('${ticket._id}')" style="padding: 6px 12px; font-size: 0.8rem;">
-                                        <i class="fas fa-eye"></i> View
-                                    </button>
                                 </td>
                             </tr>
                         `;
@@ -4177,13 +4220,25 @@ async function loadUnreadTicketCount() {
 
             if (data.count > 0) {
                 badge.textContent = data.count;
-                badge.style.display = 'inline-block';
+                badge.style.display = 'flex';
             } else {
                 badge.style.display = 'none';
             }
         }
     } catch (error) {
         console.error('Load unread count error:', error);
+    }
+}
+
+async function markAllTicketsRead() {
+    try {
+        await fetch(`${Auth.apiBase}/tickets/admin/mark-all-read`, {
+            method: 'PATCH',
+            headers: Auth.getHeaders()
+        });
+        loadUnreadTicketCount(); // Refresh badge
+    } catch (error) {
+        console.error('Mark all tickets read error:', error);
     }
 }
 
@@ -4611,7 +4666,7 @@ function updateMessagesBadge(count) {
 
     if (count > 0) {
         badge.textContent = count;
-        badge.style.display = 'inline-block';
+        badge.style.display = 'flex';
     } else {
         badge.style.display = 'none';
     }

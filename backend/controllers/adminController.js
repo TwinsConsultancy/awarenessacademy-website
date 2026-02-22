@@ -172,7 +172,11 @@ exports.getPendingContent = async (req, res) => {
 // Approve/Reject Content/Module/Course
 exports.reviewItem = async (req, res) => {
     try {
-        const { itemID, itemType, status, adminRemarks } = req.body;
+        // Support both naming conventions from frontend
+        const itemID = req.body.itemID || req.body.contentID;
+        const itemType = req.body.itemType || req.body.contentType;
+        const status = req.body.status;
+        const adminRemarks = req.body.adminRemarks || req.body.remarks || '';
         const { Module, Course } = require('../models/index');
 
         let item;
@@ -249,7 +253,7 @@ exports.getFinancialLedger = async (req, res) => {
         const payments = await Payment.find()
             .populate('studentID', 'name email')
             .populate('courseID', 'title')
-            .sort({ createdAt: -1 });
+            .sort({ date: -1 });
         res.status(200).json(payments);
     } catch (err) {
         res.status(500).json({ message: 'Ledger load failed', error: err.message });

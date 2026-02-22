@@ -2263,14 +2263,14 @@
                     <a href="#" class="nav-link" onclick="switchSection('tickets')" title="Support Tickets">
                         <i class="fas fa-ticket-alt"></i> <span class="link-text">Tickets</span>
                         <span id="ticketBadge" class="notification-badge"
-                            style="display: none; margin-left: 8px; background: var(--color-error); color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.7rem;"></span>
+                            style="display: none; position: relative; top: auto; right: auto; margin-left: auto; background: var(--color-error); color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.7rem; width: auto; height: auto;"></span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="#" class="nav-link" onclick="switchSection('messages')" title="Contact Messages">
                         <i class="fas fa-envelope"></i> <span class="link-text">Messages</span>
                         <span id="messagesBadge" class="notification-badge"
-                            style="display: none; margin-left: 8px; background: var(--color-saffron); color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.7rem;"></span>
+                            style="display: none; position: relative; top: auto; right: auto; margin-left: auto; background: var(--color-saffron); color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.7rem; width: auto; height: auto;"></span>
                     </a>
                 </li>
 
@@ -2913,6 +2913,26 @@
 
                     <!-- FINANCE SECTION -->
                     <section id="financeSection" class="dashboard-content-section" style="display: none;">
+
+                        <div class="glass-card"
+                            style="padding: 15px; margin-bottom: 20px; display: flex; gap: 15px; align-items: center;">
+                            <div style="flex: 1; position: relative;">
+                                <i class="fas fa-search"
+                                    style="position: absolute; left: 10px; top: 12px; color: #999;"></i>
+                                <input type="text" id="financeSearchInput" class="form-control"
+                                    placeholder="Search by Transaction ID, Student, or Course..."
+                                    style="padding-left: 35px; width: 100%; box-sizing: border-box;"
+                                    oninput="filterFinanceLedger()">
+                            </div>
+                            <select id="financeStatusFilter" class="form-control" style="width: auto;"
+                                onchange="filterFinanceLedger()">
+                                <option value="">All Statuses</option>
+                                <option value="Success">Success / Completed</option>
+                                <option value="Pending">Pending</option>
+                                <option value="Failed">Failed</option>
+                            </select>
+                        </div>
+
                         <div class="glass-card" style="padding: 0; overflow: hidden;">
                             <div style="max-height: 600px; overflow-y: auto;">
                                 <table style="width: 100%; border-collapse: collapse; text-align: left;">
