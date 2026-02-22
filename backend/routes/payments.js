@@ -19,6 +19,43 @@ router.post('/verify', paymentController.verifyPayment);
 // @desc    Handle payment failure
 router.post('/failure', paymentController.handlePaymentFailure);
 
+// @route   GET /api/payments/analytics
+// @desc    Get payment analytics summary for logged-in student
+router.get('/analytics', async (req, res) => {
+    try {
+        const { Payment } = require('../models/index');
+        const payments = await Payment.find({ studentID: req.user.id }).sort({ date: -1 });
+
+        // Status enum: initiated | pending | authorized | captured | completed | failed | refunded
+        const successful = payments.filter(p => ['captured', 'completed', 'authorized'].includes(p.status));
+        const failed = payments.filter(p => ['failed', 'refunded'].includes(p.status));
+
+        const totalSpent = successful.reduce((sum, p) => sum + (p.amount || 0), 0);
+        const avgTransaction = successful.length ? Math.round(totalSpent / successful.length) : 0;
+
+        const failures = failed.map(p => ({
+            reason: p.failureReason || p.notes || 'Payment failed',
+            amount: p.amount || 0,
+            date: p.date || p.createdAt
+        }));
+
+        res.json({
+            success: true,
+            data: {
+                totalSpent,
+                averageTransaction: avgTransaction,
+                totalPayments: successful.length,
+                failedAttempts: failed.length,
+                failures,
+                recentPayments: payments.slice(0, 10)
+            }
+        });
+    } catch (err) {
+        console.error('Payment analytics error:', err);
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
 // @route   GET /api/payments/my
 // @desc    Get current user's payments
 router.get('/my', paymentController.getMyPayments);
