@@ -16,7 +16,7 @@ exports.createTicket = async (req, res) => {
 
         // Automatic priority assignment based on subject
         let priority = 'Medium'; // default
-        
+
         if (subject === 'Payment Issue' || subject === 'Account Related') {
             priority = 'Urgent';
         } else if (subject === 'Technical Issue' || subject === 'Course Access Problem' || subject === 'Bug Report') {
@@ -209,7 +209,7 @@ exports.updateTicketStatus = async (req, res) => {
 
         const ticket = await Ticket.findByIdAndUpdate(
             req.params.id,
-            { 
+            {
                 status,
                 lastUpdated: Date.now(),
                 isReadByUser: false // Notify user of status change
@@ -301,6 +301,22 @@ exports.getUnreadCount = async (req, res) => {
     }
 };
 
+// @desc    Mark all tickets as read by admin
+// @route   PATCH /api/tickets/admin/mark-all-read
+// @access  Admin
+exports.markAllAsRead = async (req, res) => {
+    try {
+        const result = await Ticket.updateMany(
+            { isReadByAdmin: false },
+            { $set: { isReadByAdmin: true } }
+        );
+        res.status(200).json({ message: 'All tickets marked as read', modifiedCount: result.modifiedCount });
+    } catch (error) {
+        console.error('Mark all as read error:', error);
+        res.status(500).json({ message: 'Failed to mark all as read', error: error.message });
+    }
+};
+
 // @desc    Update all existing ticket priorities based on subject (one-time migration)
 // @route   POST /api/tickets/admin/update-priorities
 // @access  Admin
@@ -311,7 +327,7 @@ exports.updateAllPriorities = async (req, res) => {
 
         for (const ticket of tickets) {
             let newPriority = 'Medium'; // default
-            
+
             if (ticket.subject === 'Payment Issue' || ticket.subject === 'Account Related') {
                 newPriority = 'Urgent';
             } else if (ticket.subject === 'Technical Issue' || ticket.subject === 'Course Access Problem' || ticket.subject === 'Bug Report') {

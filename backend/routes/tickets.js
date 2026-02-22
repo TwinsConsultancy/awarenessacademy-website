@@ -6,6 +6,7 @@ const authorize = require('../middleware/auth');
 // Admin routes MUST come before parameterized routes
 router.get('/admin/all', authorize('Admin'), ticketController.getAllTickets);
 router.get('/admin/unread-count', authorize('Admin'), ticketController.getUnreadCount);
+router.patch('/admin/mark-all-read', authorize('Admin'), ticketController.markAllAsRead);
 router.post('/admin/update-priorities', authorize('Admin'), ticketController.updateAllPriorities);
 
 // User routes (Staff & Student)
