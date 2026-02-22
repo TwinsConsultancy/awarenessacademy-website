@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Debug</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .info { background: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .error { background: #ffe6e6; color: #d00; }
+        .success { background: #e6ffe6; color: #090; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        pre { background: #f8f8f8; padding: 10px; border-radius: 5px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Authentication Debug Tool</h1>
+    
+    <div id="output"></div>
+    
+    <button onclick="checkAuth()">Check Authentication Status</button>
+    <button onclick="testAdminStats()">Test Admin Stats Endpoint</button>
+    <button onclick="clearAuth()">Clear Authentication</button>
+    <button onclick="goToLogin()">Go to Login</button>
+
+    <script>
+        const API_BASE = 'http://localhost:5001/api';
+        
+        function log(message, type = 'info') {
+            const output = document.getElementById('output');
+            const div = document.createElement('div');
+            div.className = `info ${type}`;
+            div.innerHTML = message;
+            output.appendChild(div);
+        }
+        
+        function checkAuth() {
+            log('<h3>Checking Authentication Status...</h3>');
+            
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            
+            if (!token) {
+                log('❌ No token found in localStorage', 'error');
+                return;
+            }
+            
+            log('✅ Token found in localStorage');
+            
+            // Check token format
+            try {
+                const tokenParts = token.split('.');
+                if (tokenParts.length === 3) {
+                    const payload = JSON.parse(atob(tokenParts[1]));
+                    const expiry = new Date(payload.exp * 1000);
+                    const now = new Date();
+                    
+                    log(`Token expires: ${expiry.toLocaleString()}`);
+                    log(`Current time: ${now.toLocaleString()}`);
+                    
+                    if (now > expiry) {
+                        log('❌ Token is EXPIRED', 'error');
+                    } else {
+                        log('✅ Token is still valid', 'success');
+                        log(`Token payload: <pre>${JSON.stringify(payload, null, 2)}</pre>`);
+                    }
+                } else {
+                    log('❌ Invalid token format', 'error');
+                }
+            } catch (e) {
+                log(`❌ Error parsing token: ${e.message}`, 'error');
+            }
+            
+            // Check user data
+            if (!user) {
+                log('❌ No user data found in localStorage', 'error');
+            } else {
+                try {
+                    const userData = JSON.parse(user);
+                    log('✅ User data found');
+                    log(`User info: <pre>${JSON.stringify(userData, null, 2)}</pre>`);
+                } catch (e) {
+                    log(`❌ Error parsing user data: ${e.message}`, 'error');
+                }
+            }
+        }
+        
+        async function testAdminStats() {
+            log('<h3>Testing Admin Stats Endpoint...</h3>');
+            
+            const token = localStorage.getItem('token');
+            if (!token) {
+                log('❌ No token available for testing', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/admin/stats`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                log(`Response status: ${response.status} ${response.statusText}`);
+                
+                const responseText = await response.text();
+                log(`Response body: <pre>${responseText}</pre>`);
+                
+                if (response.ok) {
+                    log('✅ Admin stats request successful', 'success');
+                } else {
+                    log(`❌ Admin stats request failed`, 'error');
+                }
+                
+            } catch (error) {
+                log(`❌ Network error: ${error.message}`, 'error');
+            }
+        }
+        
+        function clearAuth() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            log('🧹 Authentication data cleared', 'success');
+        }
+        
+        function goToLogin() {
+            window.location.href = 'frontend/html/login.html';
+        }
+        
+        // Auto-check on load
+        window.onload = checkAuth;
+    </script>
+</body>
+</html>
