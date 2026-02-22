@@ -991,7 +991,14 @@ async function loadPayments() {
                 </tbody>
             </table>
         `;
+
+        // Also trigger payment analytics if the function exists (from student-dashboard.html)
+        if (typeof window.loadPaymentAnalytics === 'function') {
+            console.log('Triggering payment analytics from loadPayments...');
+            window.loadPaymentAnalytics();
+        }
     } catch (err) {
+        console.error('Error loading payments:', err);
         UI.error('History unavailable.');
     } finally {
         UI.hideLoader();

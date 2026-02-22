@@ -53,7 +53,7 @@
         // Open feedback modal for a specific module
         function openFeedbackModal(moduleId, moduleName) {
             console.log('openFeedbackModal called with:', { moduleId, moduleName });
-            
+
             // Validate inputs
             if (!moduleId) {
                 console.error('moduleId is required for feedback modal');
@@ -68,7 +68,7 @@
 
             currentFeedbackModule = { id: moduleId, name: moduleName };
             console.log('currentFeedbackModule set to:', currentFeedbackModule);
-            
+
             document.getElementById('feedbackModuleTitle').textContent = `Module: ${moduleName}`;
 
             // Reset JS scores
@@ -134,7 +134,7 @@
         // Submit feedback
         async function submitFeedback() {
             console.log('submitFeedback called, currentFeedbackModule:', currentFeedbackModule);
-            
+
             // Validate that we have the required module data
             if (!currentFeedbackModule) {
                 console.error('No feedback module selected');
@@ -197,7 +197,7 @@
                 if (response.ok) {
                     const result = await response.json();
                     console.log('Feedback submitted successfully:', result);
-                    
+
                     // Close modal
                     closeFeedbackModal();
 
@@ -219,7 +219,7 @@
                 } else {
                     let errorMessage = 'Failed to submit feedback';
                     let errData = {};
-                    
+
                     try {
                         errData = await response.json();
                         console.log('Error response data:', errData);
@@ -251,15 +251,15 @@
                 }
             } catch (error) {
                 console.error('Error submitting feedback:', error);
-                
+
                 let errorMessage = 'Failed to submit feedback. Please try again.';
-                
+
                 if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
                     errorMessage = 'Unable to connect to server. Please check your internet connection and try again.';
                 } else if (error.message) {
                     errorMessage = error.message;
                 }
-                
+
                 alert(errorMessage);
             } finally {
                 if (submitBtn) {
@@ -272,23 +272,64 @@
         // === PAYMENT ANALYTICS === 
         async function loadPaymentAnalytics() {
             try {
-                const response = await safeApiCall('/api/payments/analytics', {
-                    method: 'GET'
+                console.log('Loading payment analytics...');
+                
+                // Get auth token
+                const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+                if (!token) {
+                    console.error('No authentication token found for payment analytics');
+                    loadMockPaymentData();
+                    return;
+                }
+
+                // Make direct API call with proper authentication
+                const apiBase = (typeof Auth !== 'undefined' && Auth.apiBase) ? Auth.apiBase : 'http://localhost:5001/api';
+                const response = await fetch(`${apiBase}/payments/analytics`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
                 });
 
-                if (response.success && response.data) {
-                    const analytics = response.data;
+                console.log('Payment analytics response status:', response.status);
 
-                    // Update spending metrics
-                    document.getElementById('totalSpent').textContent = `₹${analytics.totalSpent || 0}`;
-                    document.getElementById('avgTransaction').textContent = `₹${analytics.averageTransaction || 0}`;
-                    document.getElementById('totalPayments').textContent = analytics.totalPayments || 0;
-                    document.getElementById('failedAttempts').textContent = analytics.failedAttempts || 0;
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Payment analytics data received:', data);
 
-                    // Load payment failures
-                    loadPaymentFailures(analytics.failures || []);
+                    if (data.success && data.data) {
+                        const analytics = data.data;
+
+                        // Update spending metrics with actual data (using correct element IDs)
+                        document.getElementById('totalSpent').textContent = `₹${analytics.totalSpent || 0}`;
+                        document.getElementById('avgTransaction').textContent = `₹${analytics.averageTransaction || 0}`;
+                        document.getElementById('totalTransactions').textContent = analytics.totalPayments || 0;
+                        document.getElementById('failedPayments').textContent = analytics.failedAttempts || 0;
+
+                        console.log('Payment analytics updated:', {
+                            totalSpent: analytics.totalSpent,
+                            averageTransaction: analytics.averageTransaction,
+                            totalPayments: analytics.totalPayments,
+                            failedAttempts: analytics.failedAttempts
+                        });
+
+                        // Load payment failures
+                        loadPaymentFailures(analytics.failures || []);
+                    } else {
+                        console.warn('Payment analytics returned unsuccessful response:', data);
+                        loadMockPaymentData();
+                    }
                 } else {
-                    // Use mock data if API fails
+                    console.error('Payment analytics API failed:', response.status, response.statusText);
+                    const errorText = await response.text().catch(() => 'No error details');
+                    console.error('Error response:', errorText);
+                    
+                    if (response.status === 401) {
+                        console.warn('Authentication failed for payment analytics, user may need to log in again');
+                    }
+                    
+                    // Fallback to mock data
                     loadMockPaymentData();
                 }
             } catch (error) {
@@ -357,18 +398,31 @@
             const paymentsObserver = new MutationObserver((mutations) => {
                 mutations.forEach((mutation) => {
                     if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
-                        const paymentsSection = document.getElementById('payments');
+                        const paymentsSection = document.getElementById('paymentsSection');
                         if (paymentsSection && paymentsSection.style.display !== 'none') {
+                            console.log('Payments section became visible, loading analytics...');
                             loadPaymentAnalytics();
                         }
                     }
                 });
             });
 
-            const paymentsSection = document.getElementById('payments');
+            const paymentsSection = document.getElementById('paymentsSection');
             if (paymentsSection) {
                 paymentsObserver.observe(paymentsSection, { attributes: true });
+                console.log('Payment analytics observer set up successfully');
+                
+                // Check if payments section is already visible and load analytics
+                if (paymentsSection.style.display !== 'none') {
+                    console.log('Payments section is already visible, loading analytics immediately');
+                    loadPaymentAnalytics();
+                }
+            } else {
+                console.error('Payments section element not found');
             }
+
+            // Also trigger payment analytics when explicitly called via tab switching
+            window.loadPaymentAnalytics = loadPaymentAnalytics;
         });
     </script>
     <style>
@@ -2669,23 +2723,6 @@
                         </button>
                     </div>
 
-                    <!-- Activity Feed -->
-                    <div class="activity-feed" id="activityFeed">
-                        <h3>
-                            <i class="fas fa-history"></i>
-                            Recent Activity
-                        </h3>
-                        <div id="activityList">
-                            <div class="activity-item">
-                                <div class="activity-icon" style="background: #e3f2fd; color: #1976d2;">
-                                    <i class="fas fa-spinner fa-spin"></i>
-                                </div>
-                                <div class="activity-content">
-                                    <p>Loading your activity...</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
 
                     <section style="margin-bottom: 40px;">
                         <div class="section-title">

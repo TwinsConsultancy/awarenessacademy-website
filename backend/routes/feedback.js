@@ -6,6 +6,12 @@ const authorize = require('../middleware/auth');
 // POST /api/feedback/submit  — any authenticated user (Student/Staff/Admin)
 router.post('/submit', authorize(['Student', 'Staff', 'Admin']), async (req, res) => {
     try {
+        console.log('=== FEEDBACK SUBMISSION DEBUG ===');
+        console.log('Full request user object:', JSON.stringify(req.user, null, 2));
+        console.log('Request user ID:', req.user?.id);
+        console.log('Request user _id:', req.user?._id);
+        console.log('Request body:', JSON.stringify(req.body, null, 2));
+        
         const {
             moduleId,
             moduleName,
@@ -19,14 +25,29 @@ router.post('/submit', authorize(['Student', 'Staff', 'Admin']), async (req, res
         } = req.body;
 
         if (!moduleId) {
+            console.log('Missing moduleId in feedback submission');
             return res.status(400).json({ success: false, message: 'moduleId is required' });
         }
 
-        const feedback = new Feedback({
+        if (!req.user) {
+            console.log('No user object in request');
+            return res.status(401).json({ success: false, message: 'User authentication required' });
+        }
+
+        // Try both id and _id to ensure we get the user ID
+        const userId = req.user.id || req.user._id;
+        if (!userId) {
+            console.log('Missing user ID - user object:', req.user);
+            return res.status(401).json({ success: false, message: 'User ID not found in authentication' });
+        }
+
+        console.log('Using user ID for feedback:', userId);
+
+        const feedbackData = {
             moduleId,
             moduleName: moduleName || 'Unknown Module',
             courseId: courseId || null,
-            studentId: req.user._id,
+            studentId: userId,
             ratings: {
                 videoQuality: Number(videoQuality) || 0,
                 contentQuality: Number(contentQuality) || 0,
@@ -39,9 +60,14 @@ router.post('/submit', authorize(['Student', 'Staff', 'Admin']), async (req, res
                 (Number(videoQuality) + Number(contentQuality) + Number(contentRelevance) +
                     Number(expectations) + Number(recommendation)) / 5
             ).toFixed(1))
-        });
+        };
+
+        console.log('Creating feedback with data:', JSON.stringify(feedbackData, null, 2));
+        
+        const feedback = new Feedback(feedbackData);
 
         await feedback.save();
+        console.log('Feedback submitted successfully for user:', userId, 'module:', moduleId);
 
         res.json({
             success: true,
@@ -50,8 +76,39 @@ router.post('/submit', authorize(['Student', 'Staff', 'Admin']), async (req, res
         });
 
     } catch (error) {
-        console.error('Error submitting feedback:', error);
-        res.status(500).json({ success: false, message: 'Failed to submit feedback', error: error.message });
+        console.error('=== FEEDBACK SUBMISSION ERROR ===');
+        console.error('Error object:', error);
+        console.error('Error name:', error.name);
+        console.error('Error message:', error.message);
+        console.error('User context:', req.user);
+        console.error('Request body:', req.body);
+        
+        // Check for specific validation errors
+        if (error.name === 'ValidationError') {
+            console.error('Validation errors details:');
+            const validationErrors = Object.keys(error.errors).map(key => {
+                console.error(`- Field '${key}': ${error.errors[key].message}`);
+                console.error(`  Value: ${error.errors[key].value}`);
+                console.error(`  Kind: ${error.errors[key].kind}`);
+                return {
+                    field: key,
+                    message: error.errors[key].message,
+                    value: error.errors[key].value,
+                    kind: error.errors[key].kind
+                };
+            });
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Validation failed',
+                errors: validationErrors
+            });
+        }
+        
+        res.status(500).json({ 
+            success: false, 
+            message: 'Failed to submit feedback', 
+            error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+        });
     }
 });
 
