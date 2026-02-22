@@ -199,15 +199,28 @@ async function applyGlobalSettings() {
         const res = await fetch(`${apiBase}/settings/public`);
 
         if (!res.ok) {
-            console.warn('Failed to load public settings');
+            // Silently apply default settings if API fails
+            applyDefaultSettings();
             return;
         }
 
         const settings = await res.json();
         processSettings(settings);
     } catch (err) {
-        console.error('Settings load error:', err);
+        // Silently apply default settings if any error occurs
+        applyDefaultSettings();
     }
+}
+
+function applyDefaultSettings() {
+    // Apply safe default settings when API fails
+    const defaultSettings = {
+        disableRightClick: false,
+        isMaintenanceMode: false,
+        maintenanceMessage: ''
+    };
+    
+    processSettings(defaultSettings);
 }
 
 function processSettings(settings) {

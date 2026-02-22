@@ -270,6 +270,25 @@ const impressionSchema = new Schema({
 // 12. System Settings (Singleton Document)
 // 12. System Settings (Moved to independent file Settings.js)
 
+// 15. Module Feedback Collection
+const feedbackSchema = new Schema({
+    studentId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    moduleId: { type: String, required: true },   // stored as string — IDs may not always be ObjectId
+    moduleName: { type: String },
+    courseId: { type: String },                   // stored as string for same reason
+    ratings: {
+        videoQuality: { type: Number, min: 0, max: 5, default: 0 },
+        contentQuality: { type: Number, min: 0, max: 5, default: 0 },
+        contentRelevance: { type: Number, min: 0, max: 5, default: 0 },
+        expectations: { type: Number, min: 0, max: 5, default: 0 },
+        recommendation: { type: Number, min: 0, max: 5, default: 0 }
+    },
+    overallRating: { type: Number, min: 0, max: 5, default: 0 },
+    comments: { type: String, maxlength: 2000, default: '' }
+}, { timestamps: true });
+
+feedbackSchema.index({ moduleId: 1, studentId: 1 });
+
 // Import new modular content models
 const Module = require('./Module');
 
@@ -284,6 +303,7 @@ module.exports = {
     Exam: mongoose.model('Exam', examSchema), // Add Exam model
     Certificate: mongoose.model('Certificate', certificateSchema), // Add Certificate model
     ExamAttempt: mongoose.model('ExamAttempt', examAttemptSchema), // Track exam sessions
+    Feedback: mongoose.model('Feedback', feedbackSchema), // Module feedback
     Module, // New modular content system
     Result: mongoose.model('Result', new Schema({
         studentID: { type: Schema.Types.ObjectId, ref: 'User', required: true },

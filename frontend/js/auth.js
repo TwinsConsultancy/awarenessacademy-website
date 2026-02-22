@@ -159,36 +159,42 @@ window.fetch = async function (...args) {
         return Promise.reject(new Error('Session terminated'));
     }
 
-    const response = await originalFetch(...args);
+    try {
+        const response = await originalFetch(...args);
 
-    // Check if response is 403 (Forbidden) - likely an inactive account
-    if (response.status === 403) {
-        // Clone response to read it without consuming the original
-        const clonedResponse = response.clone();
+        // Check if response is 403 (Forbidden) - likely an inactive account
+        if (response.status === 403) {
+            // Clone response to read it without consuming the original
+            const clonedResponse = response.clone();
 
-        // Check if response is JSON and has inactive flag
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-            try {
-                const data = await clonedResponse.json();
+            // Check if response is JSON and has inactive flag
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                try {
+                    const data = await clonedResponse.json();
 
-                // If account is inactive, force logout immediately
-                if (data.inactive === true && !isLoggingOut) {
-                    Auth.forceLogout('Your account has been deactivated by the administrator.\n\nYou have been automatically logged out.\n\nPlease contact the administrator for assistance.');
-                    return response;
+                    // If account is inactive, force logout immediately
+                    if (data.inactive === true && !isLoggingOut) {
+                        Auth.forceLogout('Your account has been deactivated by the administrator.\n\nYou have been automatically logged out.\n\nPlease contact the administrator for assistance.');
+                        return response;
+                    }
+
+                    if (data.invalidAccount === true && !isLoggingOut) {
+                        Auth.forceLogout('Your account is no longer valid.\n\nYou have been automatically logged out.');
+                        return response;
+                    }
+                } catch (e) {
+                    // Not JSON or parsing failed, ignore silently
                 }
-
-                if (data.invalidAccount === true && !isLoggingOut) {
-                    Auth.forceLogout('Your account is no longer valid.\n\nYou have been automatically logged out.');
-                    return response;
-                }
-            } catch (e) {
-                // Not JSON or parsing failed, ignore
             }
         }
-    }
 
-    return response;
+        return response;
+    } catch (error) {
+        // Network error or other fetch failure - pass through the error
+        // Don't log to console to avoid user-visible errors
+        throw error;
+    }
 };
 
 // Global Logout Handler

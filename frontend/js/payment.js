@@ -6,6 +6,7 @@
 class PaymentManager {
     constructor() {
         this.razorpayLoaded = false;
+        this.fallbackMode = false;
         this.currentPayment = null;
         this.loadRazorpay();
     }
@@ -24,12 +25,13 @@ class PaymentManager {
             script.src = 'https://checkout.razorpay.com/v1/checkout.js';
             script.onload = () => {
                 this.razorpayLoaded = true;
-                console.log('✅ Razorpay loaded successfully');
                 resolve();
             };
             script.onerror = () => {
-                console.error('❌ Failed to load Razorpay');
-                reject(new Error('Failed to load Razorpay'));
+                // Silently handle Razorpay loading failure
+                this.razorpayLoaded = false;
+                this.fallbackMode = true;
+                resolve(); // Resolve instead of reject to prevent unhandled errors
             };
             document.head.appendChild(script);
         });
@@ -42,6 +44,12 @@ class PaymentManager {
         try {
             if (!this.razorpayLoaded) {
                 await this.loadRazorpay();
+            }
+
+            // Check if Razorpay failed to load and use fallback
+            if (this.fallbackMode) {
+                this.showPaymentFallback(courseId, courseTitle);
+                return;
             }
 
             UI.showLoader('Preparing payment...');
@@ -438,6 +446,37 @@ class PaymentManager {
                 error: error.message
             };
         }
+    }
+
+    /**
+     * Show payment fallback when Razorpay fails to load
+     */
+    showPaymentFallback(courseId, courseTitle) {
+        UI.hideLoader();
+        
+        // Create user-friendly fallback modal
+        const modal = UI.createPopup({
+            title: 'Payment Service Unavailable',
+            message: `Sorry, our payment system is temporarily unavailable. You can still enroll in "${courseTitle}" using alternative methods.`,
+            type: 'info',
+            icon: 'credit-card',
+            confirmText: 'Contact Support',
+            cancelText: 'Try Later',
+            onConfirm: () => {
+                // Open support contact or redirect to contact page
+                if (typeof switchSection !== 'undefined') {
+                    switchSection('tickets');
+                } else {
+                    window.location.href = 'contact.html';
+                }
+            },
+            onCancel: () => {
+                // Do nothing, just close modal
+            }
+        });
+
+        // Also show notification
+        UI.showNotification('Payment service temporarily unavailable. Please contact support for enrollment assistance.', 'warning');
     }
 }
 
