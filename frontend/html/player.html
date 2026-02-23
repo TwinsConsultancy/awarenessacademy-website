@@ -10,31 +10,34 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;500;600&display=swap"
         rel="stylesheet">
+
     <style>
         /* ============================================================
-           ROOT TOKENS
+           TOKENS & RESET
         ============================================================ */
         :root {
-            --sidebar-w: 72px;
-            --sidebar-expanded: 260px;
-            --panel-w: 340px;
-            --header-h: 64px;
-            --bottom-nav-h: 64px;
             --saffron: #FF9933;
             --golden: #FFC300;
             --saffron-10: rgba(255, 153, 51, 0.10);
             --golden-10: rgba(255, 195, 0, 0.10);
+            --navy: #1a1a2e;
+            --navy-80: rgba(26, 26, 46, 0.92);
             --text: #1a1a2e;
             --muted: #6b7280;
-            --bg: #f6f3ef;
+            --bg: #f5f4f1;
             --white: #ffffff;
             --success: #10b981;
-            --r-sm: 10px;
-            --r-md: 16px;
-            --r-lg: 22px;
-            --sh-sm: 0 2px 10px rgba(0, 0, 0, 0.07);
-            --sh-md: 0 8px 30px rgba(0, 0, 0, 0.10);
-            --sh-lg: 0 20px 60px rgba(0, 0, 0, 0.15);
+            --danger: #ef4444;
+            --border: rgba(255, 153, 51, 0.15);
+
+            --topbar-h: 58px;
+            --sidebar-w: 280px;
+
+            --r-sm: 8px;
+            --r-md: 14px;
+            --r-lg: 20px;
+            --sh-sm: 0 2px 8px rgba(0, 0, 0, 0.07);
+            --sh-md: 0 6px 24px rgba(0, 0, 0, 0.10);
             --ease: cubic-bezier(0.4, 0, 0.2, 1);
         }
 
@@ -51,597 +54,351 @@
         }
 
         body {
-            font-family: 'Poppins', var(--font-body, sans-serif);
+            font-family: 'Poppins', sans-serif;
             background: var(--bg);
             color: var(--text);
             overflow-x: hidden;
             -webkit-font-smoothing: antialiased;
-        }
-
-        /* ============================================================
-           LAYOUT SHELL
-        ============================================================ */
-        .player-container {
-            display: flex;
-            min-height: 100vh;
-        }
-
-        /* ============================================================
-           LEFT SIDEBAR – desktop only
-        ============================================================ */
-        .sidebar {
-            width: var(--sidebar-w);
-            background: var(--white);
-            border-right: 1px solid rgba(255, 153, 51, 0.12);
+            height: 100vh;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            padding: 18px 8px;
-            gap: 6px;
-            position: sticky;
-            top: 0;
-            height: 100vh;
-            overflow: hidden;
-            transition: width 0.3s var(--ease);
-            z-index: 1000;
-            box-shadow: 3px 0 16px rgba(0, 0, 0, 0.05);
         }
 
-        .sidebar:hover {
-            width: var(--sidebar-expanded);
-            align-items: flex-start;
-            padding-left: 18px;
-        }
-
-        .sidebar-brand {
+        /* ============================================================
+           TOP NAVBAR
+        ============================================================ */
+        .top-navbar {
+            height: var(--topbar-h);
+            background: var(--navy);
             display: flex;
             align-items: center;
-            gap: 12px;
-            width: 100%;
-            padding: 6px 0 18px;
-            border-bottom: 1px solid rgba(255, 153, 51, 0.10);
-            margin-bottom: 8px;
+            padding: 0 20px;
+            gap: 16px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            flex-shrink: 0;
+            box-shadow: 0 2px 16px rgba(0, 0, 0, 0.25);
         }
 
-        .avatar {
-            min-width: 42px;
-            width: 42px;
-            height: 42px;
-            border-radius: 50%;
+        /* Back button */
+        .nav-back {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            color: rgba(255, 255, 255, 0.70);
+            text-decoration: none;
+            font-size: 0.82rem;
+            font-weight: 500;
+            padding: 6px 12px;
+            border-radius: var(--r-sm);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.2s;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .nav-back:hover {
+            color: #fff;
+            border-color: var(--saffron);
+            background: rgba(255, 153, 51, 0.12);
+        }
+
+        /* Divider */
+        .nav-divider {
+            width: 1px;
+            height: 28px;
+            background: rgba(255, 255, 255, 0.15);
+            flex-shrink: 0;
+        }
+
+        /* Brand */
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            text-decoration: none;
+            flex-shrink: 0;
+        }
+
+        .nav-brand-icon {
+            width: 32px;
+            height: 32px;
             background: linear-gradient(135deg, var(--saffron), var(--golden));
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.1rem;
-            color: white;
-            font-weight: 700;
-            border: 2.5px solid var(--golden);
-            flex-shrink: 0;
-        }
-
-        .brand-text {
-            font-size: 0.82rem;
-            font-weight: 700;
-            color: var(--text);
-            white-space: nowrap;
-            opacity: 0;
-            display: none;
-        }
-
-        .sidebar:hover .brand-text {
-            display: block;
-            opacity: 1;
-        }
-
-        .nav-menu {
-            list-style: none;
-            width: 100%;
-            flex: 1;
-        }
-
-        .nav-item {
-            margin-bottom: 2px;
-        }
-
-        .nav-link {
-            display: flex;
-            align-items: center;
-            gap: 13px;
-            padding: 11px 12px;
-            border-radius: var(--r-sm);
-            text-decoration: none;
-            color: var(--muted);
-            font-size: 0.88rem;
-            font-weight: 500;
-            transition: all 0.25s var(--ease);
-            white-space: nowrap;
-        }
-
-        .nav-link i {
-            width: 22px;
-            text-align: center;
             font-size: 1rem;
-            flex-shrink: 0;
+            color: white;
         }
 
-        .nav-link:hover,
-        .nav-link.active {
-            background: linear-gradient(135deg, var(--saffron-10), var(--golden-10));
-            color: var(--saffron);
-        }
-
-        .link-text {
-            display: none;
-            opacity: 0;
-        }
-
-        .sidebar:hover .link-text {
-            display: inline;
-            opacity: 1;
-        }
-
-        .nav-logout {
-            color: #ef4444 !important;
-            margin-top: auto;
-        }
-
-        .nav-logout:hover {
-            background: rgba(239, 68, 68, 0.08) !important;
-        }
-
-        /* ============================================================
-           MAIN CONTENT
-        ============================================================ */
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            min-width: 0;
-            max-width: calc(100% - var(--sidebar-w) - var(--panel-w));
-        }
-
-        /* ============================================================
-           TOP HEADER
-        ============================================================ */
-        .top-header {
-            background: var(--white);
-            border-bottom: 1px solid rgba(255, 153, 51, 0.12);
-            padding: 0 24px;
-            height: var(--header-h);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            box-shadow: var(--sh-sm);
-        }
-
-        .header-left {
-            display: flex;
-            flex-direction: column;
-            min-width: 0;
-        }
-
-        .course-title {
-            font-family: var(--font-heading, 'Playfair Display', serif);
-            color: var(--text);
+        .nav-brand-text {
+            font-family: 'Playfair Display', serif;
             font-size: 1.05rem;
             font-weight: 700;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 40vw;
-            line-height: 1.2;
+            color: #fff;
         }
 
-        .mentor-name {
-            font-size: 0.75rem;
-            color: var(--muted);
-            margin-top: 1px;
+        .nav-brand-text span {
+            color: var(--golden);
         }
 
-        .header-actions {
+        /* Breadcrumb / course title */
+        .nav-course {
+            flex: 1;
+            min-width: 0;
             display: flex;
             align-items: center;
             gap: 8px;
+        }
+
+        .nav-course-sep {
+            color: rgba(255, 255, 255, 0.30);
+            font-size: 0.85rem;
+        }
+
+        .nav-course-title {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.85);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 38vw;
+        }
+
+        /* Right section */
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
             flex-shrink: 0;
         }
 
-        .btn-action {
-            padding: 9px 18px;
-            border: none;
+        .nav-student {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
             border-radius: 24px;
-            cursor: pointer;
+            padding: 5px 12px 5px 7px;
+        }
+
+        .nav-avatar {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, var(--saffron), var(--golden));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .nav-student-info {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.1;
+        }
+
+        .nav-student-name {
+            font-size: 0.78rem;
             font-weight: 600;
-            font-size: 0.82rem;
-            transition: all 0.25s var(--ease);
+            color: rgba(255, 255, 255, 0.90);
+            max-width: 140px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .nav-student-role {
+            font-size: 0.65rem;
+            color: var(--golden);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .btn-logout {
             display: flex;
             align-items: center;
             gap: 6px;
-            letter-spacing: 0.01em;
+            background: var(--danger);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 0.80rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
             font-family: inherit;
         }
 
-        .btn-primary {
-            background: linear-gradient(135deg, var(--saffron), var(--golden));
-            color: white;
-            box-shadow: 0 4px 16px rgba(255, 153, 51, 0.30);
-        }
-
-        .btn-primary:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(255, 153, 51, 0.40);
-        }
-
-        .btn-primary:disabled {
-            opacity: 0.55;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .btn-secondary {
-            background: #f3f4f6;
-            color: var(--text);
-        }
-
-        .btn-secondary:hover {
-            background: #e5e7eb;
+        .btn-logout:hover {
+            background: #dc2626;
             transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
         }
 
-        .btn-success {
-            background: linear-gradient(135deg, #10b981, #059669) !important;
-            color: white !important;
-            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25) !important;
-        }
-
-        .btn-text-short {
+        /* Mobile hamburger */
+        .nav-hamburger {
             display: none;
-        }
-
-        /* ============================================================
-           CONTENT WRAPPER
-        ============================================================ */
-        .content-wrapper {
-            padding: 22px;
-            flex: 1;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        /* ============================================================
-           COURSE INTRO CARD
-        ============================================================ */
-        .course-intro-card {
-            background: var(--white);
-            border-radius: var(--r-lg);
-            padding: 24px;
-            box-shadow: var(--sh-sm);
-            border: 1px solid rgba(255, 195, 0, 0.18);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .course-intro-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, var(--saffron), var(--golden));
-        }
-
-        .intro-header {
-            display: flex;
-            align-items: flex-start;
-            gap: 18px;
-            margin-bottom: 16px;
-        }
-
-        .course-thumbnail {
-            width: 96px;
-            height: 96px;
-            border-radius: var(--r-md);
-            object-fit: cover;
-            border: 2.5px solid var(--golden);
-            flex-shrink: 0;
-            box-shadow: var(--sh-sm);
-        }
-
-        .intro-details h2 {
-            font-family: var(--font-heading, 'Playfair Display', serif);
-            color: var(--saffron);
-            font-size: 1.2rem;
-            margin-bottom: 10px;
-            line-height: 1.3;
-        }
-
-        .intro-meta {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .meta-pill {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            background: #f8f9fa;
-            padding: 4px 11px;
-            border-radius: 20px;
-            font-size: 0.78rem;
-            font-weight: 500;
-            color: var(--muted);
-        }
-
-        .meta-pill i {
-            color: var(--golden);
-        }
-
-        .course-description {
-            color: var(--muted);
-            line-height: 1.80;
-            font-size: 0.88rem;
-            border-top: 1px solid #f0f0f0;
-            padding-top: 14px;
-            margin-top: 4px;
-        }
-
-        /* ============================================================
-           VIDEO WRAPPER  — hidden by default; player.js shows it
-        ============================================================ */
-        .video-wrapper {
-            background: #000;
-            border-radius: var(--r-md);
-            overflow: hidden;
-            box-shadow: var(--sh-lg);
-            position: relative;
-            /* aspect-ratio gives correct height automatically */
-            aspect-ratio: 16/9;
-            display: none;
-            /* player.js sets display:block when video exists */
-        }
-
-        #mainVideo {
-            width: 100%;
-            height: 100%;
-            display: block;
-            object-fit: contain;
-        }
-
-        #previewOverlay {
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(135deg, rgba(0, 0, 0, 0.82), rgba(20, 20, 50, 0.88));
-            display: flex;
+            background: rgba(255, 255, 255, 0.10);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: var(--r-sm);
             align-items: center;
             justify-content: center;
-            color: white;
-        }
-
-        .lock-wrap {
-            text-align: center;
-            animation: pulse 2.2s ease-in-out infinite;
-        }
-
-        .lock-wrap i {
-            font-size: 3rem;
-            color: var(--golden);
-            display: block;
-            margin-bottom: 14px;
-        }
-
-        .lock-wrap strong {
-            font-size: 1.1rem;
-            display: block;
-            margin-bottom: 6px;
-        }
-
-        .lock-wrap span {
-            font-size: 0.82rem;
-            opacity: 0.65;
-        }
-
-        @keyframes pulse {
-
-            0%,
-            100% {
-                transform: scale(1)
-            }
-
-            50% {
-                transform: scale(1.05)
-            }
-        }
-
-        /* ============================================================
-           HTML CONTENT DISPLAY (rich text / PDF)
-        ============================================================ */
-        #htmlContentDisplay {
-            background: var(--white);
-            padding: 24px;
-            border-radius: var(--r-md);
-            line-height: 1.85;
-            color: #374151;
-            box-shadow: var(--sh-sm);
-            border: 1px solid #f0f0f0;
-            font-size: 0.92rem;
-            display: none;
-            /* shown by player.js */
-        }
-
-        /* ============================================================
-           MODULE INFO CARD
-        ============================================================ */
-        .module-info-card {
-            background: var(--white);
-            padding: 22px;
-            border-radius: var(--r-md);
-            box-shadow: var(--sh-sm);
-            border-left: 4px solid var(--saffron);
-        }
-
-        .module-info-card h3 {
-            color: var(--saffron);
+            cursor: pointer;
             font-size: 1rem;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 9px;
-        }
-
-        #contentDescription {
-            color: var(--muted);
-            font-size: 0.88rem;
-            line-height: 1.75;
         }
 
         /* ============================================================
-           DISCUSSION CARD
+           PLAYER BODY (sidebar + content)
         ============================================================ */
-        .discussion-card {
-            background: var(--white);
-            padding: 22px;
-            border-radius: var(--r-md);
-            box-shadow: var(--sh-sm);
-        }
-
-        .discussion-card h3 {
-            color: var(--saffron);
-            font-size: 1rem;
-            margin-bottom: 14px;
+        .player-body {
             display: flex;
-            align-items: center;
-            gap: 9px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid #f0f0f0;
-        }
-
-        /* forum post */
-        .forum-post {
-            background: #f8f9fa;
-            padding: 14px;
-            border-radius: var(--r-sm);
-            margin-bottom: 12px;
-        }
-
-        .forum-post-meta {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 6px;
-            font-size: 0.8rem;
-        }
-
-        .forum-post-meta strong {
-            color: var(--saffron);
-        }
-
-        .forum-post-meta small {
-            color: #aaa;
-        }
-
-        .forum-post p {
-            margin: 0;
-            color: #555;
-            font-size: 0.88rem;
-            line-height: 1.65;
+            flex: 1;
+            overflow: hidden;
+            min-height: 0;
         }
 
         /* ============================================================
-           RIGHT SIDEBAR — Curriculum Panel
+           LEFT SIDEBAR — Module List
         ============================================================ */
-        .right-sidebar {
-            width: var(--panel-w);
+        .left-sidebar {
+            width: var(--sidebar-w);
             background: var(--white);
-            border-left: 1px solid rgba(255, 153, 51, 0.12);
+            border-right: 1px solid var(--border);
             display: flex;
             flex-direction: column;
-            position: sticky;
-            top: 0;
-            height: 100vh;
-            overflow-y: auto;
-            box-shadow: -3px 0 16px rgba(0, 0, 0, 0.05);
+            flex-shrink: 0;
+            overflow: hidden;
+            transition: transform 0.35s var(--ease);
         }
 
-        .panel-header {
-            padding: 18px 20px;
+        /* Sidebar header */
+        .sidebar-top {
+            padding: 14px 16px 10px;
             background: linear-gradient(135deg, var(--saffron), var(--golden));
             color: white;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: sticky;
-            top: 0;
-            z-index: 10;
             flex-shrink: 0;
         }
 
-        .panel-header-title {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-family: var(--font-heading, 'Playfair Display', serif);
-            font-size: 0.98rem;
+        .sidebar-top-title {
+            font-size: 0.78rem;
             font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            opacity: 0.88;
+            margin-bottom: 8px;
         }
 
-        .panel-close {
-            background: rgba(255, 255, 255, 0.20);
-            border: none;
-            color: white;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            cursor: pointer;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.95rem;
-            transition: background 0.2s;
+        /* Progress bar inside sidebar header */
+        .sidebar-progress-wrap {
+            margin-bottom: 2px;
         }
 
-        .panel-close:hover {
-            background: rgba(255, 255, 255, 0.35);
+        .sidebar-progress-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.72rem;
+            font-weight: 600;
+            opacity: 0.92;
+            margin-bottom: 5px;
         }
 
-        /* The curriculum-list is populated by player.js.
-           player.js prepends a progress <li> then adds module <li>s.
-           We style via the injected classes (content-item etc.). */
+        .sidebar-progress-track {
+            height: 5px;
+            background: rgba(255, 255, 255, 0.30);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .sidebar-progress-bar {
+            height: 100%;
+            width: 0%;
+            background: rgba(255, 255, 255, 0.90);
+            border-radius: 5px;
+            transition: width 0.6s var(--ease);
+        }
+
+        /* Search */
+        .sidebar-search-wrap {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .sidebar-search {
+            width: 100%;
+            padding: 7px 12px 7px 34px;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+            background: #f8f9fa url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") no-repeat 11px center;
+        }
+
+        .sidebar-search:focus {
+            border-color: var(--saffron);
+            background-color: #fff;
+        }
+
+        /* Curriculum list */
         .curriculum-list {
             list-style: none;
-            padding: 10px;
+            overflow-y: auto;
             flex: 1;
+            padding: 8px;
         }
 
+        .curriculum-list::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .curriculum-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .curriculum-list::-webkit-scrollbar-thumb {
+            background: #ddd;
+            border-radius: 4px;
+        }
+
+        /* Module items */
         .content-item {
-            padding: 13px;
-            margin-bottom: 7px;
+            padding: 11px 12px;
+            margin-bottom: 5px;
             border-radius: var(--r-sm);
             cursor: pointer;
-            transition: all 0.25s var(--ease);
+            transition: all 0.22s var(--ease);
             border: 1px solid #f0f0f0;
             display: flex;
             align-items: center;
-            gap: 11px;
+            gap: 10px;
         }
 
         .content-item:hover {
-            background: linear-gradient(135deg, var(--saffron-10), var(--golden-10));
+            background: var(--saffron-10);
             border-color: var(--saffron);
-            transform: translateX(3px);
         }
 
         .content-item.active {
             background: linear-gradient(135deg, var(--saffron), var(--golden));
             color: white;
             border-color: transparent;
-            box-shadow: 0 5px 18px rgba(255, 153, 51, 0.30);
-            transform: none;
+            box-shadow: 0 4px 14px rgba(255, 153, 51, 0.28);
         }
 
         .content-item.completed {
@@ -655,9 +412,9 @@
         }
 
         .module-number {
-            min-width: 30px;
-            width: 30px;
-            height: 30px;
+            min-width: 28px;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
             background: var(--saffron-10);
             display: flex;
@@ -665,7 +422,7 @@
             justify-content: center;
             font-weight: 700;
             color: var(--saffron);
-            font-size: 0.82rem;
+            font-size: 0.78rem;
             flex-shrink: 0;
         }
 
@@ -686,23 +443,27 @@
 
         .module-info p {
             font-weight: 600;
-            font-size: 0.86rem;
+            font-size: 0.83rem;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             margin-bottom: 2px;
+            line-height: 1.3;
         }
 
         .module-info small {
-            font-size: 0.73rem;
-            opacity: 0.72;
+            font-size: 0.70rem;
+            opacity: 0.70;
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
 
         .content-item.active .module-info small {
             opacity: 0.88;
         }
 
-        /* skeleton loader for curriculum list initial state */
+        /* Skeleton */
         .skel {
             background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
             background-size: 200% 100%;
@@ -721,60 +482,462 @@
         }
 
         /* ============================================================
-           BOTTOM NAVIGATION — mobile only
+           MAIN CONTENT COLUMN
         ============================================================ */
-        .bottom-nav {
-            display: none;
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background: var(--white);
-            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.10);
-            z-index: 2000;
-            justify-content: space-around;
-            padding: 8px 0;
-            border-top: 1px solid #f0f0f0;
-        }
-
-        .bnav-item {
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            min-width: 0;
             display: flex;
             flex-direction: column;
+        }
+
+        .main-content::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .main-content::-webkit-scrollbar-thumb {
+            background: #ddd;
+            border-radius: 4px;
+        }
+
+        /* Current module header bar */
+        .content-header {
+            background: var(--white);
+            border-bottom: 1px solid var(--border);
+            padding: 0 24px;
+            height: 52px;
+            display: flex;
             align-items: center;
-            text-decoration: none;
-            color: var(--muted);
-            font-size: 0.68rem;
-            font-weight: 500;
-            gap: 3px;
-            padding: 4px 10px;
-            border-radius: 10px;
-            transition: color 0.2s;
-            min-width: 54px;
+            justify-content: space-between;
+            gap: 12px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            flex-shrink: 0;
+            box-shadow: var(--sh-sm);
         }
 
-        .bnav-item i {
-            font-size: 1.2rem;
+        .content-header-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
         }
 
-        .bnav-item.active {
+        .content-header-title i {
             color: var(--saffron);
+            font-size: 0.9rem;
+            flex-shrink: 0;
         }
 
-        .bnav-item.pill {
+        #contentTitle {
+            font-weight: 600;
+            font-size: 0.90rem;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .content-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        /* Buttons */
+        .btn-action {
+            padding: 7px 16px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.80rem;
+            transition: all 0.22s var(--ease);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: inherit;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
             background: linear-gradient(135deg, var(--saffron), var(--golden));
             color: white;
-            border-radius: 16px;
-            padding: 4px 18px;
+            box-shadow: 0 3px 12px rgba(255, 153, 51, 0.28);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(255, 153, 51, 0.38);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.50;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #f3f4f6;
+            color: var(--text);
+        }
+
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+
+        /* Course progress strip */
+        .progress-strip {
+            height: 3px;
+            background: #ebebeb;
+            flex-shrink: 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--saffron), var(--golden));
+            width: 0%;
+            transition: width 0.7s var(--ease);
+        }
+
+        /* Content wrapper */
+        .content-wrapper {
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            flex: 1;
         }
 
         /* ============================================================
-           OVERLAY
+           COURSE INTRO CARD
+        ============================================================ */
+        .course-intro-card {
+            background: var(--white);
+            border-radius: var(--r-lg);
+            padding: 22px;
+            box-shadow: var(--sh-sm);
+            border: 1px solid rgba(255, 195, 0, 0.18);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .course-intro-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--saffron), var(--golden));
+        }
+
+        .intro-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 14px;
+        }
+
+        .course-thumbnail {
+            width: 84px;
+            height: 84px;
+            border-radius: var(--r-md);
+            object-fit: cover;
+            border: 2.5px solid var(--golden);
+            flex-shrink: 0;
+            box-shadow: var(--sh-sm);
+        }
+
+        .intro-details h2 {
+            font-family: 'Playfair Display', serif;
+            color: var(--saffron);
+            font-size: 1.15rem;
+            margin-bottom: 8px;
+            line-height: 1.3;
+        }
+
+        .intro-meta {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .meta-pill {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: #f8f9fa;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--muted);
+        }
+
+        .meta-pill i {
+            color: var(--golden);
+        }
+
+        .danger {
+            color: var(--danger);
+        }
+
+        /* === MODULE FEEDBACK MODAL STYLES === */
+        .star-rating {
+            display: inline-flex;
+            gap: 5px;
+            margin: 10px 0;
+        }
+
+        .star {
+            font-size: 1.5rem;
+            color: #ddd;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .star:hover,
+        .star.active {
+            color: #ffc107;
+        }
+
+        .star:hover {
+            transform: scale(1.1);
+        }
+
+        .feedback-criteria {
+            margin-bottom: 20px;
+        }
+
+        .feedback-criteria h5 {
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        /* Responsive adjustments for feedback modal */
+        @media (max-width: 600px) {
+            #moduleFeedbackModal>div {
+                width: 95% !important;
+                margin: 10px auto;
+            }
+        }
+
+        .course-description {
+            color: var(--muted);
+            line-height: 1.8;
+            font-size: 0.86rem;
+            border-top: 1px solid #f0f0f0;
+            padding-top: 12px;
+            margin-top: 2px;
+        }
+
+        /* ============================================================
+           VIDEO WRAPPER
+        ============================================================ */
+        .video-wrapper {
+            background: #000;
+            border-radius: var(--r-md);
+            overflow: hidden;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+            position: relative;
+            aspect-ratio: 16/9;
+            display: none;
+            max-width: 100%;
+        }
+
+        .video-wrapper::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 48px;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.35), transparent);
+            pointer-events: none;
+            border-radius: 0 0 var(--r-md) var(--r-md);
+        }
+
+        #mainVideo {
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: contain;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        #previewOverlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.82), rgba(20, 20, 50, 0.88));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .lock-wrap {
+            text-align: center;
+            animation: pulse 2.2s ease-in-out infinite;
+        }
+
+        .lock-wrap i {
+            font-size: 2.8rem;
+            color: var(--golden);
+            display: block;
+            margin-bottom: 12px;
+        }
+
+        .lock-wrap strong {
+            font-size: 1.05rem;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .lock-wrap span {
+            font-size: 0.80rem;
+            opacity: 0.65;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1)
+            }
+
+            50% {
+                transform: scale(1.05)
+            }
+        }
+
+        /* ============================================================
+           HTML CONTENT DISPLAY
+        ============================================================ */
+        #htmlContentDisplay {
+            background: var(--white);
+            padding: 22px;
+            border-radius: var(--r-md);
+            line-height: 1.85;
+            color: #374151;
+            box-shadow: var(--sh-sm);
+            border: 1px solid #f0f0f0;
+            font-size: 0.90rem;
+            display: none;
+        }
+
+        /* ============================================================
+           MODULE INFO CARD
+        ============================================================ */
+        .module-info-card {
+            background: var(--white);
+            padding: 20px;
+            border-radius: var(--r-md);
+            box-shadow: var(--sh-sm);
+            border-left: 4px solid var(--saffron);
+        }
+
+        .module-info-card h3 {
+            color: var(--saffron);
+            font-size: 0.95rem;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #contentDescription {
+            color: var(--muted);
+            font-size: 0.86rem;
+            line-height: 1.75;
+        }
+
+        /* ============================================================
+           DISCUSSION CARD
+        ============================================================ */
+        .discussion-card {
+            background: var(--white);
+            padding: 20px;
+            border-radius: var(--r-md);
+            box-shadow: var(--sh-sm);
+        }
+
+        .discussion-card h3 {
+            color: var(--saffron);
+            font-size: 0.95rem;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .forum-post {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: var(--r-sm);
+            margin-bottom: 10px;
+        }
+
+        .forum-post-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 0.78rem;
+        }
+
+        .forum-post-meta strong {
+            color: var(--saffron);
+        }
+
+        .forum-post-meta small {
+            color: #aaa;
+        }
+
+        .forum-post p {
+            margin: 0;
+            color: #555;
+            font-size: 0.86rem;
+            line-height: 1.65;
+        }
+
+        /* Forum form */
+        .forum-form {
+            margin-top: 16px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .forum-input {
+            flex: 1;
+            min-width: 160px;
+            padding: 9px 14px;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 20px;
+            font-size: 0.86rem;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+            background: #fff;
+        }
+
+        .forum-input:focus {
+            border-color: var(--saffron);
+        }
+
+        /* ============================================================
+           OVERLAY (for mobile sidebar)
         ============================================================ */
         .sidebar-overlay {
             position: fixed;
             inset: 0;
             background: rgba(0, 0, 0, 0.55);
-            z-index: 2900;
+            z-index: 900;
             opacity: 0;
             visibility: hidden;
             transition: all 0.3s var(--ease);
@@ -787,227 +950,535 @@
         }
 
         /* ============================================================
-           RESPONSIVENESS
+           ENTRANCE ANIMATIONS
         ============================================================ */
-
-        /* Tablet ≤992px */
-        @media(max-width:992px) {
-            .sidebar {
-                display: none;
+        @keyframes cardIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
             }
 
-            .bottom-nav {
-                display: flex;
-            }
-
-            .main-content {
-                max-width: 100%;
-                padding-bottom: var(--bottom-nav-h);
-            }
-
-            .right-sidebar {
-                position: fixed;
-                right: -320px;
-                top: 0;
-                height: 100vh;
-                z-index: 3000;
-                width: 300px;
-                transition: right 0.35s var(--ease);
-                box-shadow: var(--sh-lg);
-            }
-
-            .right-sidebar.open {
-                right: 0;
-            }
-
-            .panel-close {
-                display: flex;
-            }
-
-            #mobileCurriculumBtn {
-                display: flex !important;
+            to {
+                opacity: 1;
+                transform: translateY(0);
             }
         }
 
-        /* Mobile ≤640px */
-        @media(max-width:640px) {
-            .top-header {
-                padding: 0 13px;
-                height: 56px;
+        .content-wrapper>* {
+            animation: cardIn 0.32s var(--ease) both;
+        }
+
+        .content-wrapper>*:nth-child(2) {
+            animation-delay: 0.05s;
+        }
+
+        .content-wrapper>*:nth-child(3) {
+            animation-delay: 0.10s;
+        }
+
+        .content-wrapper>*:nth-child(4) {
+            animation-delay: 0.14s;
+        }
+
+        /* ============================================================
+           RESPONSIVE
+        ============================================================ */
+        @media (max-width: 900px) {
+            :root {
+                --sidebar-w: 270px;
             }
 
-            .course-title {
-                font-size: 0.92rem;
-                max-width: 50vw;
+            .left-sidebar {
+                position: fixed;
+                left: calc(-1 * var(--sidebar-w));
+                top: var(--topbar-h);
+                height: calc(100vh - var(--topbar-h));
+                z-index: 950;
+                box-shadow: var(--sh-md);
             }
 
-            .btn-action {
-                padding: 8px 12px;
-                font-size: 0.78rem;
+            .left-sidebar.open {
+                left: 0;
             }
 
-            .btn-text-full {
-                display: none !important;
+            .nav-hamburger {
+                display: flex;
             }
 
-            .btn-text-short {
-                display: inline;
+            .nav-course-title {
+                max-width: 28vw;
             }
 
             .content-wrapper {
-                padding: 12px;
+                padding: 16px;
                 gap: 14px;
             }
+        }
 
-            .course-intro-card {
-                padding: 16px;
-                border-radius: var(--r-md);
-            }
-
-            .intro-header {
-                flex-direction: column;
-            }
-
-            .course-thumbnail {
-                width: 100%;
-                height: 160px;
-            }
-
+        @media (max-width: 768px) {
             .video-wrapper {
                 border-radius: var(--r-sm);
             }
 
-            #htmlContentDisplay {
+            .course-intro-card {
                 padding: 16px;
+            }
+
+            .intro-header {
+                gap: 12px;
+            }
+
+            .course-thumbnail {
+                width: 70px;
+                height: 70px;
+            }
+
+            .intro-details h2 {
+                font-size: 1rem;
             }
 
             .module-info-card,
             .discussion-card {
                 padding: 16px;
             }
-
-            .panel-header-title {
-                font-size: 0.88rem;
-            }
         }
 
-        /* Very small ≤380px */
-        @media(max-width:380px) {
-            .course-title {
-                max-width: 44vw;
+        @media (max-width: 640px) {
+            :root {
+                --topbar-h: 54px;
+            }
+
+            .top-navbar {
+                padding: 0 10px;
+                gap: 8px;
+            }
+
+            .content-header {
+                padding: 0 12px;
+                height: 46px;
+            }
+
+            #contentTitle {
                 font-size: 0.82rem;
             }
 
-            .mentor-name {
+            .content-wrapper {
+                padding: 12px;
+                gap: 12px;
+            }
+
+            .course-intro-card {
+                padding: 14px;
+            }
+
+            .intro-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .course-thumbnail {
+                width: 100%;
+                height: 160px;
+                object-position: center;
+            }
+
+            .intro-details h2 {
+                font-size: 0.95rem;
+                margin-bottom: 6px;
+            }
+
+            .intro-meta {
+                gap: 6px;
+            }
+
+            .meta-pill {
+                font-size: 0.72rem;
+                padding: 2px 8px;
+            }
+
+            .course-description {
+                font-size: 0.84rem;
+                line-height: 1.65;
+            }
+
+            .video-wrapper {
+                border-radius: 8px;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+            }
+
+            .module-info-card,
+            .discussion-card {
+                padding: 14px;
+            }
+
+            .module-info-card h3,
+            .discussion-card h3 {
+                font-size: 0.88rem;
+            }
+
+            #contentDescription,
+            #htmlContentDisplay {
+                font-size: 0.84rem;
+                line-height: 1.7;
+            }
+
+            .nav-student-info {
                 display: none;
             }
+
+            .nav-course-title {
+                max-width: 22vw;
+            }
+
+            .btn-action {
+                padding: 6px 12px;
+                font-size: 0.76rem;
+            }
+
+            .btn-logout {
+                padding: 5px 11px;
+                font-size: 0.75rem;
+            }
+
+            .nav-brand-text {
+                font-size: 0.95rem;
+            }
+
+            .nav-brand-icon {
+                width: 28px;
+                height: 28px;
+                font-size: 0.9rem;
+            }
+
+            .forum-form {
+                flex-direction: column;
+            }
+
+            .forum-input {
+                min-width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .content-wrapper {
+                padding: 10px;
+                gap: 10px;
+            }
+
+            .course-intro-card {
+                padding: 12px;
+            }
+
+            .intro-details h2 {
+                font-size: 0.90rem;
+            }
+
+            .course-thumbnail {
+                height: 140px;
+            }
+
+            .meta-pill {
+                font-size: 0.70rem;
+            }
+
+            .video-wrapper {
+                border-radius: 6px;
+            }
+
+            .module-info-card,
+            .discussion-card {
+                padding: 12px;
+            }
+
+            .btn-action span {
+                display: none;
+            }
+
+            .btn-action {
+                padding: 7px 10px;
+            }
+
+            .content-header {
+                padding: 0 10px;
+            }
+
+            #contentTitle {
+                font-size: 0.78rem;
+            }
+
+            .nav-back span {
+                display: none;
+            }
+
+            .nav-back {
+                padding: 0;
+                width: 36px;
+                height: 36px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .nav-course {
+                display: none;
+            }
+
+            .nav-student-name {
+                max-width: 90px;
+            }
+
+            .nav-avatar {
+                width: 26px;
+                height: 26px;
+                font-size: 0.72rem;
+            }
+
+            .nav-brand-text {
+                font-size: 0.88rem;
+            }
+
+            .nav-brand-icon {
+                width: 26px;
+                height: 26px;
+                font-size: 0.85rem;
+            }
+
+            .btn-logout {
+                padding: 5px 9px;
+                font-size: 0.72rem;
+            }
+        }
+
+        /* Mobile landscape orientation */
+        @media (max-height: 500px) and (orientation: landscape) {
+            .top-navbar {
+                height: 48px;
+            }
+
+            :root {
+                --topbar-h: 48px;
+            }
+
+            .course-intro-card {
+                display: none;
+            }
+
+            .video-wrapper {
+                max-height: calc(100vh - var(--topbar-h) - 120px);
+            }
+        }
+
+        /* Touch-friendly optimizations */
+        @media (hover: none) and (pointer: coarse) {
+
+            /* Mobile touch devices */
+            .content-item {
+                padding: 14px 12px;
+                min-height: 48px;
+            }
+
+            .btn-action,
+            .btn-logout,
+            .nav-hamburger {
+                min-height: 44px;
+                min-width: 44px;
+            }
+
+            .sidebar-search {
+                padding: 10px 12px 10px 36px;
+                min-height: 44px;
+            }
+
+            .forum-input {
+                padding: 11px 14px;
+                min-height: 44px;
+            }
+
+            /* Prevent text selection on double-tap */
+            .content-item,
+            .btn-action,
+            .nav-hamburger,
+            .nav-back {
+                -webkit-user-select: none;
+                user-select: none;
+                -webkit-tap-highlight-color: transparent;
+            }
+
+            /* Larger tap targets for icons */
+            .content-header-actions {
+                gap: 10px;
+            }
+
+            .nav-right {
+                gap: 12px;
+            }
+        }
+
+        /* Smooth scrolling */
+        @media (prefers-reduced-motion: no-preference) {
+            html {
+                scroll-behavior: smooth;
+            }
+
+            .main-content {
+                scroll-behavior: smooth;
+            }
+        }
+
+        /* ============================================================
+           BLOCK VIDEO DOWNLOAD — hide native download button
+        ============================================================ */
+        video::-webkit-media-controls-download-button {
+            display: none !important;
+        }
+
+        /* Hide the overflow (three-dot) download list item */
+        video::-internal-media-controls-download-button {
+            display: none !important;
         }
     </style>
 </head>
 
 <body oncontextmenu="return false;">
-    <div class="player-container">
 
-        <!-- ===== LEFT SIDEBAR (desktop) ===== -->
-        <aside class="sidebar">
-            <div class="sidebar-brand">
-                <div class="avatar" id="userAvatar">U</div>
-                <span class="brand-text">Student</span>
+    <!-- ===== SIDEBAR OVERLAY ===== -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+    <!-- ============================================================
+         TOP NAVBAR
+    ============================================================ -->
+    <nav class="top-navbar">
+
+        <!-- Hamburger (mobile) -->
+        <button class="nav-hamburger" id="navHamburger" onclick="toggleSidebar()" aria-label="Toggle modules">
+            <i class="fas fa-bars"></i>
+        </button>
+
+        <!-- Back -->
+        <a href="student-dashboard.html" class="nav-back">
+            <i class="fas fa-arrow-left"></i>
+            <span>Back</span>
+        </a>
+
+        <div class="nav-divider"></div>
+
+        <!-- Brand -->
+        <a href="student-dashboard.html" class="nav-brand">
+            <div class="nav-brand-icon">🔥</div>
+            <span class="nav-brand-text">Inner<span>Spark</span></span>
+        </a>
+
+        <div class="nav-divider"></div>
+
+        <!-- Course breadcrumb -->
+        <div class="nav-course">
+            <i class="fas fa-chevron-right nav-course-sep" style="font-size:0.65rem;"></i>
+            <span class="nav-course-title" id="courseTitle">Course Player</span>
+        </div>
+
+        <!-- Right: student info + logout -->
+        <div class="nav-right">
+            <div class="nav-student">
+                <div class="nav-avatar" id="userAvatar">S</div>
+                <div class="nav-student-info">
+                    <span class="nav-student-name" id="studentRegNo">Student</span>
+                    <span class="nav-student-role">Student</span>
+                </div>
             </div>
-            <ul class="nav-menu">
-                <li class="nav-item">
-                    <a href="student-dashboard.html" class="nav-link">
-                        <i class="fas fa-graduation-cap"></i>
-                        <span class="link-text">My Courses</span>
-                    </a>
+            <a href="#" id="logoutBtn" class="btn-logout">
+                <i class="fas fa-sign-out-alt"></i>
+                Logout
+            </a>
+        </div>
+    </nav>
+
+    <!-- ============================================================
+         PLAYER BODY
+    ============================================================ -->
+    <div class="player-body">
+
+        <!-- ===== LEFT SIDEBAR — Module List ===== -->
+        <!-- NOTE: class "right-sidebar" kept for player.js compatibility -->
+        <aside class="left-sidebar right-sidebar" id="rightSidebar">
+
+            <!-- Sidebar header -->
+            <div class="sidebar-top">
+                <div class="sidebar-top-title">
+                    <i class="fas fa-list-ul"></i> &nbsp;Course Curriculum
+                </div>
+            </div>
+            <!-- Hidden anchors for player.js progress tracking -->
+            <span id="progressPercent" style="display:none;">0</span>
+            <span id="panelProgressText" style="display:none;"></span>
+            <span id="panelProgressBar" style="display:none;"></span>
+
+            <!-- Search -->
+            <div class="sidebar-search-wrap">
+                <input type="search" class="sidebar-search" id="moduleSearch" placeholder="Search course… (Ctrl+K)"
+                    oninput="filterModules(this.value)">
+            </div>
+
+            <!-- Module list — populated by player.js -->
+            <ul class="curriculum-list" id="curriculumList">
+                <!-- Skeleton loaders -->
+                <li style="padding:12px;">
+                    <div style="display:flex;gap:10px;align-items:center;">
+                        <div class="skel" style="width:28px;height:28px;border-radius:50%;flex-shrink:0;"></div>
+                        <div style="flex:1;">
+                            <div class="skel" style="width:75%;height:12px;margin-bottom:6px;"></div>
+                            <div class="skel" style="width:45%;height:9px;"></div>
+                        </div>
+                    </div>
                 </li>
-                <li class="nav-item">
-                    <a href="student-dashboard.html#profile" class="nav-link">
-                        <i class="fas fa-user-circle"></i>
-                        <span class="link-text">Profile</span>
-                    </a>
+                <li style="padding:12px;">
+                    <div style="display:flex;gap:10px;align-items:center;">
+                        <div class="skel" style="width:28px;height:28px;border-radius:50%;flex-shrink:0;"></div>
+                        <div style="flex:1;">
+                            <div class="skel" style="width:60%;height:12px;margin-bottom:6px;"></div>
+                            <div class="skel" style="width:40%;height:9px;"></div>
+                        </div>
+                    </div>
                 </li>
-                <li class="nav-item">
-                    <a href="student-dashboard.html#marketplace" class="nav-link">
-                        <i class="fas fa-book-open"></i>
-                        <span class="link-text">Marketplace</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="student-dashboard.html#timetable" class="nav-link">
-                        <i class="fas fa-calendar-alt"></i>
-                        <span class="link-text">Timetable</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="student-dashboard.html#payments" class="nav-link">
-                        <i class="fas fa-receipt"></i>
-                        <span class="link-text">Payments</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="student-dashboard.html#support" class="nav-link">
-                        <i class="fas fa-headset"></i>
-                        <span class="link-text">Support</span>
-                    </a>
+                <li style="padding:12px;">
+                    <div style="display:flex;gap:10px;align-items:center;">
+                        <div class="skel" style="width:28px;height:28px;border-radius:50%;flex-shrink:0;"></div>
+                        <div style="flex:1;">
+                            <div class="skel" style="width:80%;height:12px;margin-bottom:6px;"></div>
+                            <div class="skel" style="width:50%;height:9px;"></div>
+                        </div>
+                    </div>
                 </li>
             </ul>
-            <a href="#" id="logoutBtn" class="nav-link nav-logout">
-                <i class="fas fa-sign-out-alt"></i>
-                <span class="link-text">Logout</span>
-            </a>
         </aside>
-
-        <!-- ===== BOTTOM NAV (mobile) ===== -->
-        <nav class="bottom-nav">
-            <a href="student-dashboard.html" class="bnav-item">
-                <i class="fas fa-graduation-cap"></i>
-                <span>Courses</span>
-            </a>
-            <a href="student-dashboard.html#marketplace" class="bnav-item">
-                <i class="fas fa-book-open"></i>
-                <span>Browse</span>
-            </a>
-            <a href="#" class="bnav-item pill" onclick="toggleCurriculum();return false;">
-                <i class="fas fa-list"></i>
-                <span>Modules</span>
-            </a>
-            <a href="student-dashboard.html#profile" class="bnav-item">
-                <i class="fas fa-user"></i>
-                <span>Profile</span>
-            </a>
-        </nav>
 
         <!-- ===== MAIN CONTENT ===== -->
         <main class="main-content">
 
-            <!-- Sticky Header -->
-            <div class="top-header">
-                <div class="header-left">
-                    <h1 class="course-title" id="courseTitle">Course Player</h1>
-                    <p class="mentor-name" id="mentorName">by Instructor</p>
+            <!-- Current module header bar -->
+            <div class="content-header">
+                <div class="content-header-title">
+                    <i class="fas fa-play-circle"></i>
+                    <span id="contentTitle">Select a module to begin</span>
                 </div>
-                <div class="header-actions">
-                    <!-- Mobile: modules toggle (hidden on desktop by CSS; shown via player.js / media query) -->
-                    <button id="mobileCurriculumBtn" class="btn-action btn-secondary" style="display:none;"
-                        onclick="toggleCurriculum()">
-                        <i class="fas fa-list"></i>
-                        <span>Modules</span>
-                    </button>
-
-                    <!-- Mark Complete — onclick calls markAsComplete() from player.js -->
+                <div class="content-header-actions">
+                    <!-- Mark Complete -->
                     <button id="markCompleteBtn" class="btn-action btn-primary" onclick="markAsComplete()">
                         <i class="fas fa-check-circle"></i>
-                        <span class="btn-text-full">Mark as Complete</span>
-                        <span class="btn-text-short">Done</span>
+                        <span>Mark Complete</span>
                     </button>
-
-                    <!-- Hidden download link used by player.js for PDFs -->
+                    <!-- Hidden PDF download link -->
                     <a id="downloadNotesBtn" href="#" style="display:none;"></a>
                 </div>
             </div>
 
-            <!-- Scrollable content area -->
+            <!-- Course progress strip -->
+            <div class="progress-strip" aria-hidden="true">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+
+            <!-- Scrollable content -->
             <div class="content-wrapper">
 
                 <!-- Course Intro Card -->
@@ -1019,24 +1490,15 @@
                             <div class="intro-meta">
                                 <div class="meta-pill"><i class="fas fa-user"></i><span
                                         id="instructorName">Instructor</span></div>
-                                <div class="meta-pill"><i class="fas fa-book-reader"></i><span id="moduleCount">0
-                                        Modules</span></div>
-                                <div class="meta-pill"><i class="fas fa-chart-line"></i><span id="progressPercent">0%
-                                        Complete</span></div>
-                                <div class="meta-pill"><i class="fas fa-eye"></i><span
-                                        id="viewCount">0</span>&nbsp;watching</div>
+                                <div class="meta-pill" id="mentorPill"><i class="fas fa-chalkboard-teacher"></i><span
+                                        id="mentorName">Instructor</span></div>
                             </div>
                         </div>
                     </div>
                     <p class="course-description" id="courseDescription"></p>
                 </div>
 
-                <!-- VIDEO WRAPPER
-                 player.js controls visibility of this entire wrapper.
-                 We expose it via window.videoWrapper so player.js can show/hide it.
-                 For video content  → set .video-wrapper { display:block }
-                 For other content  → leave/set { display:none }
-            -->
+                <!-- Video Wrapper — player.js shows/hides this -->
                 <div class="video-wrapper" id="videoWrapper">
                     <video id="mainVideo" controls controlsList="nodownload" playsinline></video>
                     <div id="previewOverlay" style="display:none;">
@@ -1048,118 +1510,428 @@
                     </div>
                 </div>
 
-                <!-- Rich-text / PDF content — shown by player.js for non-video modules -->
+                <!-- Rich-text / PDF content -->
                 <div id="htmlContentDisplay"></div>
 
-                <!-- Module Info Card -->
+                <!-- Module description -->
                 <div class="module-info-card">
-                    <h3><i class="fas fa-play-circle"></i><span id="contentTitle">Select a module</span></h3>
+                    <h3><i class="fas fa-info-circle"></i> About this Module</h3>
                     <div id="contentDescription"></div>
                 </div>
 
-                <!-- Discussion -->
-                <div class="discussion-card">
-                    <h3><i class="fas fa-comments"></i> Course Discussion</h3>
-                    <!-- player.js targets #forumComments -->
-                    <div id="forumComments">
-                        <p style="color:var(--muted);font-size:0.88rem;">Loading discussions…</p>
-                    </div>
 
-                    <!-- Forum submission form — player.js listens to #forumForm -->
-                    <form id="forumForm" style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;">
-                        <input name="comment" type="text" placeholder="Share your thoughts…" style="flex:1;min-width:180px;padding:10px 14px;border:1.5px solid #e5e7eb;
-                               border-radius:24px;font-size:0.88rem;font-family:inherit;outline:none;
-                               transition:border-color 0.2s;" onfocus="this.style.borderColor='var(--saffron)'"
-                            onblur="this.style.borderColor='#e5e7eb'" required>
-                        <button type="submit" class="btn-action btn-primary" style="flex-shrink:0;">
-                            <i class="fas fa-paper-plane"></i> Share
-                        </button>
-                    </form>
-                </div>
 
             </div><!-- /content-wrapper -->
         </main>
+    </div><!-- /player-body -->
 
-        <!-- ===== RIGHT SIDEBAR — Curriculum Panel ===== -->
-        <aside class="right-sidebar" id="rightSidebar">
-            <div class="panel-header">
-                <div class="panel-header-title">
-                    <i class="fas fa-list-ul"></i>
-                    Course Curriculum
-                </div>
-                <button class="panel-close" onclick="closeCurriculum()" aria-label="Close">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
 
-            <!--
-            NOTE: player.js's renderCurriculum() populates #curriculumList
-            and INJECTS its own progress <li> as the FIRST item.
-            We do NOT add a separate progress widget here to avoid duplication.
-        -->
-            <ul class="curriculum-list" id="curriculumList">
-                <!-- Skeleton while loading -->
-                <li style="padding:14px 12px;border-bottom:1px solid #f4f4f4;">
-                    <div style="display:flex;gap:11px;align-items:center;">
-                        <div class="skel" style="width:30px;height:30px;border-radius:50%;flex-shrink:0;"></div>
-                        <div style="flex:1;">
-                            <div class="skel" style="width:75%;height:13px;margin-bottom:7px;"></div>
-                            <div class="skel" style="width:45%;height:10px;"></div>
-                        </div>
-                    </div>
-                </li>
-                <li style="padding:14px 12px;">
-                    <div style="display:flex;gap:11px;align-items:center;">
-                        <div class="skel" style="width:30px;height:30px;border-radius:50%;flex-shrink:0;"></div>
-                        <div style="flex:1;">
-                            <div class="skel" style="width:65%;height:13px;margin-bottom:7px;"></div>
-                            <div class="skel" style="width:40%;height:10px;"></div>
-                        </div>
-                    </div>
-                </li>
-            </ul>
-        </aside>
-
-        <!-- Overlay -->
-        <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeCurriculum()"></div>
-
-    </div><!-- /player-container -->
-
-    <!-- ===================================================
-     Curriculum Toggle (must be BEFORE player.js)
-=================================================== -->
+    <!-- ============================================================
+         INLINE SCRIPTS (before player.js)
+    ============================================================ -->
     <script>
-        function toggleCurriculum() {
-            const sidebar = document.getElementById('rightSidebar');
-            const overlay = document.getElementById('sidebarOverlay');
-            sidebar.classList.contains('open') ? closeCurriculum() : openCurriculum();
+        /* ── Sidebar toggle (mobile) ── */
+        function toggleSidebar() {
+            const sb = document.getElementById('rightSidebar');
+            sb.classList.contains('open') ? closeSidebar() : openSidebar();
         }
-        function openCurriculum() {
+        function openSidebar() {
             document.getElementById('rightSidebar').classList.add('open');
             document.getElementById('sidebarOverlay').classList.add('active');
             document.body.style.overflow = 'hidden';
         }
-        function closeCurriculum() {
+        function closeSidebar() {
             document.getElementById('rightSidebar').classList.remove('open');
             document.getElementById('sidebarOverlay').classList.remove('active');
             document.body.style.overflow = '';
         }
+        /* Alias used by player.js */
+        function toggleCurriculum() { toggleSidebar(); }
+        function openCurriculum() { openSidebar(); }
+        function closeCurriculum() { closeSidebar(); }
 
-        // Escape key to close
-        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeCurriculum(); });
+        /* Escape key closes sidebar */
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') closeSidebar();
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                document.getElementById('moduleSearch')?.focus();
+            }
+        });
 
-        /*  Hook: player.js calls video.style.display = 'block'/'none'.
-            We intercept via a MutationObserver to also toggle the WRAPPER. */
+        /* ── Module search filter ── */
+        function filterModules(query) {
+            const q = query.toLowerCase().trim();
+            document.querySelectorAll('#curriculumList .content-item').forEach(item => {
+                const text = item.querySelector('.module-info p')?.textContent?.toLowerCase() || '';
+                item.style.display = (!q || text.includes(q)) ? '' : 'none';
+            });
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
+
+            /* ── Populate student name/reg in navbar ── */
+            try {
+                const user = JSON.parse(localStorage.getItem('user') || '{}');
+                const avatarEl = document.getElementById('userAvatar');
+                const regEl = document.getElementById('studentRegNo');
+                const name = user.name || user.registerNumber || user.email || 'Student';
+                const initial = name.charAt(0).toUpperCase();
+                if (avatarEl) avatarEl.textContent = initial;
+                if (regEl) regEl.textContent = user.registerNumber || user.email || name;
+            } catch (e) { /* silent */ }
+
+            /* ── Video wrapper sync ──
+               player.js toggles #mainVideo display; we mirror to wrapper. */
             const video = document.getElementById('mainVideo');
             const wrapper = document.getElementById('videoWrapper');
-            if (!video || !wrapper) return;
+            if (video && wrapper) {
+                new MutationObserver(() => {
+                    wrapper.style.display = (video.style.display === 'block') ? 'block' : 'none';
+                }).observe(video, { attributes: true, attributeFilter: ['style'] });
+            }
 
-            const obs = new MutationObserver(() => {
-                // If the video element itself is visible, show the wrapper
-                wrapper.style.display = (video.style.display === 'block') ? 'block' : 'none';
+            /* ── Progress strip ──
+               Mirrors #progressPercent (set by renderCurriculum) → #progressFill width */
+            const progressSpan = document.getElementById('progressPercent');
+            const progressFill = document.getElementById('progressFill');
+            const progressBar = document.getElementById('panelProgressBar');
+            if (progressSpan && progressFill) {
+                function syncProgress() {
+                    const text = progressSpan.textContent || '';
+                    const pct = parseFloat(text) || 0;
+                    const w = Math.min(pct, 100) + '%';
+                    progressFill.style.width = w;
+                    if (progressBar) progressBar.style.width = w;
+                }
+                syncProgress();
+                new MutationObserver(syncProgress)
+                    .observe(progressSpan, { childList: true, subtree: true, characterData: true });
+            }
+
+            /* ── Panel progress text ──
+               Counts completed/total items rendered by player.js */
+            const list = document.getElementById('curriculumList');
+            const panelTxt = document.getElementById('panelProgressText');
+            if (list && panelTxt) {
+                function syncPanelText() {
+                    const items = list.querySelectorAll('.content-item');
+                    const completed = list.querySelectorAll('.content-item.completed');
+                    const total = items.length;
+                    const done = completed.length;
+                    panelTxt.textContent = total === 0 ? 'Loading…' : `${done} / ${total} done`;
+                }
+                syncPanelText();
+                new MutationObserver(syncPanelText)
+                    .observe(list, { childList: true, subtree: true, attributes: true });
+            }
+
+            /* ── Auto-close sidebar on module click (mobile) ── */
+            if (list) {
+                list.addEventListener('click', e => {
+                    if (e.target.closest('.content-item') && window.innerWidth <= 900) {
+                        closeSidebar();
+                    }
+                });
+            }
+        });
+    </script>
+
+    <!-- Module Feedback Modal -->
+    <div id="moduleFeedbackModal" class="modal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; overflow-y: auto; padding: 20px;">
+        <div
+            style="background: white; border-radius: 15px; max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.2); position: relative;">
+            <div
+                style="position: sticky; top: 0; background: white; z-index: 10; display: flex; justify-content: space-between; align-items: center; padding: 25px 30px; border-bottom: 2px solid #f0f0f0; border-radius: 15px 15px 0 0;">
+                <h3 style="margin: 0; color: #333; font-size: 1.5rem; display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-star" style="color: var(--color-saffron);"></i>
+                    Module Feedback
+                </h3>
+                <button onclick="closeFeedbackModal()" class="btn-primary"
+                    style="background: #e74c3c; padding: 8px 12px; border-radius: 6px; border: none; cursor: pointer;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div style="padding: 30px;">
+                <div style="text-align: center; margin-bottom: 25px;">
+                    <h4 id="feedbackModuleTitle" style="color: var(--color-primary); margin: 0 0 10px 0;">Module:
+                        Introduction</h4>
+                    <p style="color: var(--color-text-secondary); margin: 0;">Your feedback helps us improve our content
+                        quality</p>
+                </div>
+
+                <form id="moduleFeedbackForm">
+                    <input type="hidden" id="feedbackCourseId">
+                    <input type="hidden" id="feedbackModuleId">
+
+                    <!-- Video Quality -->
+                    <div style="margin-bottom: 25px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+                        <label style="display: block; font-weight: 600; margin-bottom: 15px; color: #333;">
+                            <i class="fas fa-video" style="margin-right: 8px; color: var(--color-saffron);"></i>
+                            1. Quality of Video
+                        </label>
+                        <div class="star-rating" data-field="videoQuality">
+                            <span class="star" data-value="1">★</span>
+                            <span class="star" data-value="2">★</span>
+                            <span class="star" data-value="3">★</span>
+                            <span class="star" data-value="4">★</span>
+                            <span class="star" data-value="5">★</span>
+                        </div>
+                    </div>
+
+                    <!-- Content Quality -->
+                    <div style="margin-bottom: 25px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+                        <label style="display: block; font-weight: 600; margin-bottom: 15px; color: #333;">
+                            <i class="fas fa-book-open" style="margin-right: 8px; color: var(--color-saffron);"></i>
+                            2. Quality of Content
+                        </label>
+                        <div class="star-rating" data-field="contentQuality">
+                            <span class="star" data-value="1">★</span>
+                            <span class="star" data-value="2">★</span>
+                            <span class="star" data-value="3">★</span>
+                            <span class="star" data-value="4">★</span>
+                            <span class="star" data-value="5">★</span>
+                        </div>
+                    </div>
+
+                    <!-- Content Relevance -->
+                    <div style="margin-bottom: 25px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+                        <label style="display: block; font-weight: 600; margin-bottom: 15px; color: #333;">
+                            <i class="fas fa-bullseye" style="margin-right: 8px; color: var(--color-saffron);"></i>
+                            3. Content Relevance to Course
+                        </label>
+                        <div class="star-rating" data-field="contentRelevance">
+                            <span class="star" data-value="1">★</span>
+                            <span class="star" data-value="2">★</span>
+                            <span class="star" data-value="3">★</span>
+                            <span class="star" data-value="4">★</span>
+                            <span class="star" data-value="5">★</span>
+                        </div>
+                    </div>
+
+                    <!-- Expectations -->
+                    <div style="margin-bottom: 25px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+                        <label style="display: block; font-weight: 600; margin-bottom: 15px; color: #333;">
+                            <i class="fas fa-check-circle" style="margin-right: 8px; color: var(--color-saffron);"></i>
+                            4. Did it Meet Your Expectations?
+                        </label>
+                        <div class="star-rating" data-field="expectations">
+                            <span class="star" data-value="1">★</span>
+                            <span class="star" data-value="2">★</span>
+                            <span class="star" data-value="3">★</span>
+                            <span class="star" data-value="4">★</span>
+                            <span class="star" data-value="5">★</span>
+                        </div>
+                    </div>
+
+                    <!-- Recommendation -->
+                    <div style="margin-bottom: 25px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+                        <label style="display: block; font-weight: 600; margin-bottom: 15px; color: #333;">
+                            <i class="fas fa-share" style="margin-right: 8px; color: var(--color-saffron);"></i>
+                            5. Would You Suggest This to Others?
+                        </label>
+                        <div class="star-rating" data-field="recommendation">
+                            <span class="star" data-value="1">★</span>
+                            <span class="star" data-value="2">★</span>
+                            <span class="star" data-value="3">★</span>
+                            <span class="star" data-value="4">★</span>
+                            <span class="star" data-value="5">★</span>
+                        </div>
+                    </div>
+
+                    <!-- Additional Feedback -->
+                    <div style="margin-bottom: 25px;">
+                        <label style="display: block; font-weight: 600; margin-bottom: 10px; color: #333;">
+                            <i class="fas fa-comment" style="margin-right: 8px; color: var(--color-saffron);"></i>
+                            6. Additional Feedback (Optional)
+                        </label>
+                        <textarea id="additionalFeedback" rows="4" placeholder="Any suggestions for improvement?"
+                            style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-family: inherit; resize: vertical;"></textarea>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                        <button type="button" onclick="closeFeedbackModal()" class="btn-secondary"
+                            style="padding: 12px 25px; border-radius: 8px; cursor: pointer;">Skip</button>
+                        <button type="submit" class="btn-primary"
+                            style="background: linear-gradient(135deg, var(--saffron) 0%, var(--golden) 100%); padding: 12px 25px; border-radius: 8px; font-weight: 600; border: none; color: white; cursor: pointer;">
+                            <i class="fas fa-paper-plane"></i> Submit Feedback
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // === MODULE FEEDBACK SYSTEM ===
+        let currentFeedbackModule = null;
+        let onFeedbackComplete = null; // Callback after modal closes
+
+        const starScores = {
+            videoQuality: 0,
+            contentQuality: 0,
+            contentRelevance: 0,
+            expectations: 0,
+            recommendation: 0
+        };
+
+        function openFeedbackModal(moduleId, moduleName, courseId, callback) {
+            console.log('openFeedbackModal called with:', { moduleId, moduleName, courseId });
+            currentFeedbackModule = { id: moduleId, name: moduleName, courseId: courseId || null };
+            onFeedbackComplete = callback || null;
+
+            document.getElementById('feedbackModuleTitle').textContent = `Module: ${moduleName}`;
+
+            // Reset scores and visuals
+            Object.keys(starScores).forEach(k => starScores[k] = 0);
+            document.querySelectorAll('.star-rating .star').forEach(star => star.classList.remove('active'));
+            document.getElementById('additionalFeedback').value = '';
+
+            const modal = document.getElementById('moduleFeedbackModal');
+            if (modal) {
+                modal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function closeFeedbackModal() {
+            const modal = document.getElementById('moduleFeedbackModal');
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+            currentFeedbackModule = null;
+            if (onFeedbackComplete) {
+                const cb = onFeedbackComplete;
+                onFeedbackComplete = null;
+                cb();
+            }
+        }
+
+        function initializeStarRatings() {
+            document.querySelectorAll('.star-rating').forEach(ratingEl => {
+                const field = ratingEl.getAttribute('data-field');
+                if (!field) return;
+
+                const stars = ratingEl.querySelectorAll('.star');
+
+                stars.forEach((star, index) => {
+                    star.addEventListener('click', () => {
+                        const value = index + 1;
+                        starScores[field] = value;
+                        stars.forEach((s, i) => s.classList.toggle('active', i < value));
+                    });
+
+                    star.addEventListener('mouseenter', () => {
+                        stars.forEach((s, i) => s.classList.toggle('active', i <= index));
+                    });
+                });
+
+                ratingEl.addEventListener('mouseleave', () => {
+                    const val = starScores[field] || 0;
+                    stars.forEach((s, i) => s.classList.toggle('active', i < val));
+                });
             });
-            obs.observe(video, { attributes: true, attributeFilter: ['style'] });
+        }
+
+        async function submitFeedback() {
+            if (!currentFeedbackModule || !currentFeedbackModule.id) return;
+
+            const token = localStorage.getItem('token') || localStorage.getItem('authToken') || '';
+            if (!token) {
+                alert('Please log in to submit feedback.');
+                return;
+            }
+
+            const feedback = {
+                moduleId: currentFeedbackModule.id,
+                moduleName: currentFeedbackModule.name,
+                courseId: currentFeedbackModule.courseId,
+                videoQuality: starScores.videoQuality || 0,
+                contentQuality: starScores.contentQuality || 0,
+                contentRelevance: starScores.contentRelevance || 0,
+                expectations: starScores.expectations || 0,
+                recommendation: starScores.recommendation || 0,
+                comments: document.getElementById('additionalFeedback').value.trim() || ''
+            };
+
+            try {
+                const submitBtn = document.querySelector('#moduleFeedbackForm button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Submitting...';
+                }
+
+                const apiBase = (typeof Auth !== 'undefined' && Auth.apiBase) ? Auth.apiBase : 'http://localhost:5001/api';
+                const response = await fetch(`${apiBase}/feedback/submit`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(feedback)
+                });
+
+                if (response.ok) {
+                    if (typeof UI !== 'undefined' && UI.success) UI.success('Thank you for your feedback!');
+                    else alert('Thank you for your feedback!');
+                    closeFeedbackModal();
+                } else {
+                    const err = await response.json();
+                    alert(err.message || 'Failed to submit feedback');
+                }
+            } catch (error) {
+                console.error('Error submitting feedback:', error);
+                alert('Failed to submit feedback. Please try again.');
+            } finally {
+                const submitBtn = document.querySelector('#moduleFeedbackForm button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Submit Feedback';
+                }
+            }
+        }
+
+        async function checkFeedbackExists(moduleId) {
+            try {
+                const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+                if (!token) return false;
+
+                const apiBase = (typeof Auth !== 'undefined' && Auth.apiBase) ? Auth.apiBase : 'http://localhost:5001/api';
+                const response = await fetch(`${apiBase}/feedback/check/${moduleId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    return data.hasSubmitted;
+                }
+                return false;
+            } catch (error) {
+                return false;
+            }
+        }
+
+        window.showModuleCompletionFeedback = function (moduleId, moduleName, courseId, callback) {
+            checkFeedbackExists(moduleId).then(hasSubmitted => {
+                if (hasSubmitted) {
+                    if (callback) callback();
+                    return;
+                }
+                openFeedbackModal(moduleId, moduleName, courseId, callback);
+            }).catch(() => {
+                openFeedbackModal(moduleId, moduleName, courseId, callback);
+            });
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeStarRatings();
+            document.getElementById('moduleFeedbackForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                submitFeedback();
+            });
+            document.getElementById('moduleFeedbackModal').addEventListener('click', (e) => {
+                if (e.target.id === 'moduleFeedbackModal') closeFeedbackModal();
+            });
         });
     </script>
 
@@ -1167,6 +1939,7 @@
     <script src="../js/auth.js"></script>
     <script src="../js/utils.js"></script>
     <script src="../js/player.js"></script>
+
 </body>
 
 </html>

@@ -5,6 +5,7 @@
 let currentCourseID = null;
 let currentModuleID = null;
 let hasFullAccess = false;
+let currentExamAttemptID = null; // Track current assessment attempt ID
 
 document.addEventListener('DOMContentLoaded', async () => {
     // SECURITY: Prevent caching of this page
@@ -185,8 +186,7 @@ async function loadPlayer() {
             document.getElementById('curriculumList').innerHTML = '<p style="padding:20px; color:#ccc;">No modules available yet.</p>';
         }
 
-        // Mock viewer count
-        document.getElementById('viewCount').textContent = Math.floor(Math.random() * 50) + 5;
+
 
 
 
@@ -444,9 +444,14 @@ async function loadModuleContent(module) {
     if (contentType === 'video' && fileUrl) {
         // VIDEO MODULE — show wrapper + video element
         if (videoWrapper) videoWrapper.style.display = 'block';
+        video.setAttribute('controlsList', 'nodownload');
         video.src = fileUrl;
         video.style.display = 'block';
         video.load();
+        // Re-enforce after load (some browsers reset on src change)
+        video.addEventListener('loadstart', () => {
+            video.setAttribute('controlsList', 'nodownload');
+        }, { once: true });
 
         // Disable right-click on video to prevent easy download
         video.addEventListener('contextmenu', e => e.preventDefault());
@@ -663,8 +668,24 @@ function updateCurriculumWithLocks(completedModules) {
 async function switchModule(moduleId) {
     console.log('Switching to module:', moduleId);
 
+    // Capture previous module info for feedback popup
+    const prevModuleId = currentModuleID;
+    let prevModuleName = 'Module';
+    if (prevModuleId && window.cachedCourseData) {
+        const m = window.cachedCourseData.modules.find(mod => mod._id === prevModuleId);
+        if (m) prevModuleName = m.title || m.name;
+    }
+
     // 1. Sync current progress before switching
     await syncProgress();
+
+    // Trigger feedback for the previous module if we're moving AWAY from one
+    if (prevModuleId && prevModuleId !== moduleId && typeof window.showModuleCompletionFeedback === 'function') {
+        // We call it but don't 'await' it to not block the switch process? 
+        // Actually, the modal might be better shown AFTER the switch UI updates starts to feel responsive.
+        // But for now, let's trigger it.
+        window.showModuleCompletionFeedback(prevModuleId, prevModuleName, currentCourseID);
+    }
 
     // 2. Update current ID
     currentModuleID = moduleId;
@@ -796,9 +817,13 @@ function loadIntroIframe(course) {
     if (course?.introVideo) {
         const vw2 = document.getElementById('videoWrapper');
         if (vw2) vw2.style.display = 'block';
+        video.setAttribute('controlsList', 'nodownload');
         video.src = course.introVideo;
         video.style.display = 'block';
         video.load();
+        video.addEventListener('loadstart', () => {
+            video.setAttribute('controlsList', 'nodownload');
+        }, { once: true });
     } else {
         UI.info('No introduction video available for this course.');
     }
@@ -812,6 +837,50 @@ window.switchAssessment = switchAssessment;
 
 async function switchAssessment(examId) {
     console.log('Switching to assessment:', examId);
+
+    // 0. Check eligibility and certificate status first
+    try {
+        UI.showLoader();
+        const eligibilityRes = await fetch(`${Auth.apiBase}/exams/eligibility/${currentCourseID}`, {
+            headers: Auth.getHeaders()
+        });
+        const eligibilityData = await eligibilityRes.json();
+
+        // Check if already has certificate
+        if (eligibilityData.hasCertificate) {
+            UI.hideLoader();
+            UI.createPopup({
+                title: '🎓 Certificate Already Earned',
+                message: eligibilityData.message || 'You have already received a certificate for this course! The assessment cannot be reattempted.',
+                type: 'success',
+                icon: 'certificate',
+                confirmText: 'View Dashboard',
+                cancelText: 'Close',
+                onConfirm: () => {
+                    window.location.href = 'student-dashboard.html?section=certificates';
+                }
+            });
+            return;
+        }
+
+        // Check if not eligible
+        if (!eligibilityData.eligible) {
+            UI.hideLoader();
+            if (eligibilityData.alreadyPassed) {
+                UI.success(eligibilityData.message || 'You have already passed this assessment!');
+            } else {
+                UI.info(eligibilityData.message || 'You are not yet eligible for this assessment.');
+            }
+            return;
+        }
+
+        UI.hideLoader();
+    } catch (err) {
+        console.error('Eligibility check failed:', err);
+        UI.hideLoader();
+        UI.error('Could not verify assessment eligibility.');
+        return;
+    }
 
     // 1. Sync current progress before switching
     await syncProgress();
@@ -830,6 +899,44 @@ async function switchAssessment(examId) {
 
 async function loadAssessmentContent(assessment) {
     console.log('Loading Assessment:', assessment);
+
+    // Check eligibility and certificate status before loading
+    try {
+        const eligibilityRes = await fetch(`${Auth.apiBase}/exams/eligibility/${currentCourseID}`, {
+            headers: Auth.getHeaders()
+        });
+        const eligibilityData = await eligibilityRes.json();
+
+        // Check if already has certificate
+        if (eligibilityData.hasCertificate) {
+            UI.createPopup({
+                title: '🎓 Certificate Already Earned',
+                message: eligibilityData.message || 'You have already received a certificate for this course! The assessment cannot be reattempted.',
+                type: 'success',
+                icon: 'certificate',
+                confirmText: 'View Dashboard',
+                cancelText: 'Close',
+                onConfirm: () => {
+                    window.location.href = 'student-dashboard.html?section=certificates';
+                }
+            });
+            return;
+        }
+
+        // Check if not eligible
+        if (!eligibilityData.eligible) {
+            if (eligibilityData.alreadyPassed) {
+                UI.success(eligibilityData.message || 'You have already passed this assessment!');
+            } else {
+                UI.info(eligibilityData.message || 'You are not yet eligible for this assessment.');
+            }
+            return;
+        }
+    } catch (err) {
+        console.error('Eligibility check failed:', err);
+        UI.error('Could not verify assessment eligibility.');
+        return;
+    }
 
     // Clear previous intervals
     if (progressInterval) clearInterval(progressInterval);
@@ -854,21 +961,61 @@ async function loadAssessmentContent(assessment) {
     title.textContent = assessment.title;
     document.getElementById('contentDescription').innerHTML = `<p>Duration: ${assessment.duration} mins | Passing Score: ${assessment.passingScore}%</p>`;
 
-    // Fetch full exam details (questions)
+    // STEP 1: Create exam attempt first (consistent with exam.js)
     try {
         UI.showLoader();
+        const attemptRes = await fetch(`${Auth.apiBase}/exams/attempt/start`, {
+            method: 'POST',
+            headers: Auth.getHeaders(),
+            body: JSON.stringify({ examID: assessment._id })
+        });
+
+        console.log('Attempt response status:', attemptRes.status);
+
+        if (!attemptRes.ok) {
+            const errorData = await attemptRes.json();
+            console.error('❌ Attempt failed:', errorData);
+
+            // Special handling for certificate case
+            if (errorData.hasCertificate) {
+                console.log('Certificate detected during attempt creation');
+                UI.createPopup({
+                    title: '🎓 Certificate Already Earned',
+                    message: errorData.message || 'You have already received a certificate for this course! The assessment cannot be reattempted.',
+                    type: 'success',
+                    icon: 'certificate',
+                    confirmText: 'View Dashboard',
+                    cancelText: 'Close',
+                    onConfirm: () => {
+                        window.location.href = 'student-dashboard.html?section=certificates';
+                    }
+                });
+                UI.hideLoader();
+                return;
+            }
+
+            UI.error(errorData.message || 'Unable to start assessment attempt.');
+            UI.hideLoader();
+            return;
+        }
+
+        const attemptData = await attemptRes.json();
+        currentExamAttemptID = attemptData.attemptID;
+        console.log('🎯 Assessment attempt created:', currentExamAttemptID);
+
+        // STEP 2: Fetch full exam details (questions)
         const res = await fetch(`${Auth.apiBase}/exams/${assessment._id}`, { headers: Auth.getHeaders() });
         const fullExam = await res.json();
 
-        // Render Quiz UI
+        // STEP 3: Render Quiz UI
         contentDisplay.style.display = 'block';
         contentDisplay.innerHTML = renderQuizUI(fullExam);
 
-        // Initialize Timer
-        startAssessmentTimer(fullExam.duration);
+        // STEP 4: Initialize Timer
+        startAssessmentTimer(attemptData.duration || fullExam.duration);
 
-        // Attach Submit Handler
-        document.getElementById('quizForm').onsubmit = (e) => submitAssessment(e, fullExam._id);
+        // STEP 5: Attach Submit Handler (passes attemptID)
+        document.getElementById('quizForm').onsubmit = (e) => submitAssessment(e, currentExamAttemptID);
 
     } catch (err) {
         console.error('Error loading exam details', err);
@@ -944,9 +1091,18 @@ function renderQuizUI(exam) {
     `;
 }
 
-async function submitAssessment(e, examId) {
+async function submitAssessment(e, attemptID) {
     e.preventDefault();
     if (assessmentTimerInterval) clearInterval(assessmentTimerInterval);
+
+    // Validate attemptID
+    if (!attemptID) {
+        UI.error('Assessment session expired. Please reload and try again.');
+        setTimeout(() => {
+            loadPlayer();
+        }, 2000);
+        return;
+    }
 
     const formData = new FormData(e.target);
     const answers = {};
@@ -977,17 +1133,41 @@ async function submitAssessment(e, examId) {
 
     try {
         UI.showLoader();
+        console.log('📤 Submitting assessment with attemptID:', attemptID);
+
         const res = await fetch(`${Auth.apiBase}/exams/submit`, {
             method: 'POST',
             headers: Auth.getHeaders(),
-            body: JSON.stringify({ examID: examId, answers: answersArray })
+            body: JSON.stringify({ attemptID: attemptID, answers: answersArray })
         });
 
         const result = await res.json();
+        console.log('Submit assessment result:', result);
 
         const contentDisplay = document.getElementById('htmlContentDisplay');
         const timerDisplay = document.getElementById('moduleTimer');
         if (timerDisplay) timerDisplay.style.display = 'none'; // Hide timer
+
+        if (!res.ok) {
+            // Check if certificate exists
+            if (result.hasCertificate) {
+                UI.error('🎓 ' + (result.message || 'You have already received a certificate for this course. This attempt is no longer valid.'));
+                setTimeout(() => {
+                    window.location.href = 'student-dashboard.html?section=certificates';
+                }, 2000);
+                return;
+            }
+
+            UI.error(result.message || 'Submission failed');
+
+            // If attempt not found or forbidden, go back to dashboard
+            if (res.status === 404 || res.status === 403) {
+                setTimeout(() => {
+                    window.location.href = 'student-dashboard.html';
+                }, 2000);
+            }
+            return;
+        }
 
         if (res.ok) {
             let resultIcon = result.status === 'Pass' ? 'trophy' : 'times-circle';
@@ -1006,8 +1186,8 @@ async function submitAssessment(e, examId) {
                 `;
             } else {
                 actionButton = `
-                    <button onclick="loadAssessmentContent({_id: '${examId}', title: 'Retake Assessment', duration: 30, passingScore: ${result.passingScore || 70}})" class="btn-primary" style="background: #666;">
-                        <i class="fas fa-redo"></i> Retake Assessment
+                    <button onclick="window.location.reload()" class="btn-primary" style="background: #666;">
+                        <i class="fas fa-redo"></i> Try Again
                     </button>
                 `;
             }

@@ -312,7 +312,7 @@ async function openCourseModal(id) {
         const { course, content, hasFullAccess, isExpired } = data;
 
         document.getElementById('modalTitle').textContent = course.title;
-        document.getElementById('modalMentor').textContent = `By ${course.mentorID?.name}`;
+        document.getElementById('modalMentor').textContent = `By ${course.mentors && course.mentors.length > 0 ? course.mentors.map(m => m.name).join(', ') : 'Mentor'}`;
         document.getElementById('modalDesc').textContent = course.description;
         document.getElementById('modalPrice').textContent = `$${course.price}`;
         document.getElementById('modalImg').src = getThumbnail(course.thumbnail);
@@ -725,7 +725,7 @@ async function loadCourseDetails(courseId) {
 
         // Populate modal with course data
         document.getElementById('exploreModalTitle').textContent = course.title;
-        document.getElementById('exploreModalMentor').querySelector('span').textContent = course.mentorID?.name || 'Mentor';
+        document.getElementById('exploreModalMentor').querySelector('span').textContent = course.mentors && course.mentors.length > 0 ? course.mentors.map(m => m.name).join(', ') : 'Mentor';
         document.getElementById('exploreModalCategory').querySelector('span').textContent = course.category || 'General';
         document.getElementById('exploreModalPrice').textContent = `$${course.price}`;
         document.getElementById('exploreModalDescription').textContent = course.description || 'Discover the transformative power of this course.';

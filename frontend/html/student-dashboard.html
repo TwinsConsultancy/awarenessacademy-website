@@ -292,7 +292,7 @@
         }
 
         // === FEEDBACK CHECKING FUNCTIONS ===
-        
+
         // Check if student has already submitted feedback for a module
         async function checkFeedbackExists(moduleId) {
             try {
@@ -327,7 +327,7 @@
         // Show feedback modal after module completion (called from player.js)
         function showModuleCompletionFeedback(moduleId, moduleName) {
             console.log('showModuleCompletionFeedback called:', { moduleId, moduleName });
-            
+
             if (!moduleId) {
                 console.error('Module ID required for feedback');
                 return;
@@ -2730,22 +2730,6 @@
                                     back, <span id="welcomeName">Seeker</span>! 🎓</h1>
                                 <p style="margin: 0; font-size: 1.1rem; opacity: 0.95;">Continue your learning journey
                                 </p>
-
-                                <!-- Quick Stats Inline -->
-                                <div style="display: flex; gap: 30px; margin-top: 20px; flex-wrap: wrap;">
-                                    <div>
-                                        <div style="font-size: 2rem; font-weight: 700;" id="heroEnrolled">0</div>
-                                        <div style="font-size: 0.9rem; opacity: 0.9;">Courses</div>
-                                    </div>
-                                    <div>
-                                        <div style="font-size: 2rem; font-weight: 700;" id="heroProgress">0%</div>
-                                        <div style="font-size: 0.9rem; opacity: 0.9;">Progress</div>
-                                    </div>
-                                    <div>
-                                        <div style="font-size: 2rem; font-weight: 700;" id="heroCertificates">0</div>
-                                        <div style="font-size: 0.9rem; opacity: 0.9;">Certificates</div>
-                                    </div>
-                                </div>
                             </div>
 
                             <div class="hero-banner-actions">
@@ -2768,7 +2752,8 @@
                                 <i class="fas fa-graduation-cap"></i>
                             </div>
                             <div>
-                                <h4 id="enrolledCount">0</h4>
+                                <h4 id="enrolledCount"><i class="fas fa-spinner fa-spin"
+                                        style="font-size: 1rem; color: #ccc;"></i></h4>
                                 <p style="color: var(--color-text-secondary); font-size: 0.9rem;">Enrolled Courses</p>
                             </div>
                         </div>
@@ -2778,18 +2763,20 @@
                                 <i class="fas fa-spinner"></i>
                             </div>
                             <div>
-                                <h4 id="avgProgress">0%</h4>
+                                <h4 id="avgProgress"><i class="fas fa-spinner fa-spin"
+                                        style="font-size: 1rem; color: #ccc;"></i></h4>
                                 <p style="color: var(--color-text-secondary); font-size: 0.9rem;">Overall Progress</p>
                             </div>
                         </div>
                         <div class="stat-card glass-card">
                             <div class="stat-icon"
                                 style="background: rgba(40, 167, 69, 0.1); color: var(--color-success);">
-                                <i class="fas fa-clock"></i>
+                                <i class="fas fa-certificate"></i>
                             </div>
                             <div>
-                                <h4 id="attendanceRate">0</h4>
-                                <p style="color: var(--color-text-secondary); font-size: 0.9rem;">Live Sessions Joined
+                                <h4 id="certificatesCount"><i class="fas fa-spinner fa-spin"
+                                        style="font-size: 1rem; color: #ccc;"></i></h4>
+                                <p style="color: var(--color-text-secondary); font-size: 0.9rem;">Certificates Earned
                                 </p>
                             </div>
                         </div>
@@ -2819,24 +2806,13 @@
                         </div>
                     </section>
 
-                    <section>
+                    <!-- Mindfulness Toolkit - Only shown when live classes are scheduled -->
+                    <section id="mindfulnessToolkit" style="display: none;">
                         <div class="section-title">
                             <h3><i class="fas fa-spa" style="color: var(--color-golden);"></i> Mindfulness Toolkit</h3>
                         </div>
-                        <div class="toolkit-item glass-card">
-                            <div class="toolkit-row">
-                                <div style="display: flex; align-items: center; gap: 15px;">
-                                    <i class="fas fa-video" style="font-size: 1.2rem; color: var(--color-saffron);"></i>
-                                    <div>
-                                        <strong>Live Classroom</strong>
-                                        <p style="font-size: 0.8rem; color: var(--color-text-secondary);">Join your
-                                            mentor
-                                            for a
-                                            live flow.</p>
-                                    </div>
-                                </div>
-                                <button class="btn-primary" style="padding: 8px 20px;">Join Now</button>
-                            </div><!-- end toolkit-row -->
+                        <div id="toolkitLiveClassContainer">
+                            <!-- Live class info will be dynamically populated here -->
                         </div>
                     </section>
                 </div>
@@ -3004,18 +2980,193 @@
 
                 <!-- Marketplace Section -->
                 <div id="marketplaceSection" style="display: none;">
-                    <div class="section-title-row">
-                        <h2 style="margin: 0;">Explore Courses</h2>
-                        <div style="display: flex; gap: 10px;">
-                            <select id="marketplaceCategory" onchange="loadMarketplace()" class="form-control"
-                                style="padding: 10px; border-radius: 8px; border: 1px solid #ddd;">
+
+                    <!-- ── Marketplace Toolbar ── -->
+                    <style>
+                        .mkt-toolbar {
+                            display: flex;
+                            align-items: center;
+                            gap: 10px;
+                            flex-wrap: wrap;
+                            background: #fff;
+                            border: 1px solid rgba(255, 153, 51, 0.18);
+                            border-radius: 14px;
+                            padding: 10px 14px;
+                            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.07);
+                            margin-bottom: 24px;
+                        }
+
+                        .mkt-search-wrap {
+                            display: flex;
+                            align-items: center;
+                            flex: 1;
+                            min-width: 200px;
+                            background: #f7f3ee;
+                            border-radius: 10px;
+                            border: 1.5px solid transparent;
+                            transition: border-color 0.2s;
+                            padding: 0 12px;
+                        }
+
+                        .mkt-search-wrap:focus-within {
+                            border-color: var(--color-saffron);
+                            background: #fff;
+                        }
+
+                        .mkt-search-wrap i {
+                            color: var(--color-saffron);
+                            font-size: 0.9rem;
+                            margin-right: 8px;
+                            flex-shrink: 0;
+                        }
+
+                        .mkt-search-wrap input {
+                            border: none !important;
+                            background: transparent !important;
+                            outline: none !important;
+                            box-shadow: none !important;
+                            padding: 10px 0;
+                            font-size: 0.9rem;
+                            width: 100%;
+                            color: var(--color-primary);
+                            font-family: inherit;
+                        }
+
+                        .mkt-toolbar-divider {
+                            width: 1px;
+                            height: 32px;
+                            background: #e8ddd0;
+                            flex-shrink: 0;
+                        }
+
+                        .mkt-select-wrap {
+                            display: flex;
+                            align-items: center;
+                            gap: 6px;
+                            background: #f7f3ee;
+                            border-radius: 10px;
+                            border: 1.5px solid transparent;
+                            padding: 0 10px;
+                            transition: border-color 0.2s;
+                        }
+
+                        .mkt-select-wrap:focus-within {
+                            border-color: var(--color-saffron);
+                            background: #fff;
+                        }
+
+                        .mkt-select-wrap i {
+                            color: var(--color-saffron);
+                            font-size: 0.8rem;
+                            flex-shrink: 0;
+                        }
+
+                        .mkt-select-wrap select {
+                            border: none !important;
+                            background: transparent !important;
+                            outline: none !important;
+                            box-shadow: none !important;
+                            padding: 10px 4px;
+                            font-size: 0.85rem;
+                            color: var(--color-primary);
+                            cursor: pointer;
+                            font-family: inherit;
+                            appearance: none;
+                            -webkit-appearance: none;
+                            min-width: 120px;
+                        }
+
+                        .mkt-search-btn {
+                            display: flex;
+                            align-items: center;
+                            gap: 7px;
+                            padding: 10px 18px;
+                            border: none;
+                            border-radius: 10px;
+                            background: linear-gradient(135deg, #FF9933, #FFC300);
+                            color: #fff;
+                            font-weight: 700;
+                            font-size: 0.88rem;
+                            cursor: pointer;
+                            white-space: nowrap;
+                            box-shadow: 0 3px 10px rgba(255, 153, 51, 0.30);
+                            transition: transform 0.2s, box-shadow 0.2s;
+                            font-family: inherit;
+                        }
+
+                        .mkt-search-btn:hover {
+                            transform: translateY(-2px);
+                            box-shadow: 0 6px 16px rgba(255, 153, 51, 0.40);
+                        }
+
+                        @media (max-width: 600px) {
+                            .mkt-toolbar {
+                                padding: 10px;
+                                gap: 8px;
+                            }
+
+                            .mkt-toolbar-divider {
+                                display: none;
+                            }
+
+                            .mkt-search-wrap {
+                                min-width: 0;
+                            }
+
+                            .mkt-select-wrap select {
+                                min-width: 0;
+                                flex: 1;
+                            }
+
+                            .mkt-search-btn {
+                                width: 100%;
+                                justify-content: center;
+                            }
+                        }
+                    </style>
+
+                    <div class="mkt-toolbar">
+                        <!-- Search -->
+                        <div class="mkt-search-wrap">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="marketplaceSearch"
+                                placeholder="Search courses, topics, instructors..."
+                                onkeyup="debounceMarketplaceSearch(this.value)" />
+                        </div>
+
+                        <div class="mkt-toolbar-divider"></div>
+
+                        <!-- Category filter -->
+                        <div class="mkt-select-wrap">
+                            <i class="fas fa-layer-group"></i>
+                            <select id="marketplaceCategory" onchange="filterMarketplace()">
                                 <option value="All">All Wisdom</option>
                                 <option value="Meditation">Meditation</option>
                                 <option value="Yoga">Yoga</option>
                                 <option value="Philosophy">Philosophy</option>
                                 <option value="Wellbeing">Wellbeing</option>
                             </select>
+                            <i class="fas fa-chevron-down" style="font-size:0.7rem;color:#aaa;"></i>
                         </div>
+
+                        <div class="mkt-toolbar-divider"></div>
+
+                        <!-- Price filter -->
+                        <div class="mkt-select-wrap">
+                            <i class="fas fa-tag"></i>
+                            <select id="marketplacePriceFilter" onchange="filterMarketplace()">
+                                <option value="All">All Prices</option>
+                                <option value="Free">Free</option>
+                                <option value="Paid">Paid</option>
+                            </select>
+                            <i class="fas fa-chevron-down" style="font-size:0.7rem;color:#aaa;"></i>
+                        </div>
+
+                        <!-- Search CTA -->
+                        <button class="mkt-search-btn"
+                            onclick="debounceMarketplaceSearch(document.getElementById('marketplaceSearch').value)">
+                            <i class="fas fa-search"></i> Search
+                        </button>
                     </div>
                     <div id="marketplaceGrid" class="course-grid">
                         <!-- Marketplace courses load here -->
@@ -3024,9 +3175,9 @@
 
                 <!-- Timetable Section -->
                 <div id="timetableSection" style="display: none;">
-                    <h2 style="margin-bottom: 30px;">Your Spiritual Timetable</h2>
+                    <h2 style="margin-bottom: 30px;">Live Classes Schedule</h2>
                     <div id="timetableGrid" style="display: grid; gap: 15px;">
-                        <p>Fetching your cosmic schedule...</p>
+                        <p>Loading live classes...</p>
                     </div>
                 </div>
 
@@ -3407,6 +3558,177 @@
     <script src="../js/student.js"></script>
     <script src="../js/analytics.js"></script>
     <script src="../js/chatbot.js"></script>
+
+    <!-- Additional Dashboard Enhancements -->
+    <script>
+        // Global variables for marketplace filtering
+        let allMarketplaceCourses = [];
+        let marketplaceSearchTimeout = null;
+
+        // Debounced search function
+        function debounceMarketplaceSearch(query) {
+            clearTimeout(marketplaceSearchTimeout);
+            marketplaceSearchTimeout = setTimeout(() => {
+                filterMarketplace();
+            }, 300);
+        }
+
+        // Enhanced marketplace filtering function
+        function filterMarketplace() {
+            const searchQuery = document.getElementById('marketplaceSearch')?.value.toLowerCase() || '';
+            const categoryFilter = document.getElementById('marketplaceCategory')?.value || 'All';
+            const priceFilter = document.getElementById('marketplacePriceFilter')?.value || 'All';
+
+            if (!allMarketplaceCourses.length) {
+                return; // Wait for courses to load first
+            }
+
+            let filteredCourses = allMarketplaceCourses.filter(course => {
+                // Search filter
+                const matchesSearch = !searchQuery ||
+                    course.title?.toLowerCase().includes(searchQuery) ||
+                    course.description?.toLowerCase().includes(searchQuery) ||
+                    course.instructor?.toLowerCase().includes(searchQuery);
+
+                // Category filter
+                const matchesCategory = categoryFilter === 'All' || course.category === categoryFilter;
+
+                // Price filter
+                const matchesPrice = priceFilter === 'All' ||
+                    (priceFilter === 'Free' && (!course.price || course.price === 0)) ||
+                    (priceFilter === 'Paid' && course.price && course.price > 0);
+
+                return matchesSearch && matchesCategory && matchesPrice;
+            });
+
+            displayMarketplaceCourses(filteredCourses);
+        }
+
+        // Function to display filtered marketplace courses
+        function displayMarketplaceCourses(courses) {
+            const grid = document.getElementById('marketplaceGrid');
+            if (!grid) return;
+
+            if (courses.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1; text-align: center; padding: 40px;">
+                        <i class="fas fa-search" style="font-size: 3rem; color: #ddd; margin-bottom: 20px;"></i>
+                        <h3 style="color: #666;">No courses found</h3>
+                        <p style="color: #999;">Try adjusting your search terms or filters</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = courses.map(course => `
+                <div class="course-card glass-card" data-course-id="${course.id}">
+                    <img src="${course.thumbnail || '../assets/images/default-course.jpg'}" 
+                         alt="${course.title}" 
+                         style="width: 100%; height: 160px; object-fit: cover; border-radius: 8px 8px 0 0;"
+                         onerror="this.src='../assets/images/default-course.jpg'">
+                    <div style="padding: 15px;">
+                        <h4 style="margin: 0 0 8px 0; color: var(--color-primary); font-size: 1.1rem;">${course.title}</h4>
+                        <p style="color: var(--color-text-secondary); font-size: 0.9rem; margin: 0 0 15px 0; line-height: 1.4;">
+                            ${course.description?.substring(0, 80)}${course.description?.length > 80 ? '...' : ''}
+                        </p>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <span class="badge badge-${course.category === 'Free' ? 'success' : 'primary'}">
+                                ${course.category}
+                            </span>
+                            <div style="color: var(--color-saffron); font-weight: 600; font-size: 1.1rem;">
+                                ${course.price && course.price > 0 ? `₹${course.price}` : 'Free'}
+                            </div>
+                        </div>
+                        <button class="btn-primary" onclick="enrollInCourse('${course.id}')" style="width: 100%; padding: 10px;">
+                            <i class="fas fa-plus"></i> Enroll Now
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Enhanced live classes status checker
+        function checkLiveClassStatus(classItem, startTime, endTime, joinedStatus) {
+            const now = new Date();
+            const classStart = new Date(startTime);
+            const classEnd = new Date(endTime);
+
+            let statusHtml = '';
+            let actionHtml = '';
+
+            if (now > classEnd) {
+                // Class has ended
+                statusHtml = '<span class="badge" style="background: #6B7280; color: white;">Session Ended</span>';
+                if (joinedStatus) {
+                    actionHtml = '<span style="color: #10B981; font-weight: 600;"><i class="fas fa-check-circle"></i> Already Joined</span>';
+                } else {
+                    actionHtml = '<span style="color: #EF4444; font-weight: 600;"><i class="fas fa-times-circle"></i> Not Joined - Time Reached</span>';
+                }
+            } else if (now >= classStart && now <= classEnd) {
+                // Class is currently live
+                statusHtml = '<span class="badge badge-success">Live Now</span>';
+                if (joinedStatus) {
+                    actionHtml = '<span style="color: #10B981; font-weight: 600;"><i class="fas fa-check-circle"></i> Already Joined</span>';
+                } else {
+                    actionHtml = '<button class="btn-primary" onclick="joinLiveClass(\'' + classItem.id + '\')" style="background: #10B981;"><i class="fas fa-video"></i> Join Now</button>';
+                }
+            } else {
+                // Class hasn't started yet
+                statusHtml = '<span class="badge badge-warning">Upcoming</span>';
+                const timeUntil = Math.ceil((classStart - now) / (1000 * 60)); // minutes
+                if (timeUntil > 60) {
+                    actionHtml = `<span style="color: #F59E0B; font-weight: 600;">Starts in ${Math.ceil(timeUntil / 60)}h ${timeUntil % 60}min</span>`;
+                } else {
+                    actionHtml = `<span style="color: #F59E0B; font-weight: 600;">Starts in ${timeUntil}min</span>`;
+                }
+            }
+
+            return { statusHtml, actionHtml };
+        }
+
+        // Function to generate live class card HTML
+        function generateLiveClassCard(classItem) {
+            const { statusHtml, actionHtml } = checkLiveClassStatus(
+                classItem,
+                classItem.startTime,
+                classItem.endTime,
+                classItem.joined || false
+            );
+
+            return `
+                <div class="glass-card" style="padding: 20px; border-left: 4px solid var(--color-saffron);">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+                        <div>
+                            <h4 style="margin: 0 0 5px 0; color: var(--color-primary);">${classItem.title}</h4>
+                            <p style="margin: 0; color: var(--color-text-secondary); font-size: 0.9rem;">${classItem.description || 'Live meditation session'}</p>
+                        </div>
+                        ${statusHtml}
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px; font-size: 0.9rem;">
+                        <div>
+                            <i class="fas fa-calendar" style="color: var(--color-saffron); margin-right: 5px;"></i>
+                            ${new Date(classItem.startTime).toLocaleDateString()}
+                        </div>
+                        <div>
+                            <i class="fas fa-clock" style="color: var(--color-saffron); margin-right: 5px;"></i>
+                            ${new Date(classItem.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                        <div>
+                            <i class="fas fa-hourglass-half" style="color: var(--color-saffron); margin-right: 5px;"></i>
+                            ${classItem.duration || '60'} min
+                        </div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="color: var(--color-text-secondary); font-size: 0.85rem;">
+                            <i class="fas fa-user" style="margin-right: 5px;"></i>
+                            Instructor: ${classItem.instructor || 'Awareness Academy'}
+                        </div>
+                        ${actionHtml}
+                    </div>
+                </div>
+            `;
+        }
+    </script>
 
     <!-- Mobile Responsive JS -->
     <script>

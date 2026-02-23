@@ -30,12 +30,26 @@
         }
 
         body {
-            background: linear-gradient(135deg, #FFE8D1 0%, #FFD4A3 50%, #FFC98B 100%);
+            background: linear-gradient(135deg, #FFE8D1 0%, #FFD4A3 30%, #FFC98B 70%, #FFB366 100%);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             position: relative;
             overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(ellipse at 20% 50%, rgba(255, 179, 102, 0.3) 0%, transparent 50%),
+                        radial-gradient(ellipse at 80% 20%, rgba(255, 215, 150, 0.4) 0%, transparent 50%),
+                        radial-gradient(ellipse at 40% 80%, rgba(255, 201, 139, 0.3) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
         }
 
         .auth-container {
@@ -50,16 +64,35 @@
 
         .auth-card {
             width: 100%;
-            max-width: 480px;
-            padding: 50px 45px;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border-radius: 24px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.5);
-            border: 1px solid rgba(255, 153, 51, 0.1);
+            max-width: 450px;
+            padding: 45px 40px;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(25px);
+            border-radius: 20px;
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(255, 153, 51, 0.08);
             transform: translateY(0);
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             animation: slideUp 0.6s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--color-saffron), var(--color-golden), var(--color-saffron));
+            background-size: 200% 100%;
+            animation: shimmer 3s linear infinite;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
         }
 
         @keyframes slideUp {
@@ -84,14 +117,20 @@
         }
 
         .auth-header h2 {
-            font-size: 2.5rem;
+            font-size: 2.2rem;
             background: linear-gradient(135deg, var(--color-saffron), var(--color-golden));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             font-weight: 700;
             letter-spacing: -0.5px;
+        }
+
+        .auth-header p {
+            color: var(--color-text-secondary);
+            font-size: 1rem;
+            margin-bottom: 0;
         }
 
         .form-group {
@@ -306,156 +345,100 @@
             box-shadow: 0 5px 20px rgba(255, 107, 53, 0.4);
         }
 
-        /* Footer Styles */
-        .footer {
-            background: #111;
-            color: white;
-            padding: 80px 50px 30px;
-            width: 100%;
-            box-sizing: border-box;
-            overflow-x: hidden;
-        }
-
-        .footer-grid {
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr 1fr;
-            gap: 50px;
-            max-width: 1200px;
-            margin: 0 auto;
-            width: 100%;
-        }
-
-        .footer-brand .logo {
-            color: white;
-            margin-bottom: 20px;
-        }
-
-        .footer-brand p {
-            opacity: 0.7;
-            line-height: 1.8;
-            margin-bottom: 20px;
-        }
-
-        .footer h4 {
-            color: var(--color-saffron);
-            margin-bottom: 25px;
-            font-size: 1.1rem;
-        }
-
-        .footer ul {
-            list-style: none;
-            padding: 0;
-        }
-
-        .footer ul li {
-            margin-bottom: 12px;
-        }
-
-        .footer ul a {
-            color: rgba(255,255,255,0.7);
-            text-decoration: none;
-            transition: color 0.3s;
-        }
-
-        .footer ul a:hover {
-            color: var(--color-saffron);
-        }
-
-        .footer-bottom {
-            text-align: center;
-            padding-top: 40px;
-            margin-top: 50px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            opacity: 0.7;
-            font-size: 0.9rem;
-        }
-
-        .social-icons {
-            display: flex;
-            gap: 15px;
-        }
-
-        .social-icons a {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            transition: all 0.3s;
-        }
-
-        .social-icons a:hover {
-            background: var(--color-saffron);
-            transform: translateY(-3px);
-        }
-
         /* Mobile Menu Button */
         .mobile-menu-btn {
             display: none;
-            flex-direction: column;
-            gap: 5px;
-            background: none;
+            background: linear-gradient(135deg, var(--color-saffron), var(--color-golden));
             border: none;
             cursor: pointer;
-            padding: 10px;
+            padding: 12px;
             z-index: 1001;
+            border-radius: 12px;
+            width: 48px;
+            height: 48px;
+            position: relative;
+            box-shadow: 0 4px 15px rgba(255, 153, 51, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .mobile-menu-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(255, 153, 51, 0.4);
         }
 
         .mobile-menu-btn span {
-            width: 25px;
-            height: 3px;
-            background: var(--color-text-primary);
+            display: block;
+            width: 22px;
+            height: 2.5px;
+            background: white;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
             border-radius: 3px;
-            transition: all 0.3s;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .mobile-menu-btn span:nth-child(1) {
+            top: 14px;
+        }
+
+        .mobile-menu-btn span:nth-child(2) {
+            top: 22px;
+            width: 16px;
+        }
+
+        .mobile-menu-btn span:nth-child(3) {
+            top: 30px;
         }
 
         .mobile-menu-btn.active span:nth-child(1) {
-            transform: rotate(45deg) translate(5px, 5px);
+            top: 22px;
+            transform: translateX(-50%) rotate(45deg);
         }
 
         .mobile-menu-btn.active span:nth-child(2) {
             opacity: 0;
+            transform: translateX(-150%);
         }
 
         .mobile-menu-btn.active span:nth-child(3) {
-            transform: rotate(-45deg) translate(7px, -6px);
+            top: 22px;
+            transform: translateX(-50%) rotate(-45deg);
         }
 
         /* Mobile Navigation Overlay */
         .mobile-nav-overlay {
-            display: none;
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: 998;
+            background: rgba(0, 0, 0, 0.5);
             opacity: 0;
-            transition: opacity 0.3s;
+            visibility: hidden;
+            transition: all 0.4s ease;
+            z-index: 998;
         }
 
         .mobile-nav-overlay.active {
-            display: block;
             opacity: 1;
+            visibility: visible;
         }
 
         /* Mobile Navigation Panel */
         .mobile-nav {
             position: fixed;
             top: 0;
-            right: -300px;
+            right: -320px;
             width: 300px;
             height: 100vh;
-            background: white;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
             z-index: 999;
-            transition: right 0.3s ease;
+            padding: 80px 0 20px;
             display: flex;
             flex-direction: column;
-            box-shadow: -5px 0 20px rgba(0,0,0,0.1);
+            transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+            box-shadow: -10px 0 40px rgba(0, 0, 0, 0.3);
         }
 
         .mobile-nav.active {
@@ -463,68 +446,128 @@
         }
 
         .mobile-nav-header {
-            padding: 20px;
-            border-bottom: 1px solid #eee;
+            padding: 0 20px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 16px;
         }
 
         .mobile-nav-header .logo {
-            font-size: 1.2rem;
+            color: white;
+            font-size: 1rem;
+        }
+
+        .mobile-nav-header .logo img {
+            height: 30px !important;
         }
 
         .mobile-nav-links {
             flex: 1;
-            padding: 20px;
+            padding: 0 16px;
             overflow-y: auto;
+        }
+
+        .mobile-nav-links::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .mobile-nav-links::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .mobile-nav-links::-webkit-scrollbar-thumb {
+            background: rgba(255, 153, 51, 0.5);
+            border-radius: 2px;
         }
 
         .mobile-nav-links a {
             display: flex;
             align-items: center;
-            gap: 15px;
-            padding: 15px;
-            color: var(--color-text-primary);
+            gap: 12px;
+            font-size: 1rem;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.8);
             text-decoration: none;
+            padding: 12px 16px;
             border-radius: 10px;
-            transition: all 0.3s;
+            margin-bottom: 4px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            min-height: 44px;
+        }
+
+        .mobile-nav-links a::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 4px;
+            background: linear-gradient(180deg, var(--color-saffron), var(--color-golden));
+            border-radius: 0 4px 4px 0;
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
         }
 
         .mobile-nav-links a:hover,
         .mobile-nav-links a.active {
-            background: rgba(255, 107, 53, 0.1);
-            color: var(--color-saffron);
+            background: rgba(255, 153, 51, 0.15);
+            color: white;
+        }
+
+        .mobile-nav-links a:hover::before,
+        .mobile-nav-links a.active::before {
+            transform: scaleY(1);
         }
 
         .mobile-nav-links a i {
             width: 20px;
             text-align: center;
             color: var(--color-saffron);
+            font-size: 0.9rem;
         }
 
         .mobile-nav-contact {
-            padding: 20px;
-            border-top: 1px solid #eee;
+            padding: 8px 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .mobile-nav-contact p {
-            font-size: 0.85rem;
-            color: #999;
-            margin-bottom: 5px;
+        .mobile-nav-contact-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.7);
         }
 
-        .mobile-nav-contact a {
+        .mobile-nav-contact-item i {
             color: var(--color-saffron);
+            font-size: 0.85rem;
+        }
+
+        .mobile-nav-contact-item a {
+            color: white;
             text-decoration: none;
             font-weight: 600;
+            font-size: 0.85rem;
         }
 
         .mobile-nav-footer {
-            padding: 20px;
-            border-top: 1px solid #eee;
+            padding: 12px 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .mobile-nav-footer .social-icons {
+            justify-content: center;
+            gap: 10px;
         }
 
         .mobile-nav-footer .social-icons a {
-            background: rgba(0,0,0,0.05);
-            color: var(--color-text-primary);
+            width: 36px;
+            height: 36px;
+            background: rgba(255, 255, 255, 0.1);
+            font-size: 0.9rem;
         }
 
         /* Responsive */
@@ -577,11 +620,8 @@
 
             .mobile-menu-btn {
                 display: flex;
-            }
-
-            .footer-grid {
-                grid-template-columns: 1fr 1fr;
-                width: 100%;
+                align-items: center;
+                justify-content: center;
             }
         }
 
@@ -598,19 +638,58 @@
                 height: 30px;
             }
 
-            .footer {
-                padding: 50px 20px 20px;
-                width: 100%;
-            }
-
-            .footer-grid {
-                grid-template-columns: 1fr;
-                gap: 30px;
-                width: 100%;
+            .auth-container {
+                padding: 20px 15px;
             }
 
             .auth-card {
-                padding: 30px 20px;
+                padding: 30px 25px;
+                margin: 0 10px;
+                border-radius: 16px;
+            }
+
+            .auth-header h2 {
+                font-size: 2rem;
+            }
+
+            .form-control {
+                padding: 12px 16px;
+            }
+
+            .btn-auth {
+                padding: 14px;
+                font-size: 1rem;
+            }
+
+            .mobile-nav {
+                width: 280px;
+                right: -300px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .auth-header h2 {
+                font-size: 1.8rem;
+            }
+
+            .auth-card {
+                padding: 25px 20px;
+                max-width: 95%;
+            }
+
+            .form-control {
+                padding: 12px 14px;
+                font-size: 0.95rem;
+            }
+
+            .btn-auth {
+                padding: 14px 16px;
+                font-size: 0.95rem;
+            }
+
+            .mobile-nav {
+                width: 260px;
+                right: -280px;
             }
         }
     </style>
@@ -686,33 +765,30 @@
     <div class="auth-container">
         <div class="auth-card glass-card">
             <div class="auth-header">
-                <a href="index.html" style="text-decoration: none; display: flex; align-items: center; gap: 10px; justify-content: center; color: var(--color-golden); font-family: var(--font-heading); font-weight: bold;">
-                    <img src="../assets/logo.png" alt="AWARENESS ACADEMY" style="height: 50px;"> AWARENESS ACADEMY
-                </a>
                 <h2>Welcome Back</h2>
-                <p>Login to continue</p>
+                <p>Login to continue your journey</p>
             </div>
 
             <div id="message" class="error"></div>
 
             <form id="loginForm">
                 <div class="form-group">
-                    <label>Email or Unique ID</label>
+                    <label><i class="fas fa-user"></i> Email or Unique ID</label>
                     <input type="text" name="identifier" class="form-control"
                         placeholder="STU-2024-XXXX or email@example.com" required>
                 </div>
 
                 <div class="form-group">
-                    <label>Password</label>
+                    <label><i class="fas fa-lock"></i> Password</label>
                     <div class="password-wrapper">
                         <input type="password" name="password" id="loginPassword" class="form-control"
                             placeholder="Enter your password" required style="padding-right: 45px;">
                         <i class="fas fa-eye password-toggle" id="toggleLoginPassword"
                             onclick="togglePasswordVisibility('loginPassword', 'toggleLoginPassword')"></i>
                     </div>
-                    <div style="text-align: right; margin-top: 5px;">
+                    <div style="text-align: right; margin-top: 8px;">
                         <a href="forgot-password.html"
-                            style="font-size: 0.85rem; color: var(--color-saffron); text-decoration: none;">Forgot
+                            style="font-size: 0.85rem; color: var(--color-saffron); text-decoration: none; font-weight: 500;">Forgot
                             Password?</a>
                     </div>
                 </div>
@@ -726,52 +802,7 @@
         </div>
     </div>
 
-    <footer class="footer">
-        <div class="footer-grid">
-            <div class="footer-brand">
-                <a href="index.html" class="logo">
-                    <img src="../assets/logo.png" alt="AWARENESS ACADEMY"> AWARENESS ACADEMY
-                </a>
-                <p>A sanctuary for transformation, empowering individuals to live with clarity, purpose, and harmony through ancient wisdom and modern practices.</p>
-                <div class="social-icons">
-                    <a href="https://www.instagram.com/awarenessacademy_abishek" target="_blank"><i class="fab fa-instagram"></i></a>
-                    <a href="https://www.youtube.com/@awarenessacademy4396" target="_blank"><i class="fab fa-youtube"></i></a>
-                    <a href="https://www.facebook.com/Awarenessacademy-103831264982368/" target="_blank"><i class="fab fa-facebook-f"></i></a>
-                    <a href="https://wa.me/919843341742" target="_blank"><i class="fab fa-whatsapp"></i></a>
-                </div>
-            </div>
-            <div>
-                <h4>Quick Links</h4>
-                <ul>
-                    <li><a href="index.html">Home</a></li>
-                    <li><a href="about.html">About Us</a></li>
-                    <li><a href="courses.html">Courses</a></li>
-                    <li><a href="gallery.html">Gallery</a></li>
-                    <li><a href="contact.html">Contact</a></li>
-                </ul>
-            </div>
-            <div>
-                <h4>Legal</h4>
-                <ul>
-                    <li><a href="terms.html">Terms & Conditions</a></li>
-                    <li><a href="privacy.html">Privacy Policy</a></li>
-                    <li><a href="login.html">Login / Register</a></li>
-                </ul>
-            </div>
-            <div>
-                <h4>Contact Info</h4>
-                <ul style="opacity: 0.7;">
-                    <li style="margin-bottom: 15px;"><i class="fas fa-envelope" style="margin-right: 10px; color: var(--color-saffron);"></i> awarenessacademy26@gmail.com</li>
-                    <li style="margin-bottom: 15px;"><i class="fas fa-phone" style="margin-right: 10px; color: var(--color-saffron);"></i> +91 98433 41742</li>
-                    <li style="margin-bottom: 15px;"><i class="fas fa-phone" style="margin-right: 10px; color: var(--color-saffron);"></i> +91 87541 23775</li>
-                    <li><i class="fas fa-map-marker-alt" style="margin-right: 10px; color: var(--color-saffron);"></i> Thammampatty, Salem District, Tamil Nadu, India</li>
-                </ul>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            &copy; 2026 AWARENESS ACADEMY. All rights reserved.
-        </div>
-    </footer>
+
 
     <script src="../js/auth.js"></script>
     <script src="../js/utils.js"></script>

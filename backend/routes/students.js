@@ -8,7 +8,8 @@ const {
     Result,
     Exam,
     ExamAttempt,
-    User
+    User,
+    Progress
 } = require('../models/index');
 
 // Get Student Dashboard Analytics
@@ -23,9 +24,26 @@ router.get('/analytics', authorize('Student'), async (req, res) => {
 
         // Calculate stats
         const enrolledCourses = enrollments.length;
+        
+        // Get progress data for all enrolled courses
+        const progressRecords = await Progress.find({ studentID }).lean();
+        console.log(`Found ${progressRecords.length} progress records for student ${studentID}`);
+        
+        const progressMap = {};
+        progressRecords.forEach(p => {
+            progressMap[p.courseID.toString()] = p.percentComplete || 0;
+            console.log(`Course ${p.courseID}: ${p.percentComplete}%`);
+        });
+        
+        // Calculate overall progress from Progress collection
         const overallProgress = enrollments.length > 0
-            ? Math.round(enrollments.reduce((sum, e) => sum + (e.progress || 0), 0) / enrollments.length)
+            ? Math.round(enrollments.reduce((sum, e) => {
+                const courseProgress = progressMap[e.courseID._id.toString()] || 0;
+                return sum + courseProgress;
+            }, 0) / enrollments.length)
             : 0;
+        
+        console.log(`Overall progress calculated: ${overallProgress}% (${enrolledCourses} courses)`);
 
         // Get certificates
         const certificates = await Certificate.find({ studentID }).lean();

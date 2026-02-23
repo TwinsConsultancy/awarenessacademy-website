@@ -21,11 +21,32 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
+    // Pre-check: Verify exam is accessible before attempting to load
+    try {
+        const examCheckRes = await fetch(`${Auth.apiBase}/exams/${currentExamID}`, {
+            headers: Auth.getHeaders()
+        });
+        
+        if (!examCheckRes.ok) {
+            console.error('Exam not accessible');
+            alert('This assessment is not accessible.');
+            window.location.href = 'student-dashboard.html';
+            return;
+        }
+        
+        const examCheck = await examCheckRes.json();
+        console.log('Exam accessible, attempting to start:', examCheck.title);
+    } catch (err) {
+        console.error('Pre-check failed:', err);
+    }
+
     await loadExam();
 });
 
 async function loadExam() {
     try {
+        console.log('🎯 Starting exam attempt for exam ID:', currentExamID);
+        
         // STEP 1: Create exam attempt first (FIX for BUG #1)
         const attemptRes = await fetch(`${Auth.apiBase}/exams/attempt/start`, {
             method: 'POST',
@@ -33,8 +54,20 @@ async function loadExam() {
             body: JSON.stringify({ examID: currentExamID })
         });
 
+        console.log('Attempt response status:', attemptRes.status);
+
         if (!attemptRes.ok) {
             const errorData = await attemptRes.json();
+            console.error('❌ Attempt failed:', errorData);
+            
+            // Special handling for certificate case
+            if (errorData.hasCertificate) {
+                console.log('Certificate detected, redirecting to certificates section');
+                alert('🎓 ' + (errorData.message || 'You have already received a certificate for this course! The assessment cannot be reattempted.'));
+                window.location.href = 'student-dashboard.html?section=certificates';
+                return;
+            }
+            
             alert(errorData.message || 'Unable to start exam attempt.');
             window.location.href = 'student-dashboard.html';
             return;
@@ -155,7 +188,23 @@ async function submitExam(auto = false) {
 
         if (!res.ok) {
             const errorData = await res.json();
+            console.error('Submission error:', errorData);
+            
+            // Check if certificate exists
+            if (errorData.hasCertificate) {
+                alert('🎓 ' + (errorData.message || 'You have already received a certificate for this course. This attempt is no longer valid.'));
+                window.location.href = 'student-dashboard.html?section=certificates';
+                return;
+            }
+            
             alert(errorData.message || 'Submission failed. Please try again.');
+            
+            // If attempt not found, go back to dashboard
+            if (res.status === 404 || res.status === 403) {
+                setTimeout(() => {
+                    window.location.href = 'student-dashboard.html';
+                }, 2000);
+            }
             return;
         }
 

@@ -14,9 +14,7 @@ async function loadAnalytics() {
             console.error('Failed to fetch analytics');
             return;
         }
-
         analyticsData = await response.json();
-
         // Update stats cards
         updateStatsCards();
 
@@ -44,20 +42,25 @@ function updateStatsCards() {
 
     const { stats } = analyticsData;
 
-    // Update analytics section stats
-    document.getElementById('analyticsEnrolled').textContent = stats.enrolledCourses;
-    document.getElementById('analyticsProgress').textContent = `${stats.overallProgress}%`;
-    document.getElementById('analyticsCertificates').textContent = stats.certificatesEarned;
-    document.getElementById('analyticsStreak').textContent = stats.studyStreak;
+    // Update analytics section stats with null checks
+    const analyticsEnrolled = document.getElementById('analyticsEnrolled');
+    const analyticsProgress = document.getElementById('analyticsProgress');
+    const analyticsCertificates = document.getElementById('analyticsCertificates');
+    const analyticsStreak = document.getElementById('analyticsStreak');
+    
+    if (analyticsEnrolled) analyticsEnrolled.textContent = stats.enrolledCourses;
+    if (analyticsProgress) analyticsProgress.textContent = `${stats.overallProgress}%`;
+    if (analyticsCertificates) analyticsCertificates.textContent = stats.certificatesEarned;
+    if (analyticsStreak) analyticsStreak.textContent = stats.studyStreak;
 
     // Also update main dashboard stats
-    document.getElementById('enrolledCount').textContent = stats.enrolledCourses;
-    document.getElementById('avgProgress').textContent = `${stats.overallProgress}%`;
-
-    // Update hero banner stats with animation
-    animateValue('heroEnrolled', 0, stats.enrolledCourses, 1000);
-    animateValue('heroProgress', 0, stats.overallProgress, 1000, '%');
-    animateValue('heroCertificates', 0, stats.certificatesEarned, 1000);
+    const enrolledCount = document.getElementById('enrolledCount');
+    const avgProgress = document.getElementById('avgProgress');
+    const certificatesCount = document.getElementById('certificatesCount');
+    
+    if (enrolledCount) enrolledCount.textContent = stats.enrolledCourses;
+    if (avgProgress) avgProgress.textContent = `${stats.overallProgress}%`;
+    if (certificatesCount) certificatesCount.textContent = stats.certificatesEarned;
 }
 
 // Count-up animation for numbers
@@ -187,6 +190,9 @@ function updateActivityFeed() {
 
     const { recentActivity } = analyticsData;
     const activityList = document.getElementById('activityList');
+    
+    // Check if element exists
+    if (!activityList) return;
 
     if (recentActivity.length === 0) {
         activityList.innerHTML = `
@@ -223,6 +229,9 @@ function updateUpcomingExams() {
     const { upcomingExams } = analyticsData;
     const widget = document.getElementById('upcomingExamsWidget');
     const list = document.getElementById('upcomingExamsList');
+    
+    // Check if elements exist
+    if (!widget || !list) return;
 
     if (upcomingExams.length > 0) {
         widget.style.display = 'block';
@@ -254,6 +263,9 @@ function updateAchievements() {
     const { achievements } = analyticsData;
     const section = document.getElementById('achievementsSection');
     const badges = document.getElementById('achievementsBadges');
+    
+    // Check if elements exist
+    if (!section || !badges) return;
 
     if (achievements.length > 0) {
         section.style.display = 'block';

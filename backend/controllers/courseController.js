@@ -1,15 +1,46 @@
-const { Course, Content, Impression, User, CourseSubscriber } = require('../models/index');
+const { Course, Content, Impression, User, CourseSubscriber, Progress } = require('../models/index');
 const { sendCoursePublishedNotification } = require('../utils/emailService');
 
 // Get Enrolled Courses for Student
 exports.getEnrolledCourses = async (req, res) => {
     try {
+        console.log('getEnrolledCourses - User ID:', req.user?.id);
+        
         const user = await User.findById(req.user.id).populate({
             path: 'enrolledCourses',
             populate: { path: 'mentors', select: 'name' }
         });
-        res.status(200).json(user.enrolledCourses);
+        
+        console.log('User found:', user ? 'Yes' : 'No');
+        console.log('Enrolled courses count:', user?.enrolledCourses?.length || 0);
+        
+        // Handle case where user has no enrolled courses
+        if (!user || !user.enrolledCourses) {
+            return res.status(200).json([]);
+        }
+        
+        // Fetch progress data for all enrolled courses
+        const progressRecords = await Progress.find({ studentID: req.user.id }).lean();
+        const progressMap = {};
+        progressRecords.forEach(p => {
+            progressMap[p.courseID.toString()] = {
+                percentage: p.percentComplete || 0,
+                completedLessons: p.completedLessons || [],
+                lastAccessed: p.lastAccessed
+            };
+        });
+        
+        // Attach progress data to each course
+        const coursesWithProgress = user.enrolledCourses.map(course => {
+            const courseObj = course.toObject ? course.toObject() : course;
+            const courseId = courseObj._id.toString();
+            courseObj.progress = progressMap[courseId] || { percentage: 0, completedLessons: [], lastAccessed: null };
+            return courseObj;
+        });
+        
+        res.status(200).json(coursesWithProgress);
     } catch (err) {
+        console.error('getEnrolledCourses error:', err.message, err.stack);
         res.status(500).json({ message: 'Fetch failed', error: err.message });
     }
 };

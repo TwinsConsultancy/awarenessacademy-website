@@ -83,6 +83,15 @@ document.addEventListener('DOMContentLoaded', () => {
     loadEnrolledCourses();
     checkAffirmation();
     loadStats();
+    loadMindfulnessToolkit();
+
+    // Refresh mindfulness toolkit every minute to update live class status
+    setInterval(() => {
+        const courseSection = document.getElementById('courseSection');
+        if (courseSection && courseSection.style.display !== 'none') {
+            loadMindfulnessToolkit();
+        }
+    }, 60000); // Every 60 seconds
 
     // 4. ID Card Generation
     const downloadBtn = document.getElementById('downloadIDBtn');
@@ -167,6 +176,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize Charts if Analytics Section exists
     if (document.getElementById('activityChart')) {
         loadCharts();
+    }
+
+    // 9. Handle URL parameters for direct section navigation
+    const urlParams = new URLSearchParams(window.location.search);
+    const sectionParam = urlParams.get('section');
+    if (sectionParam) {
+        // Remove the parameter from URL without page reload
+        window.history.replaceState({}, document.title, window.location.pathname);
+        // Switch to the requested section
+        setTimeout(() => switchSection(sectionParam), 500);
     }
 });
 
@@ -254,6 +273,7 @@ function switchSection(section) {
     }
 
     // Load data for specific sections
+    if (section === 'course') loadMindfulnessToolkit(); // Refresh live class status
     if (section === 'timetable') loadTimetable();
     if (section === 'payments') loadPayments();
     if (section === 'tickets') loadMyTickets();
@@ -263,58 +283,188 @@ function switchSection(section) {
     if (section === 'analytics') loadAnalytics();
 }
 
+// Helper function to calculate overall progress from enrolled courses
+function calculateOverallProgress(courses) {
+    if (!courses || courses.length === 0) return 0;
+
+    let totalProgress = 0;
+    courses.forEach(course => {
+        if (course.progress && typeof course.progress.percentage === 'number') {
+            totalProgress += course.progress.percentage;
+        }
+    });
+
+    return Math.round(totalProgress / courses.length);
+}
+
 async function loadStats() {
-    const updateEnrolledCount = async () => {
-        const res = await fetch(`${Auth.apiBase}/courses/enrolled`, { headers: Auth.getHeaders() });
-        const courses = await res.json();
-        return courses.length || 0;
-    };
+    try {
+        // Fetch analytics data which contains all stats including progress
+        const res = await fetch(`${Auth.apiBase}/students/analytics`, { headers: Auth.getHeaders() });
 
-    const updateAttendanceRate = async () => {
-        const attRes = await fetch(`${Auth.apiBase}/attendance/my`, { headers: Auth.getHeaders() });
-        const attendance = await attRes.json();
-        return attendance.length || 0;
-    };
+        if (!res.ok) {
+            throw new Error('Failed to fetch analytics');
+        }
 
-    // Safe API calls with fallbacks
-    const enrolledCount = await safeApiCall(updateEnrolledCount, 3);
-    const attendanceCount = await safeApiCall(updateAttendanceRate, 12);
+        const analyticsData = await res.json();
+        console.log('Analytics data received:', analyticsData); // Debug log
+        const { stats } = analyticsData;
 
-    // Update UI elements safely
-    const enrolledEl = document.getElementById('enrolledCount');
-    if (enrolledEl) enrolledEl.textContent = enrolledCount;
+        // Update UI elements safely with actual data from API
+        const enrolledEl = document.getElementById('enrolledCount');
+        if (enrolledEl) {
+            enrolledEl.innerHTML = stats.enrolledCourses || 0;
+            console.log('Enrolled courses:', stats.enrolledCourses);
+        }
 
-    const heroEnrolledEl = document.getElementById('heroEnrolled');
-    if (heroEnrolledEl) heroEnrolledEl.textContent = enrolledCount;
+        const certificatesEl = document.getElementById('certificatesCount');
+        if (certificatesEl) {
+            certificatesEl.innerHTML = stats.certificatesEarned || 0;
+            console.log('Certificates earned:', stats.certificatesEarned);
+        }
 
-    const attendanceEl = document.getElementById('attendanceRate');
-    if (attendanceEl) attendanceEl.textContent = attendanceCount;
+        // Use actual progress from analytics API
+        const avgProgressEl = document.getElementById('avgProgress');
+        if (avgProgressEl) {
+            const progressValue = stats.overallProgress || 0;
+            avgProgressEl.innerHTML = `${progressValue}%`;
+            console.log('Overall progress:', progressValue + '%');
+        }
 
-    // Calculate and update average progress
-    const avgProgressEl = document.getElementById('avgProgress');
-    const heroProgressEl = document.getElementById('heroProgress');
-    const progressPercent = Math.floor(Math.random() * 30 + 50); // 50-80% realistic progress
+    } catch (error) {
+        console.error('Error loading stats:', error);
+        // Show zeros on error
+        const enrolledEl = document.getElementById('enrolledCount');
+        const certificatesEl = document.getElementById('certificatesCount');
+        const avgProgressEl = document.getElementById('avgProgress');
 
-    if (avgProgressEl) avgProgressEl.textContent = `${progressPercent}%`;
-    if (heroProgressEl) heroProgressEl.textContent = `${progressPercent}%`;
+        if (enrolledEl) enrolledEl.innerHTML = '0';
+        if (certificatesEl) certificatesEl.innerHTML = '0';
+        if (avgProgressEl) avgProgressEl.innerHTML = '0%';
+    }
+}
+
+// Load Mindfulness Toolkit - Only show when live classes are scheduled
+async function loadMindfulnessToolkit() {
+    try {
+        const res = await fetch(`${Auth.apiBase}/schedules/my-timetable`, { headers: Auth.getHeaders() });
+        const schedules = await res.json();
+
+        if (!schedules || schedules.length === 0) {
+            // No live classes scheduled - hide the toolkit
+            const toolkit = document.getElementById('mindfulnessToolkit');
+            if (toolkit) toolkit.style.display = 'none';
+            return;
+        }
+
+        const now = new Date();
+
+        // Find the next upcoming or currently live class
+        const upcomingClasses = schedules
+            .filter(s => new Date(s.endTime) > now) // Only future or ongoing classes
+            .sort((a, b) => new Date(a.startTime) - new Date(b.startTime)); // Sort by start time
+
+        if (upcomingClasses.length === 0) {
+            // No upcoming classes
+            const toolkit = document.getElementById('mindfulnessToolkit');
+            if (toolkit) toolkit.style.display = 'none';
+            return;
+        }
+
+        const nextClass = upcomingClasses[0];
+        const classStart = new Date(nextClass.startTime);
+        const classEnd = new Date(nextClass.endTime);
+
+        // Determine class status
+        let statusHTML = '';
+        let buttonHTML = '';
+
+        if (now >= classStart && now <= classEnd) {
+            // Class is live now
+            statusHTML = '<span class="badge badge-success" style="background: #10B981; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; margin-left: 10px;">Live Now</span>';
+            buttonHTML = `<button onclick="joinLive('${nextClass.courseID._id}', '${nextClass._id}', '${nextClass.meetingLink}')" class="btn-primary" style="padding: 10px 25px; background: #10B981; white-space: nowrap;"><i class="fas fa-video"></i> Join Now</button>`;
+        } else {
+            // Class is upcoming
+            const timeUntil = Math.ceil((classStart - now) / (1000 * 60));
+            let timeText = '';
+            if (timeUntil > 60) {
+                const hours = Math.floor(timeUntil / 60);
+                const mins = timeUntil % 60;
+                timeText = `Starts in ${hours}h ${mins}m`;
+            } else {
+                timeText = `Starts in ${timeUntil}m`;
+            }
+            statusHTML = `<span class="badge badge-warning" style="background: #F59E0B; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; margin-left: 10px;">${timeText}</span>`;
+            buttonHTML = `<button class="btn-primary" style="padding: 10px 25px; background: #F59E0B; cursor: not-allowed; white-space: nowrap;" disabled><i class="fas fa-clock"></i> Upcoming</button>`;
+        }
+
+        // Show the toolkit section
+        const toolkit = document.getElementById('mindfulnessToolkit');
+        const container = document.getElementById('toolkitLiveClassContainer');
+
+        if (toolkit && container) {
+            container.innerHTML = `
+                <div class="toolkit-item glass-card">
+                    <div class="toolkit-row">
+                        <div style="display: flex; align-items: center; gap: 15px; flex: 1;">
+                            <i class="fas fa-video" style="font-size: 1.2rem; color: var(--color-saffron);"></i>
+                            <div style="flex: 1;">
+                                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                    <strong>${nextClass.title}</strong>
+                                    ${statusHTML}
+                                </div>
+                                <p style="font-size: 0.8rem; color: var(--color-text-secondary); margin: 5px 0 0 0;">
+                                    ${nextClass.courseID.title} • ${new Date(nextClass.startTime).toLocaleString('en-IN', {
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            })}
+                                </p>
+                            </div>
+                        </div>
+                        ${buttonHTML}
+                    </div>
+                </div>
+            `;
+            toolkit.style.display = 'block';
+        }
+
+    } catch (error) {
+        console.error('Error loading mindfulness toolkit:', error);
+        // Hide toolkit on error
+        const toolkit = document.getElementById('mindfulnessToolkit');
+        if (toolkit) toolkit.style.display = 'none';
+    }
 }
 
 async function loadAnalytics() {
     try {
-        // Try to load real data first, fallback to mock if needed
-        const res = await fetch(`${Auth.apiBase}/courses/enrolled`, { headers: Auth.getHeaders() });
-        const courses = await res.json();
+        // Fetch real analytics data from API
+        const res = await fetch(`${Auth.apiBase}/students/analytics`, { headers: Auth.getHeaders() });
 
-        // Populate analytics stats with real or mock data
-        const enrolledCount = courses.length || 3;
-        const overallProgress = Math.floor(Math.random() * 40 + 45); // 45-85%
-        const certificates = Math.floor(enrolledCount * 0.6); // 60% completion rate
-        const streak = Math.floor(Math.random() * 15 + 5); // 5-20 days
+        if (!res.ok) {
+            throw new Error('Analytics API failed');
+        }
 
-        document.getElementById('analyticsEnrolled').textContent = enrolledCount;
-        document.getElementById('analyticsProgress').textContent = `${overallProgress}%`;
-        document.getElementById('analyticsCertificates').textContent = certificates;
-        document.getElementById('analyticsStreak').textContent = streak;
+        const analyticsData = await res.json();
+        const { stats } = analyticsData;
+
+        // Use actual stats from API
+        const enrolledCount = stats.enrolledCourses || 0;
+        const overallProgress = stats.overallProgress || 0;
+        const certificates = stats.certificatesEarned || 0;
+        const streak = stats.studyStreak || 0;
+
+        const analyticsEnrolled = document.getElementById('analyticsEnrolled');
+        const analyticsProgress = document.getElementById('analyticsProgress');
+        const analyticsCertificates = document.getElementById('analyticsCertificates');
+        const analyticsStreak = document.getElementById('analyticsStreak');
+
+        if (analyticsEnrolled) analyticsEnrolled.textContent = enrolledCount;
+        if (analyticsProgress) analyticsProgress.textContent = `${overallProgress}%`;
+        if (analyticsCertificates) analyticsCertificates.textContent = certificates;
+        if (analyticsStreak) analyticsStreak.textContent = streak;
 
         // Load charts with Chart.js
         await loadChartJS();
@@ -326,23 +476,17 @@ async function loadAnalytics() {
 
     } catch (error) {
         console.error('Error loading analytics:', error);
-        loadMockAnalytics();
+        // Show zeros instead of mock data
+        const analyticsEnrolled = document.getElementById('analyticsEnrolled');
+        const analyticsProgress = document.getElementById('analyticsProgress');
+        const analyticsCertificates = document.getElementById('analyticsCertificates');
+        const analyticsStreak = document.getElementById('analyticsStreak');
+
+        if (analyticsEnrolled) analyticsEnrolled.textContent = '0';
+        if (analyticsProgress) analyticsProgress.textContent = '0%';
+        if (analyticsCertificates) analyticsCertificates.textContent = '0';
+        if (analyticsStreak) analyticsStreak.textContent = '0';
     }
-}
-
-function loadMockAnalytics() {
-    // Mock data for when API is unavailable
-    document.getElementById('analyticsEnrolled').textContent = '3';
-    document.getElementById('analyticsProgress').textContent = '67%';
-    document.getElementById('analyticsCertificates').textContent = '2';
-    document.getElementById('analyticsStreak').textContent = '12';
-
-    // Load charts with mock data
-    loadChartJS().then(() => {
-        loadAnalyticsCharts();
-        loadUpcomingExams();
-        loadAchievements();
-    });
 }
 
 function loadAnalyticsCharts() {
@@ -523,7 +667,24 @@ async function loadEnrolledCourses() {
         `).join('');
 
         const res = await fetch(`${Auth.apiBase}/courses/enrolled`, { headers: Auth.getHeaders() });
-        const courses = await res.json();
+
+        if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
+        }
+
+        const data = await res.json();
+
+        // Check if response is an error object instead of array
+        if (data.message && data.error) {
+            console.error('API error:', data.message, data.error);
+            container.innerHTML = `<p style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--error-color);">Failed to load courses: ${data.message}</p>`;
+            return;
+        }
+
+        // Ensure data is an array
+        const courses = Array.isArray(data) ? data : [];
+
+        console.log('Enrolled courses response:', courses);
 
         if (courses.length === 0) {
             container.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 40px;">You haven\'t joined any spiritual paths yet. Visit the Course Catalog to begin.</p>';
@@ -552,45 +713,24 @@ async function loadEnrolledCourses() {
         localStorage.setItem('enrolledCourses', JSON.stringify(coursesWithModules));
 
         container.innerHTML = coursesWithModules.map(c => {
-            // Create module feedback buttons
-            const moduleButtons = c.modules && c.modules.length > 0
-                ? c.modules.slice(0, 3).map(module => `
-                    <button onclick="checkAndOpenFeedbackModal('${module._id}', '${(module.title || 'Module').replace(/'/g, '\\\'')}', '${c._id}')" 
-                            class="btn-secondary" 
-                            style="width: 100%; padding: 6px; margin: 2px 0; font-size: 0.75rem; background: linear-gradient(135deg, #10B981, #059669); color: white; border: none;">
-                        <i class="fas fa-star" style="font-size: 0.7rem;"></i> Rate: ${module.title || 'Module'}
-                    </button>
-                  `).join('')
-                : '<p style="font-size: 0.75rem; color: #666; margin: 4px 0;">No modules available for feedback</p>';
-
-            const showMoreModules = c.modules && c.modules.length > 3
-                ? `<button onclick="showModuleFeedbackList('${c._id}', '${c.title.replace(/'/g, '\\\'')}')" 
-                           class="btn-secondary" 
-                           style="width: 100%; padding: 6px; margin: 2px 0; font-size: 0.75rem; background: #6366f1; color: white; border: none;">
-                       <i class="fas fa-list"></i> View All ${c.modules.length} Modules
-                   </button>`
+            // Check if course is completed (100% progress)
+            const isCompleted = c.progress && c.progress.percentage >= 100;
+            const completionBadge = isCompleted
+                ? '<span class="badge" style="background: #10B981; color: white; position: absolute; top: 10px; right: 10px; padding: 5px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600;"><i class="fas fa-check-circle"></i> Completed</span>'
                 : '';
 
             return `
-                <div class="course-card glass-premium fade-in">
+                <div class="course-card glass-premium fade-in" style="position: relative;">
+                    ${completionBadge}
                     <div class="course-thumb" style="background: url('${getThumbnail(c.thumbnail)}'); background-size: cover;"></div>
                     <div class="course-info">
                         <h4>${c.title}</h4>
-                        <p style="color: var(--color-text-secondary); font-size: 0.85rem; margin-bottom: 15px;">By ${c.mentorID?.name || 'Mentor'}</p>
+                        <p style="color: var(--color-text-secondary); font-size: 0.85rem; margin-bottom: 15px;">By ${c.mentors && c.mentors.length > 0 ? c.mentors.map(m => m.name).join(', ') : 'Mentor'}</p>
                         
                         <!-- Course Action Buttons -->
                         <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px;">
                             <button onclick="window.location.href='player.html?course=${c._id}&content=first'" class="btn-primary" style="width: 100%; padding: 8px;">Continue Course</button>
                             <button onclick="checkAndTakeExam('${c._id}')" class="btn-primary" style="width: 100%; padding: 8px; background: var(--color-golden);">Take Assessment</button>
-                        </div>
-                        
-                        <!-- Module Feedback Section -->
-                        <div style="border-top: 1px solid #eee; padding-top: 10px;">
-                            <h5 style="font-size: 0.8rem; color: #666; margin-bottom: 8px; font-weight: 600;">Module Feedback:</h5>
-                            <div style="max-height: 120px; overflow-y: auto;">
-                                ${moduleButtons}
-                                ${showMoreModules}
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -739,7 +879,24 @@ async function checkAndTakeExam(courseID) {
                 setTimeout(() => window.location.href = `exam.html?id=${data.examID}`, 1000);
             }
         } else {
-            UI.info(data.message || 'You are not yet eligible for this assessment.');
+            // Check if already has certificate
+            if (data.hasCertificate) {
+                UI.createPopup({
+                    title: '🎓 Certificate Already Earned',
+                    message: data.message || 'You have already received a certificate for this course! The assessment cannot be reattempted.',
+                    type: 'success',
+                    icon: 'certificate',
+                    confirmText: 'View Certificates',
+                    cancelText: 'Close',
+                    onConfirm: () => {
+                        switchSection('certificates');
+                    }
+                });
+            } else if (data.alreadyPassed) {
+                UI.success(data.message || 'You have already passed this assessment!');
+            } else {
+                UI.info(data.message || 'You are not yet eligible for this assessment.');
+            }
         }
     } catch (err) {
         UI.error('Could not verify availability.');
@@ -956,26 +1113,101 @@ async function loadTimetable() {
         const schedules = await res.json();
 
         if (schedules.length === 0) {
-            container.innerHTML = '<p style="text-align: center; padding: 40px;">Your path is currently quiet. No live flows scheduled.</p>';
+            container.innerHTML = '<p style="text-align: center; padding: 40px;">No live classes scheduled at the moment.</p>';
             return;
         }
 
-        container.innerHTML = schedules.map(s => `
-            <div class="glass-premium" style="padding: 20px; display: flex; justify-content: space-between; align-items: center; border-radius: 12px; margin-bottom: 10px;">
-                <div>
-                    <h4 style="color: var(--color-saffron);">${s.title}</h4>
-                    <p style="font-size: 0.9rem; margin: 5px 0;">Course: ${s.courseID.title}</p>
-                    <small style="color: var(--color-text-secondary);">
-                        <i class="far fa-clock"></i> ${new Date(s.startTime).toLocaleString()} - ${new Date(s.endTime).toLocaleTimeString()}
-                    </small>
+        // Group schedules by date
+        const groupedSchedules = schedules.reduce((acc, schedule) => {
+            const date = new Date(schedule.startTime).toDateString();
+            if (!acc[date]) acc[date] = [];
+            acc[date].push(schedule);
+            return acc;
+        }, {});
+
+        container.innerHTML = Object.entries(groupedSchedules).map(([date, daySchedules]) => `
+            <div style="margin-bottom: 30px;">
+                <h3 style="color: var(--color-saffron); margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid #eee;">
+                    <i class="fas fa-calendar-day"></i> ${date}
+                </h3>
+                <div style="display: grid; gap: 15px;">
+                    ${daySchedules.map(s => {
+            // Use the enhanced class status checker from the HTML
+            if (typeof window.generateLiveClassCard === 'function') {
+                return window.generateLiveClassCard({
+                    id: s._id,
+                    title: s.title,
+                    description: `Course: ${s.courseID.title}`,
+                    startTime: s.startTime,
+                    endTime: s.endTime,
+                    instructor: s.courseID.mentors && s.courseID.mentors.length > 0 ? s.courseID.mentors.map(m => m.name).join(', ') : 'Instructor',
+                    duration: s.duration || 60,
+                    joined: s.attended || false
+                });
+            } else {
+                // Fallback to original logic
+                const now = new Date();
+                const classStart = new Date(s.startTime);
+                const classEnd = new Date(s.endTime);
+
+                let statusBadge = '';
+                let actionButton = '';
+
+                if (now > classEnd) {
+                    statusBadge = '<span class="badge" style="background: #6B7280; color: white;">Session Ended</span>';
+                    if (s.attended) {
+                        actionButton = '<span style="color: #10B981; font-weight: 600;"><i class="fas fa-check-circle"></i> Already Joined</span>';
+                    } else {
+                        actionButton = '<span style="color: #EF4444; font-weight: 600;"><i class="fas fa-times-circle"></i> Not Joined - Time Reached</span>';
+                    }
+                } else if (now >= classStart && now <= classEnd) {
+                    statusBadge = '<span class="badge badge-success">Live Now</span>';
+                    if (s.attended) {
+                        actionButton = '<span style="color: #10B981; font-weight: 600;"><i class="fas fa-check-circle"></i> Already Joined</span>';
+                    } else {
+                        actionButton = `<button onclick="joinLive('${s.courseID._id}', '${s._id}', '${s.meetingLink}')" class="btn-primary" style="background: #10B981; padding: 10px 25px;"><i class="fas fa-video"></i> Join Now</button>`;
+                    }
+                } else {
+                    const timeUntil = Math.ceil((classStart - now) / (1000 * 60));
+                    statusBadge = '<span class="badge badge-warning">Upcoming</span>';
+                    if (timeUntil > 60) {
+                        actionButton = `<span style="color: #F59E0B; font-weight: 600;">Starts in ${Math.ceil(timeUntil / 60)}h ${timeUntil % 60}min</span>`;
+                    } else {
+                        actionButton = `<span style="color: #F59E0B; font-weight: 600;">Starts in ${timeUntil}min</span>`;
+                    }
+                }
+
+                return `
+                                <div class="glass-premium" style="padding: 20px; border-radius: 12px; margin-bottom: 10px; border-left: 4px solid var(--color-saffron);">
+                                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+                                        <div>
+                                            <h4 style="color: var(--color-saffron); margin: 0 0 5px 0;">${s.title}</h4>
+                                            <p style="font-size: 0.9rem; margin: 5px 0; color: var(--color-text-secondary);">Course: ${s.courseID.title}</p>
+                                        </div>
+                                        ${statusBadge}
+                                    </div>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px; font-size: 0.9rem;">
+                                        <div><i class="fas fa-calendar" style="color: var(--color-saffron); margin-right: 5px;"></i>${new Date(s.startTime).toLocaleDateString()}</div>
+                                        <div><i class="fas fa-clock" style="color: var(--color-saffron); margin-right: 5px;"></i>${new Date(s.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                                        <div><i class="fas fa-hourglass-half" style="color: var(--color-saffron); margin-right: 5px;"></i>${s.duration || 60} min</div>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <div style="color: var(--color-text-secondary); font-size: 0.85rem;">
+                                            <i class="fas fa-user" style="margin-right: 5px;"></i>Instructor: ${s.courseID.mentors && s.courseID.mentors.length > 0 ? s.courseID.mentors.map(m => m.name).join(', ') : 'Instructor'}
+                                        </div>
+                                        ${actionButton}
+                                    </div>
+                                </div>
+                            `;
+            }
+        }).join('')}
                 </div>
-                <button onclick="joinLive('${s.courseID._id}', '${s._id}', '${s.meetingLink}')" class="btn-primary" style="padding: 10px 25px;">
-                    ${s.type === 'Live' ? 'Join Flow' : 'Watch Premiere'}
-                </button>
             </div>
         `).join('');
+
     } catch (err) {
-        UI.error('Divine connection failed.');
+        console.error('Error loading timetable:', err);
+        UI.error('Unable to load live class schedule.');
     } finally {
         UI.hideLoader();
     }
@@ -1128,63 +1360,147 @@ async function loadTickets() {
 
 async function loadCertificates() {
     const container = document.getElementById('certificatesGrid');
+    if (!container) return;
     try {
         UI.showLoader();
         const res = await fetch(`${Auth.apiBase}/certificates/my`, { headers: Auth.getHeaders() });
         const certs = await res.json();
 
         if (!certs || certs.length === 0) {
-            container.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 40px;">No certifications earned yet. Complete your paths to receive them.</p>';
+            container.innerHTML = `
+                <div style="grid-column:1/-1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:60px 20px; text-align:center;">
+                    <div style="width:90px; height:90px; border-radius:50%; background:linear-gradient(135deg,rgba(255,153,51,0.12),rgba(255,195,0,0.12)); display:flex; align-items:center; justify-content:center; margin-bottom:20px;">
+                        <i class="fas fa-award" style="font-size:2.5rem; color:var(--color-golden); opacity:0.5;"></i>
+                    </div>
+                    <h4 style="margin:0 0 8px; color:var(--color-primary); font-family:var(--font-heading);">No Certificates Yet</h4>
+                    <p style="color:var(--color-text-secondary); font-size:0.9rem; max-width:300px; margin:0;">Complete a course and pass the final assessment to earn your first certificate.</p>
+                </div>`;
             return;
         }
 
-        container.innerHTML = certs.map(c => `
-            <div class="glass-premium" style="padding: 20px; text-align: center; border-radius: 15px;">
-                <div style="position: relative; display: inline-block;">
-                    <i class="fas fa-certificate" style="font-size: 3.5rem; color: var(--color-golden); margin-bottom: 15px;"></i>
-                    <i class="fas fa-check" style="position: absolute; top: 10px; right: -5px; color: white; background: var(--color-success); border-radius: 50%; font-size: 0.8rem; padding: 3px;"></i>
+        container.innerHTML = certs.map(c => {
+            const issueDate = new Date(c.issueDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
+            const certIdShort = c.uniqueCertID || c._id.slice(-8).toUpperCase();
+            const courseTitle = c.courseID?.title || 'Course Completion';
+            return `
+            <div class="cert-card" style="
+                background:#fff;
+                border-radius:18px;
+                overflow:hidden;
+                box-shadow:0 8px 30px rgba(0,0,0,0.10);
+                transition:transform 0.25s ease, box-shadow 0.25s ease;
+                display:flex; flex-direction:column;
+                border:1px solid rgba(255,195,0,0.18);"
+                onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 16px 40px rgba(255,153,51,0.18)';"
+                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 30px rgba(0,0,0,0.10)';">
+
+                <!-- Gradient header -->
+                <div style="background:linear-gradient(135deg,#FF9933 0%,#FFC300 100%); padding:28px 20px 20px; text-align:center; position:relative;">
+                    <!-- Ribbon corners -->
+                    <div style="position:absolute;top:0;left:0;width:0;height:0;border-style:solid;border-width:28px 28px 0 0;border-color:#fff3 transparent transparent transparent;"></div>
+                    <div style="position:absolute;top:0;right:0;width:0;height:0;border-style:solid;border-width:0 28px 28px 0;border-color:transparent #fff3 transparent transparent;"></div>
+                    <!-- Award icon with ring -->
+                    <div style="width:70px;height:70px;border-radius:50%;background:rgba(255,255,255,0.25);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;border:3px solid rgba(255,255,255,0.5);">
+                        <i class="fas fa-award" style="font-size:2.2rem;color:#fff;"></i>
+                    </div>
+                    <div style="font-size:0.68rem;font-weight:700;letter-spacing:0.12em;color:rgba(255,255,255,0.85);text-transform:uppercase;margin-bottom:4px;">Certificate of Completion</div>
                 </div>
-                <h4 style="font-family: var(--font-heading);">${c.courseID?.title || 'Course Completion'}</h4>
-                <p style="font-size: 0.8rem; color: var(--color-text-secondary); margin: 10px 0;">Awarded on cosmic date ${new Date(c.issueDate).toLocaleDateString()}</p>
-                <div style="display: flex; gap: 8px; margin-top: 12px;">
-                    <button onclick="viewCertificate('${c._id}')" class="btn-secondary" style="flex: 1; padding: 8px; font-size: 0.8rem;">
-                        <i class="fas fa-eye"></i> View
+
+                <!-- Card body -->
+                <div style="padding:20px; flex:1; display:flex; flex-direction:column; gap:10px;">
+                    <h4 style="margin:0; font-family:var(--font-heading); font-size:1rem; color:var(--color-primary); line-height:1.35; text-align:center;">${courseTitle}</h4>
+
+                    <div style="display:flex; align-items:center; justify-content:center; gap:6px;">
+                        <i class="fas fa-calendar-check" style="color:var(--color-saffron); font-size:0.8rem;"></i>
+                        <span style="font-size:0.82rem; color:var(--color-text-secondary);">Issued on ${issueDate}</span>
+                    </div>
+
+                    <!-- Cert ID badge -->
+                    <div style="background:linear-gradient(135deg,rgba(255,153,51,0.07),rgba(255,195,0,0.07)); border:1px dashed rgba(255,153,51,0.35); border-radius:8px; padding:6px 10px; text-align:center;">
+                        <span style="font-size:0.72rem; color:var(--color-text-secondary); display:block; margin-bottom:2px; letter-spacing:0.06em;">CERT ID</span>
+                        <span style="font-size:0.78rem; font-weight:700; color:var(--color-saffron); font-family:monospace; letter-spacing:0.04em;">${certIdShort}</span>
+                    </div>
+                </div>
+
+                <!-- Action buttons -->
+                <div style="padding:0 16px 16px; display:flex; gap:8px;">
+                    <button onclick="viewCertificate('${c._id}')" style="
+                        flex:1; padding:9px 6px; border-radius:10px;
+                        border:1.5px solid var(--color-saffron);
+                        background:transparent; color:var(--color-saffron);
+                        font-size:0.82rem; font-weight:600; cursor:pointer;
+                        display:flex; align-items:center; justify-content:center; gap:6px;
+                        transition:all 0.2s ease; font-family:inherit;"
+                        onmouseover="this.style.background='var(--color-saffron)'; this.style.color='#fff';"
+                        onmouseout="this.style.background='transparent'; this.style.color='var(--color-saffron)';">
+                        <i class="fas fa-eye"></i> Preview
                     </button>
-                    <button onclick="downloadCertificate('${c._id}')" class="btn-primary" style="flex: 1; padding: 8px; font-size: 0.8rem;">
+                    <button onclick="downloadCertificate('${c._id}')" style="
+                        flex:1; padding:9px 6px; border-radius:10px;
+                        border:none;
+                        background:linear-gradient(135deg,#FF9933,#FFC300);
+                        color:#fff; font-size:0.82rem; font-weight:600; cursor:pointer;
+                        display:flex; align-items:center; justify-content:center; gap:6px;
+                        box-shadow:0 3px 10px rgba(255,153,51,0.3);
+                        transition:all 0.2s ease; font-family:inherit;"
+                        onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 18px rgba(255,153,51,0.4)';"
+                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 3px 10px rgba(255,153,51,0.3)';">
                         <i class="fas fa-download"></i> Download
                     </button>
                 </div>
-            </div>
-        `).join('');
+            </div>`;
+        }).join('');
+
+        // Inject responsive grid CSS once
+        if (!document.getElementById('certGridStyle')) {
+            const style = document.createElement('style');
+            style.id = 'certGridStyle';
+            style.textContent = `
+                #certificatesGrid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+                    gap: 20px;
+                }
+                @media (max-width: 480px) {
+                    #certificatesGrid { grid-template-columns: 1fr; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
     } catch (err) {
+        console.error('Certificate load error:', err);
         UI.error('Connection lost with the archive.');
     } finally {
         UI.hideLoader();
     }
 }
 
-// View certificate in browser (new tab)
+// View certificate in browser (new tab) — fetches PDF as blob with auth headers
 async function viewCertificate(certID) {
     try {
-        // Open certificate in new tab using view endpoint (inline display)
-        const viewUrl = `${Auth.apiBase}/certificates/view/${certID}`;
-        const token = localStorage.getItem('authToken');
+        UI.showLoader();
+        const res = await fetch(`${Auth.apiBase}/certificates/view/${certID}`, {
+            headers: Auth.getHeaders()
+        });
+        if (!res.ok) throw new Error('Could not load certificate');
 
-        // Create form and submit to new tab (to pass auth headers)
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = viewUrl;
-        form.target = '_blank';
+        const blob = await res.blob();
+        const blobUrl = URL.createObjectURL(blob);
 
-        // Add token as hidden input (backend will need to accept this)
-        // Alternative: open with token in query param
-        window.open(`${viewUrl}?token=${token}`, '_blank');
-
-        UI.info('Opening certificate in new tab...');
-
+        // Open inline in a new tab; browser will render the PDF
+        const newTab = window.open(blobUrl, '_blank');
+        if (!newTab) {
+            UI.error('Popup blocked. Please allow popups for this site and try again.');
+            URL.revokeObjectURL(blobUrl);
+            return;
+        }
+        // Revoke after a delay to allow the tab to load
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
     } catch (err) {
         console.error('Certificate view error:', err);
-        UI.error('Could not view certificate. Please try again.');
+        UI.error('Could not preview certificate. Please try Download instead.');
+    } finally {
+        UI.hideLoader();
     }
 }
 
@@ -1255,32 +1571,130 @@ async function loadMarketplace() {
 
         container.innerHTML = courses.map(c => {
             const isEnrolled = enrolledIds.includes(c._id);
+            const mentorName = c.mentors && c.mentors.length > 0 ? c.mentors.map(m => m.name).join(', ') : 'Instructor';
+            const thumb = getThumbnail(c.thumbnail);
+
+            let ctaBtn = '';
+            if (isEnrolled) {
+                ctaBtn = `<button onclick="switchSection('course')" style="
+                    width:100%; padding:11px; border:none; border-radius:10px;
+                    background:linear-gradient(135deg,#22c55e,#16a34a); color:#fff;
+                    font-weight:700; font-size:0.9rem; cursor:pointer;
+                    display:flex; align-items:center; justify-content:center; gap:8px;
+                    font-family:inherit;">
+                    <i class="fas fa-check-circle"></i> Continue Learning
+                </button>`;
+            } else if (c.status === 'Approved') {
+                ctaBtn = `<button onclick="openNotifyModal('${c._id}','${c.title.replace(/'/g, "\\'")}')" style="
+                    width:100%; padding:11px; border:none; border-radius:10px;
+                    background:linear-gradient(135deg,#F59E0B,#D97706); color:#fff;
+                    font-weight:700; font-size:0.9rem; cursor:pointer;
+                    display:flex; align-items:center; justify-content:center; gap:8px;
+                    font-family:inherit;">
+                    <i class="fas fa-bell"></i> Notify Me
+                </button>`;
+            } else {
+                ctaBtn = `<button onclick="purchaseCourse('${c._id}','${c.price}',event)" style="
+                    width:100%; padding:11px; border:none; border-radius:10px;
+                    background:linear-gradient(135deg,#FF9933,#FFC300); color:#fff;
+                    font-weight:700; font-size:0.9rem; cursor:pointer;
+                    display:flex; align-items:center; justify-content:center; gap:8px;
+                    box-shadow:0 4px 12px rgba(255,153,51,0.35); font-family:inherit;
+                    transition:transform 0.2s,box-shadow 0.2s;"
+                    onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 20px rgba(255,153,51,0.45)';"
+                    onmouseout="this.style.transform='';this.style.boxShadow='0 4px 12px rgba(255,153,51,0.35)';">
+                    <i class="fas fa-bolt"></i> Enroll Now
+                </button>`;
+            }
+
             return `
-            <div class="course-card glass-premium" style="display: flex; flex-direction: column; justify-content: space-between;">
-                <div>
-                    <div class="course-thumb" style="background: url('${getThumbnail(c.thumbnail)}'); background-size: cover; height: 160px;">
-                        <span class="badge" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem;">${c.category}</span>
-                    </div>
-                    <div class="course-info" style="padding: 15px;">
-                        <h4 style="margin: 0 0 5px; font-size: 1.1rem; color: var(--color-primary);">${c.title}</h4>
-                        <p style="color: var(--color-text-secondary); font-size: 0.85rem; margin-bottom: 10px;">By <span style="color: var(--color-saffron);">${c.mentorID?.name || 'Mentor'}</span></p>
-                        <p style="font-size: 0.9rem; margin-bottom: 15px; color: #666; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${c.description}</p>
+            <div class="mkt-course-card" style="
+                background:#fff; border-radius:16px; overflow:hidden;
+                display:flex; flex-direction:column;
+                box-shadow:0 4px 20px rgba(0,0,0,0.08);
+                border:1px solid rgba(255,153,51,0.12);
+                transition:transform 0.25s ease,box-shadow 0.25s ease;"
+                onmouseover="this.style.transform='translateY(-5px)';this.style.boxShadow='0 14px 36px rgba(255,153,51,0.16)';"
+                onmouseout="this.style.transform='';this.style.boxShadow='0 4px 20px rgba(0,0,0,0.08)';">
+
+                <!-- Thumbnail -->
+                <div style="position:relative; height:180px; background:url('${thumb}') center/cover #f5efe4; flex-shrink:0;">
+                    <!-- Category pill -->
+                    <span style="position:absolute;top:10px;left:10px;
+                        background:rgba(0,0,0,0.55);backdrop-filter:blur(6px);
+                        color:#fff;font-size:0.7rem;font-weight:600;
+                        padding:4px 10px;border-radius:20px;letter-spacing:0.04em;">
+                        ${c.category || 'Course'}
+                    </span>
+                    ${isEnrolled ? `<span style="position:absolute;top:10px;right:10px;
+                        background:#22c55e;color:#fff;font-size:0.7rem;font-weight:700;
+                        padding:4px 10px;border-radius:20px;"><i class="fas fa-check"></i> Enrolled</span>` : ''}
+                </div>
+
+                <!-- Body -->
+                <div style="padding:16px 16px 12px; flex:1; display:flex; flex-direction:column; gap:8px;">
+                    <!-- Title -->
+                    <h4 style="margin:0; font-size:0.97rem; line-height:1.4; color:var(--color-primary);
+                        font-family:var(--font-heading);
+                        display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
+                        ${c.title}
+                    </h4>
+
+                    <!-- Mentor -->
+                    <p style="margin:0;font-size:0.8rem;color:var(--color-text-secondary);">
+                        <i class="fas fa-user-tie" style="color:var(--color-saffron);margin-right:4px;font-size:0.75rem;"></i>
+                        ${mentorName}
+                    </p>
+
+                    <!-- Description -->
+                    <p style="margin:0;font-size:0.82rem;color:#666;line-height:1.5;
+                        display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
+                        ${c.description || ''}
+                    </p>
+
+                    <!-- Meta strip -->
+                    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:4px;">
+                        <span style="font-size:0.75rem;color:#888;display:flex;align-items:center;gap:4px;">
+                            <i class="fas fa-play-circle" style="color:var(--color-saffron);"></i> ${c.totalLessons || 0} Lessons
+                        </span>
+                        ${c.duration ? `<span style="font-size:0.75rem;color:#888;display:flex;align-items:center;gap:4px;">
+                            <i class="fas fa-clock" style="color:var(--color-saffron);"></i> ${c.duration}
+                        </span>` : ''}
                     </div>
                 </div>
-                <div style="padding: 0 15px 15px;">
-                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-top: 1px solid #eee; padding-top: 10px;">
-                        <span style="font-weight: bold; font-size: 1.2rem; color: var(--color-primary);">₹${c.price}</span>
-                        <span style="font-size: 0.8rem; color: #777;"><i class="fas fa-video"></i> ${c.totalLessons || 0} Lessons</span>
+
+                <!-- Footer -->
+                <div style="padding:0 16px 16px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;
+                        padding:10px 0;border-top:1px solid rgba(0,0,0,0.06);margin-bottom:10px;">
+                        <span style="font-size:1.25rem;font-weight:800;color:var(--color-primary);">₹${c.price}</span>
+                        <span style="font-size:0.72rem;color:#aaa;text-decoration:line-through;">₹${Math.round(c.price * 1.25)}</span>
                     </div>
-                    ${isEnrolled ?
-                    `<button onclick="switchSection('course')" class="btn-primary" style="width: 100%; padding: 10px; background: var(--color-success); border: none;"><i class="fas fa-check"></i> Enrolled</button>` :
-                    c.status === 'Approved' ?
-                        `<button onclick="openNotifyModal('${c._id}', '${c.title.replace(/'/g, "\\'")}')" class="btn-secondary" style="width: 100%; padding: 10px; background: #F59E0B; color: white; border: none;"><i class="fas fa-bell"></i> Notify Me</button>` :
-                        `<button onclick="purchaseCourse('${c._id}', '${c.price}', event)" class="btn-primary" style="width: 100%; padding: 10px; background: linear-gradient(135deg, #FF9933, #FFC300); color: white; border: none; box-shadow: 0 4px 15px rgba(255, 153, 51, 0.3); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(255, 153, 51, 0.4)'; this.style.background='linear-gradient(135deg, #FFC300, #FF9933)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(255, 153, 51, 0.3)'; this.style.background='linear-gradient(135deg, #FF9933, #FFC300)'"><i class="fas fa-cart-plus"></i> Enroll Now</button>`
+                    ${ctaBtn}
+                </div>
+            </div>`;
+        }).join('');
+
+        // Inject responsive marketplace grid CSS once
+        if (!document.getElementById('mktGridStyle')) {
+            const s = document.createElement('style');
+            s.id = 'mktGridStyle';
+            s.textContent = `
+                #marketplaceGrid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                    gap: 22px;
                 }
-                </div>
-            </div>
-        `}).join('');
+                @media (max-width: 768px) {
+                    #marketplaceGrid { grid-template-columns: repeat(2,1fr); gap: 14px; }
+                    .mkt-course-card > div[style*="height:180px"] { height: 140px !important; }
+                }
+                @media (max-width: 480px) {
+                    #marketplaceGrid { grid-template-columns: 1fr; gap: 12px; }
+                }
+            `;
+            document.head.appendChild(s);
+        }
 
     } catch (err) {
         UI.error('Course catalog temporarily unavailable.');

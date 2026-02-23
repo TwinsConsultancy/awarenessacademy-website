@@ -139,12 +139,34 @@ exports.startExamAttempt = async (req, res) => {
         const { examID } = req.body;
         const studentID = req.user.id;
 
-        const { ExamAttempt, Result, Exam } = require('../models/index');
+        const { ExamAttempt, Result, Exam, Certificate } = require('../models/index');
 
         // Get exam
         const exam = await Exam.findById(examID);
         if (!exam) {
             return res.status(404).json({ message: 'Exam not found' });
+        }
+
+        // FIRST: Check for certificate regardless of pass status (priority check)
+        const certificate = await Certificate.findOne({ 
+            studentID, 
+            courseID: exam.courseID 
+        });
+        
+        if (certificate) {
+            console.log(`Certificate found for student ${studentID}, course ${exam.courseID}`);
+            // Delete any incomplete attempts if they exist
+            await ExamAttempt.deleteMany({
+                studentID,
+                examID,
+                completed: false
+            });
+            
+            return res.status(403).json({
+                hasCertificate: true,
+                message: 'You have already received a certificate for this course. The assessment cannot be attempted again.',
+                certificateID: certificate._id
+            });
         }
 
         // Check if already passed
@@ -155,6 +177,7 @@ exports.startExamAttempt = async (req, res) => {
         });
 
         if (passedResult) {
+            console.log(`Passed result found for student ${studentID}, exam ${examID}`);
             return res.status(403).json({
                 message: 'You have already passed this assessment. No retakes allowed.'
             });
@@ -168,6 +191,7 @@ exports.startExamAttempt = async (req, res) => {
         });
 
         if (incompleteAttempt) {
+            console.log(`Resuming incomplete attempt ${incompleteAttempt._id}`);
             // Return existing attempt with full exam settings
             return res.status(200).json({
                 message: 'Resuming existing attempt',
@@ -229,7 +253,23 @@ exports.submitExam = async (req, res) => {
             .populate('courseID', 'title mentors');
 
         if (!attempt) {
-            return res.status(404).json({ message: 'Exam attempt not found' });
+            console.error(`Attempt not found for ID: ${attemptID}, Student: ${studentID}`);
+            
+            // Check if student has certificate for any course (attempt might have been cleaned up)
+            const { Certificate } = require('../models/index');
+            const hasCertificate = await Certificate.findOne({ studentID });
+            
+            if (hasCertificate) {
+                return res.status(403).json({ 
+                    hasCertificate: true,
+                    message: 'This exam attempt is no longer valid. You have already received a certificate for this course.',
+                    certificateID: hasCertificate._id
+                });
+            }
+            
+            return res.status(404).json({ 
+                message: 'Exam attempt not found or has expired. Please start a new assessment.' 
+            });
         }
 
         if (attempt.studentID.toString() !== studentID) {
@@ -382,6 +422,33 @@ exports.checkEligibility = async (req, res) => {
             });
         }
 
+        // Check if already has certificate (priority check)
+        const certificate = await Certificate.findOne({ studentID, courseID });
+        
+        if (certificate) {
+            console.log(`Certificate exists for student ${studentID}, course ${courseID}`);
+            
+            // Clean up any incomplete attempts
+            const { ExamAttempt } = require('../models/index');
+            const deletedCount = await ExamAttempt.deleteMany({
+                studentID,
+                courseID,
+                completed: false
+            });
+            
+            if (deletedCount.deletedCount > 0) {
+                console.log(`Cleaned up ${deletedCount.deletedCount} incomplete attempts`);
+            }
+            
+            return res.status(200).json({
+                eligible: false,
+                alreadyPassed: true,
+                hasCertificate: true,
+                message: 'You have already received a certificate for this course! The assessment cannot be reattempted.',
+                certificateID: certificate._id
+            });
+        }
+
         // Check if already passed
         const passedResult = await Result.findOne({
             studentID,
@@ -390,13 +457,11 @@ exports.checkEligibility = async (req, res) => {
         });
 
         if (passedResult) {
-            const certificate = await Certificate.findOne({ studentID, courseID });
             return res.status(200).json({
                 eligible: false,
                 alreadyPassed: true,
                 message: 'You have already passed this assessment!',
-                score: passedResult.score,
-                certificateID: certificate ? certificate._id : null
+                score: passedResult.score
             });
         }
 
