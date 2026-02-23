@@ -1,5 +1,5 @@
 /**
- * InnerSpark - Secure Checkout Logic
+ * AWARNESS ACADEMY - Secure Checkout Logic
  */
 
 let selectedMethod = 'Card';
@@ -70,7 +70,7 @@ async function applyCoupon() {
         if (res.ok) {
             discountPercent = data.discountPercent;
             appliedCoupon = code.toUpperCase();
-            alert('Grace code applied! InnerSpark welcomes you.');
+            alert('Grace code applied! AWARNESS ACADEMY welcomes you.');
             updateTotals();
         } else {
             alert(data.message);

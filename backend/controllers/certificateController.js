@@ -118,7 +118,7 @@ exports.viewCertificate = async (req, res) => {
         doc.fontSize(32)
             .fillColor('#FF9933')
             .font('Helvetica-Bold')
-            .text('INNERSPARK SANCTUARY', 0, 105, { align: 'center' });
+            .text('AWARENESS ACADEMY', 0, 105, { align: 'center' });
 
         doc.fontSize(10)
             .fillColor('#888888')
@@ -148,37 +148,82 @@ exports.viewCertificate = async (req, res) => {
         const photoX = 60;
         const photoY = 220;
 
+        let photoDisplayed = false;
+
         if (cert.studentID.profilePhoto) {
+            console.log('Certificate - Profile photo field:', cert.studentID.profilePhoto);
             const photoPath = path.join(__dirname, '../../', cert.studentID.profilePhoto);
+            console.log('Certificate - Resolved photo path:', photoPath);
+            
             if (fs.existsSync(photoPath)) {
-                doc.circle(photoX + photoSize / 2, photoY + photoSize / 2, photoSize / 2 + 3)
-                    .lineWidth(2)
-                    .strokeColor('#FFC300')
-                    .stroke();
+                console.log('Certificate - Photo file exists, displaying');
+                try {
+                    // Draw decorative border around photo
+                    doc.circle(photoX + photoSize / 2, photoY + photoSize / 2, photoSize / 2 + 3)
+                        .lineWidth(2)
+                        .strokeColor('#FFC300')
+                        .stroke();
 
-                doc.save()
-                    .circle(photoX + photoSize / 2, photoY + photoSize / 2, photoSize / 2)
-                    .clip();
+                    doc.save()
+                        .circle(photoX + photoSize / 2, photoY + photoSize / 2, photoSize / 2)
+                        .clip();
 
-                doc.image(photoPath, photoX, photoY, {
-                    width: photoSize,
-                    height: photoSize,
-                    align: 'center',
-                    valign: 'center'
-                });
+                    doc.image(photoPath, photoX, photoY, {
+                        width: photoSize,
+                        height: photoSize,
+                        align: 'center',
+                        valign: 'center'
+                    });
 
-                doc.restore();
+                    doc.restore();
+                    photoDisplayed = true;
+                } catch (err) {
+                    console.error('Certificate - Error loading photo:', err.message);
+                }
+            } else {
+                console.log('Certificate - Photo file does not exist at path');
             }
         } else {
+            console.log('Certificate - No profilePhoto field in student data');
+        }
+
+        // Draw placeholder if photo wasn't displayed
+        if (!photoDisplayed) {
+            console.log('Certificate - Drawing placeholder with initials');
+            
+            // Draw filled circle background with border
+            doc.circle(photoX + photoSize / 2, photoY + photoSize / 2, photoSize / 2)
+                .fillOpacity(1)
+                .fill('#F5F5F5')
+                .strokeOpacity(1)
+                .lineWidth(1)
+                .stroke('#E0E0E0');
+
+            // Draw golden outer border on top
             doc.circle(photoX + photoSize / 2, photoY + photoSize / 2, photoSize / 2 + 3)
                 .lineWidth(2)
-                .strokeColor('#FFC300')
-                .stroke();
+                .strokeOpacity(1)
+                .stroke('#FFC300');
 
-            doc.circle(photoX + photoSize / 2, photoY + photoSize / 2, photoSize / 2)
-                .lineWidth(1)
-                .strokeColor('#E0E0E0')
-                .stroke();
+            // Add user icon placeholder (initials)
+            const initials = cert.studentID.name
+                .split(' ')
+                .filter(word => word.length > 0)
+                .map(word => word[0])
+                .join('')
+                .substring(0, 2)
+                .toUpperCase();
+
+            console.log('Certificate - Displaying initials:', initials);
+
+            doc.fillOpacity(1)
+                .fontSize(30)
+                .fillColor('#999999')
+                .font('Helvetica-Bold')
+                .text(initials, photoX, photoY + photoSize / 2 - 15, {
+                    width: photoSize,
+                    align: 'center'
+                });
         }
 
         // ======= CERTIFICATION TEXT =======
@@ -347,7 +392,7 @@ exports.viewCertificate = async (req, res) => {
         doc.fontSize(100)
             .fillColor('#FF9933', 0.02)
             .font('Helvetica-Bold')
-            .text('INNERSPARK', pageWidth / 2 - 180, pageHeight / 2 - 40, {
+            .text('AWARENESS ACADEMY', pageWidth / 2 - 180, pageHeight / 2 - 40, {
                 rotate: 45,
                 opacity: 0.02
             });
@@ -494,7 +539,7 @@ exports.downloadCertificate = async (req, res) => {
         doc.fontSize(32)
             .fillColor('#FF9933')
             .font('Helvetica-Bold')
-            .text('INNERSPARK SANCTUARY', 0, 105, { align: 'center' });
+            .text('AWARENESS ACADEMY', 0, 105, { align: 'center' });
 
         // Tagline
         doc.fontSize(10)
@@ -529,41 +574,83 @@ exports.downloadCertificate = async (req, res) => {
         const photoX = 60;
         const photoY = 220;
 
+        let photoDisplayed = false;
+
         if (cert.studentID.profilePhoto) {
+            console.log('Download Certificate - Profile photo field:', cert.studentID.profilePhoto);
             const photoPath = path.join(__dirname, '../../', cert.studentID.profilePhoto);
+            console.log('Download Certificate - Resolved photo path:', photoPath);
 
             if (fs.existsSync(photoPath)) {
-                // Draw decorative border around photo
-                doc.circle(photoX + photoSize / 2, photoY + photoSize / 2, photoSize / 2 + 3)
-                    .lineWidth(2)
-                    .strokeColor('#FFC300')
-                    .stroke();
+                console.log('Download Certificate - Photo file exists, displaying');
+                try {
+                    // Draw decorative border around photo
+                    doc.circle(photoX + photoSize / 2, photoY + photoSize / 2, photoSize / 2 + 3)
+                        .lineWidth(2)
+                        .strokeColor('#FFC300')
+                        .stroke();
 
-                // Clip to circle and insert photo
-                doc.save()
-                    .circle(photoX + photoSize / 2, photoY + photoSize / 2, photoSize / 2)
-                    .clip();
+                    // Clip to circle and insert photo
+                    doc.save()
+                        .circle(photoX + photoSize / 2, photoY + photoSize / 2, photoSize / 2)
+                        .clip();
 
-                doc.image(photoPath, photoX, photoY, {
-                    width: photoSize,
-                    height: photoSize,
-                    align: 'center',
-                    valign: 'center'
-                });
+                    doc.image(photoPath, photoX, photoY, {
+                        width: photoSize,
+                        height: photoSize,
+                        align: 'center',
+                        valign: 'center'
+                    });
 
-                doc.restore();
+                    doc.restore();
+                    photoDisplayed = true;
+                } catch (err) {
+                    console.error('Download Certificate - Error loading photo:', err.message);
+                }
+            } else {
+                console.log('Download Certificate - Photo file does not exist at path');
             }
         } else {
-            // Empty ornate frame if no photo (no placeholder image)
+            console.log('Download Certificate - No profilePhoto field in student data');
+        }
+
+        // Draw placeholder if photo wasn't displayed
+        if (!photoDisplayed) {
+            console.log('Download Certificate - Drawing placeholder with initials');
+            
+            // Draw filled circle background with border
+            doc.circle(photoX + photoSize / 2, photoY + photoSize / 2, photoSize / 2)
+                .fillOpacity(1)
+                .fill('#F5F5F5')
+                .strokeOpacity(1)
+                .lineWidth(1)
+                .stroke('#E0E0E0');
+
+            // Draw golden outer border on top
             doc.circle(photoX + photoSize / 2, photoY + photoSize / 2, photoSize / 2 + 3)
                 .lineWidth(2)
-                .strokeColor('#FFC300')
-                .stroke();
+                .strokeOpacity(1)
+                .stroke('#FFC300');
 
-            doc.circle(photoX + photoSize / 2, photoY + photoSize / 2, photoSize / 2)
-                .lineWidth(1)
-                .strokeColor('#E0E0E0')
-                .stroke();
+            // Add user icon placeholder (initials)
+            const initials = cert.studentID.name
+                .split(' ')
+                .filter(word => word.length > 0)
+                .map(word => word[0])
+                .join('')
+                .substring(0, 2)
+                .toUpperCase();
+
+            console.log('Download Certificate - Displaying initials:', initials);
+
+            doc.fillOpacity(1)
+                .fontSize(30)
+                .fillColor('#999999')
+                .font('Helvetica-Bold')
+                .text(initials, photoX, photoY + photoSize / 2 - 15, {
+                    width: photoSize,
+                    align: 'center'
+                });
         }
 
         // ======= CERTIFICATION TEXT =======
@@ -745,7 +832,7 @@ exports.downloadCertificate = async (req, res) => {
         doc.fontSize(100)
             .fillColor('#FF9933', 0.02)
             .font('Helvetica-Bold')
-            .text('INNERSPARK', pageWidth / 2 - 180, pageHeight / 2 - 40, {
+            .text('AWARENESS ACADEMY', pageWidth / 2 - 180, pageHeight / 2 - 40, {
                 rotate: 45,
                 opacity: 0.02
             });

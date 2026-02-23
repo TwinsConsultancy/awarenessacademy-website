@@ -392,8 +392,8 @@
                         // Update spending metrics with actual data (using correct element IDs)
                         document.getElementById('totalSpent').textContent = `₹${analytics.totalSpent || 0}`;
                         document.getElementById('avgTransaction').textContent = `₹${analytics.averageTransaction || 0}`;
-                        document.getElementById('totalTransactions').textContent = analytics.totalPayments || 0;
-                        document.getElementById('failedPayments').textContent = analytics.failedAttempts || 0;
+                        document.getElementById('totalPayments').textContent = analytics.totalPayments || 0;
+                        document.getElementById('failedAttempts').textContent = analytics.failedAttempts || 0;
 
                         console.log('Payment analytics updated:', {
                             totalSpent: analytics.totalSpent,
@@ -402,8 +402,7 @@
                             failedAttempts: analytics.failedAttempts
                         });
 
-                        // Load payment failures
-                        loadPaymentFailures(analytics.failures || []);
+
                     } else {
                         console.warn('Payment analytics returned unsuccessful response:', data);
                         loadMockPaymentData();
@@ -432,31 +431,9 @@
             document.getElementById('avgTransaction').textContent = `₹${Math.floor(Math.random() * 3000) + 1000}`;
             document.getElementById('totalPayments').textContent = Math.floor(Math.random() * 15) + 3;
             document.getElementById('failedAttempts').textContent = Math.floor(Math.random() * 3);
-
-            // Mock failure data
-            const mockFailures = [
-                { reason: 'Insufficient funds', amount: 1500, date: '2024-01-15' },
-                { reason: 'Card expired', amount: 2200, date: '2024-01-10' }
-            ];
-            loadPaymentFailures(mockFailures);
         }
 
-        function loadPaymentFailures(failures) {
-            const container = document.getElementById('paymentFailuresList');
-            if (!failures || failures.length === 0) {
-                container.innerHTML = '<p style="text-align: center; color: #10B981; padding: 20px;"><i class="fas fa-check-circle"></i> No failed payment attempts</p>';
-                return;
-            }
 
-            container.innerHTML = failures.map(failure => `
-                <div class="payment-failure-item">
-                    <div>
-                        <div class="failure-reason">${failure.reason}</div>
-                        <div class="failure-amount">₹${failure.amount} - ${new Date(failure.date).toLocaleDateString()}</div>
-                    </div>
-                </div>
-            `).join('');
-        }
 
         // Initialize feedback modal when page loads
         document.addEventListener('DOMContentLoaded', function () {
@@ -1145,6 +1122,296 @@
             gap: 15px;
         }
 
+        /* Payment Cards Styling */
+        .payment-card-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding: 10px 5px;
+        }
+
+        .payment-item-card {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+            gap: 15px;
+            padding: 20px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+            position: relative;
+        }
+
+        .payment-item-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            background: white;
+        }
+
+        .payment-icon-box {
+            width: 45px;
+            height: 45px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .payment-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .payment-course {
+            font-weight: 700;
+            color: var(--color-primary);
+            margin: 0 0 4px 0;
+            font-size: 1.05rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .payment-meta {
+            display: flex;
+            gap: 15px;
+            color: #777;
+            font-size: 0.85rem;
+        }
+
+        .payment-amount {
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: #333;
+            text-align: right;
+        }
+
+        .payment-status-badge {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.8rem;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            margin-top: 5px;
+            width: fit-content;
+        }
+
+        .failure-msg-area {
+            grid-column: 1 / -1;
+            background: rgba(220, 53, 69, 0.05);
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 0.85rem;
+            color: #dc3545;
+            display: none;
+            border-left: 3px solid #dc3545;
+        }
+
+        .payment-item-card[data-failed="true"]:hover .failure-msg-area,
+        .payment-item-card[data-failed="true"]:active .failure-msg-area {
+            display: block;
+        }
+
+        @media (max-width: 600px) {
+            .payment-item-card {
+                grid-template-columns: auto 1fr;
+                gap: 12px;
+                padding: 15px;
+            }
+
+            .payment-amount {
+                grid-column: 2;
+                text-align: left;
+                font-size: 1.1rem;
+            }
+
+            .payment-course {
+                font-size: 1rem;
+            }
+        }
+
+        /* Profile Enhancements */
+        .btn-primary:disabled,
+        .btn-primary.disabled {
+            background: #e0e0e0 !important;
+            color: #999 !important;
+            cursor: not-allowed !important;
+            box-shadow: none !important;
+            opacity: 0.8;
+            transform: none !important;
+        }
+
+        .profile-photo-row {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+            padding: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .profile-photo-row {
+                flex-direction: column;
+                text-align: center;
+                gap: 20px;
+            }
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #444;
+            font-size: 0.9rem;
+        }
+
+        .form-control {
+            border-radius: 8px !important;
+            padding: 12px 15px !important;
+            border: 1px solid #ddd !important;
+            transition: all 0.3s ease !important;
+        }
+
+        .form-control:focus {
+            border-color: var(--color-saffron) !important;
+            background: #fff !important;
+        }
+
+        /* Profile Section Subsection headers */
+        #profileSection h2 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-top: 40px;
+            margin-bottom: 25px;
+            position: relative;
+            padding-left: 15px;
+        }
+
+        #profileSection h2::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 24px;
+            background: var(--color-saffron);
+            border-radius: 2px;
+        }
+
+        .completion-status-bar {
+            height: 6px;
+            background: #eee;
+            border-radius: 10px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+
+        .completion-status-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--color-saffron), var(--color-golden));
+            width: 0%;
+            transition: width 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        .profile-group-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .profile-group-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.03);
+            border-color: rgba(255, 153, 51, 0.2);
+        }
+
+        .profile-group-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+        }
+
+        .profile-group-header i {
+            width: 38px;
+            height: 38px;
+            background: rgba(255, 153, 51, 0.1);
+            color: var(--color-saffron);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            font-size: 1.1rem;
+        }
+
+        .profile-group-header h3 {
+            margin: 0;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--color-primary);
+        }
+
+        .profile-field-enhanced {
+            position: relative;
+        }
+
+        .profile-field-enhanced i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+            font-size: 0.9rem;
+            pointer-events: none;
+        }
+
+        .profile-field-enhanced .form-control {
+            padding-left: 38px !important;
+        }
+
+        .profile-progress-container {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 1px solid #eee;
+        }
+
+        .profile-progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .profile-progress-header span {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #444;
+        }
+
+        .profile-progress-header .percent {
+            color: var(--color-saffron);
+            font-size: 1.1rem;
+        }
+
         /* === HAMBURGER MENU BUTTON (mobile only) === */
         .mobile-menu-btn {
             display: none;
@@ -1227,6 +1494,35 @@
             .mobile-charts-grid {
                 grid-template-columns: 1fr;
             }
+        }
+
+        /* === FIELD HIGHLIGHT ANIMATION === */
+        @keyframes fieldPulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 153, 51, 0.4);
+                border-color: var(--color-saffron);
+            }
+
+            50% {
+                box-shadow: 0 0 0 10px rgba(255, 153, 51, 0);
+                border-color: var(--color-golden);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 153, 51, 0);
+                border-color: #ddd;
+            }
+        }
+
+        .field-highlight {
+            animation: fieldPulse 1.5s ease-in-out infinite;
+            border-width: 2px !important;
+            background-color: rgba(255, 153, 51, 0.05) !important;
+        }
+
+        .required-star {
+            color: #ff4d4f;
+            margin-left: 3px;
         }
 
         /* === MOBILE BREAKPOINT (768px) === */
@@ -2627,15 +2923,15 @@
                         <div
                             style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 5px;">
                             <span>Progress</span>
-                            <span id="profileAlertPercent">0%</span>
+                            <span id="alertProgressPercent">0%</span>
                         </div>
                         <div style="height: 6px; background: rgba(0,0,0,0.1); border-radius: 3px; overflow: hidden;">
-                            <div id="profileAlertBar"
+                            <div id="alertProgressBar"
                                 style="height: 100%; width: 0%; background: var(--color-saffron); transition: width 0.3s ease;">
                             </div>
                         </div>
                     </div>
-                    <button onclick="switchSection('profile')" class="btn-primary"
+                    <button onclick="scrollToIncompleteFields()" class="btn-primary"
                         style="padding: 8px 15px; font-size: 0.85rem; margin-left: 20px;">Complete Now</button>
                 </div>
 
@@ -2784,13 +3080,13 @@
 
                     <!-- Quick Actions -->
                     <div class="quick-actions">
-                        <button class="quick-action-btn" id="continuelearningBtn">
-                            <i class="fas fa-book-reader"></i>
-                            <span>Continue Learning</span>
-                        </button>
                         <button class="quick-action-btn" onclick="switchSection('marketplace')">
                             <i class="fas fa-store"></i>
                             <span>Browse Courses</span>
+                        </button>
+                        <button class="quick-action-btn" id="continuelearningBtn">
+                            <i class="fas fa-book-reader"></i>
+                            <span>Continue Learning</span>
                         </button>
                         <button class="quick-action-btn" onclick="switchSection('certificates')">
                             <i class="fas fa-certificate"></i>
@@ -2821,158 +3117,293 @@
 
                 <!-- Profile Section -->
                 <div id="profileSection" style="display: none;">
-                    <div class="glass-card" style="padding: 30px;">
-                        <div class="section-title-row" style="border-bottom: 2px solid #eee; padding-bottom: 10px;">
-                            <h2 style="margin: 0; color: var(--color-primary);">Personal Details</h2>
+                    <div class="glass-card" style="padding: 25px;">
+                        <!-- Profile Header -->
+                        <div class="section-title-row"
+                            style="border-bottom: 2px solid #f0f0f0; padding-bottom: 20px; margin-bottom: 30px;">
+                            <div style="flex: 1;">
+                                <h2 style="margin: 0 0 5px 0; color: var(--color-primary); border: none; padding: 0;">My
+                                    Profile</h2>
+                                <p style="margin: 0; color: #777; font-size: 0.9rem;">Manage your personal information
+                                    and documents</p>
+                            </div>
                             <button class="btn-primary" id="downloadIDBtn"
-                                style="background: linear-gradient(135deg, var(--color-saffron), var(--color-golden)); color: white; border: none; box-shadow: 0 4px 15px rgba(255, 153, 51, 0.3);">
+                                title="Complete 100% profile to download ID card">
                                 <i class="fas fa-id-card"></i> Get ID Card
                             </button>
                         </div>
+
+                        <!-- Completion Progress Bar -->
+                        <div class="profile-progress-container">
+                            <div class="profile-progress-header">
+                                <span><i class="fas fa-tasks"></i> Profile Completion</span>
+                                <span class="percent" id="profileAlertPercent">0%</span>
+                            </div>
+                            <div class="completion-status-bar">
+                                <div class="completion-status-fill" id="profileAlertBar" style="width: 0%;"></div>
+                            </div>
+                            <p id="profileProgressText" style="margin: 10px 0 0 0; font-size: 0.85rem; color: #666;">
+                                Complete your profile (Personal, Address, and Photo) to unlock your official ID Card.
+                            </p>
+                        </div>
+
                         <form id="profileForm" onsubmit="event.preventDefault(); updateProfile();">
-                            <!-- Profile Photo Section -->
-                            <div style="margin-bottom: 30px; padding: 20px; background: #f9f9f9; border-radius: 10px;">
-                                <label
-                                    style="display: block; margin-bottom: 15px; font-weight: 600; color: #333;">Profile
-                                    Photo</label>
-                                <div class="profile-photo-row">
+
+                            <!-- 1. PERSONAL DETAILS CARD -->
+                            <div class="profile-group-card">
+                                <div class="profile-group-header">
+                                    <i class="fas fa-user"></i>
+                                    <h3>Personal Details</h3>
+                                </div>
+
+                                <!-- Profile Photo Row inside Personal -->
+                                <div class="profile-photo-row"
+                                    style="margin-bottom: 25px; background: rgba(0,0,0,0.02); padding: 20px; border-radius: 12px;">
                                     <div id="profilePhotoPreview"
-                                        style="width: 120px; height: 120px; border-radius: 50%; background: #e0e0e0; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 3px solid var(--color-golden);">
-                                        <i class="fas fa-user" style="font-size: 3rem; color: #999;"></i>
+                                        style="width: 130px; height: 130px; border-radius: 50%; background: #eee; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 4px solid white; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+                                        <i class="fas fa-user" style="font-size: 3.5rem; color: #ccc;"></i>
                                     </div>
                                     <div style="flex: 1;">
                                         <input type="file" id="profilePhotoInput" accept=".jpg,.jpeg,.png"
-                                            style="display: none;"
-                                            onchange="console.log('File input changed'); if(typeof handleProfileUpload === 'function') { handleProfileUpload(this); } else { console.error('handleProfileUpload is not defined!', typeof handleProfileUpload); }">
+                                            style="display: none;" onchange="handleProfileUpload(this)">
                                         <button type="button" class="btn-primary"
-                                            onclick="event.preventDefault(); event.stopPropagation(); console.log('Upload button clicked'); console.log('handleProfileUpload type:', typeof handleProfileUpload); document.getElementById('profilePhotoInput').click(); return false;"
-                                            style="margin-bottom: 10px; background: linear-gradient(135deg, var(--color-saffron), var(--color-golden)); color: white; border: none; box-shadow: 0 4px 15px rgba(255, 153, 51, 0.3);">
-                                            <i class="fas fa-camera"></i> Upload Photo
+                                            onclick="document.getElementById('profilePhotoInput').click();"
+                                            style="margin-bottom: 12px; background: linear-gradient(135deg, var(--color-saffron), var(--color-golden)); color: white; border: none; padding: 10px 20px;">
+                                            <i class="fas fa-camera"></i> Change Photo
                                         </button>
-                                        <div style="font-size: 0.85rem; color: #666;">
-                                            <p style="margin: 5px 0;"><i class="fas fa-info-circle"></i> Upload a clear
-                                                photo of yourself</p>
-                                            <p style="margin: 5px 0;"><strong>Requirements:</strong></p>
-                                            <ul style="margin: 5px 0; padding-left: 20px;">
-                                                <li>Format: JPG or PNG</li>
-                                                <li>Size: 5KB - 50KB</li>
-                                                <li>Recommended: Square photo with face clearly visible</li>
-                                            </ul>
+                                        <div style="font-size: 0.8rem; color: #777; line-height: 1.4;">
+                                            JPG/PNG, 5KB - 50KB. A clear headshot is recommended for your ID card.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mobile-grid-2">
+                                    <div class="form-group">
+                                        <label>Full Name (CAPS)</label>
+                                        <div class="profile-field-enhanced">
+                                            <i class="fas fa-user-tag"></i>
+                                            <input type="text" id="p_name" class="form-control" readonly>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Email Address</label>
+                                        <div class="profile-field-enhanced">
+                                            <i class="fas fa-envelope"></i>
+                                            <input type="email" id="p_email" class="form-control" readonly>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Phone Number <span class="required-star">*</span></label>
+                                        <div class="profile-field-enhanced">
+                                            <i class="fas fa-phone"></i>
+                                            <input type="tel" id="p_phone" class="form-control"
+                                                placeholder="10 digit number">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>WhatsApp Number</label>
+                                        <div class="profile-field-enhanced">
+                                            <i class="fab fa-whatsapp"></i>
+                                            <input type="tel" id="p_whatsapp" class="form-control"
+                                                placeholder="WhatsApp number">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Initial</label>
+                                        <div class="profile-field-enhanced">
+                                            <i class="fas fa-id-badge"></i>
+                                            <input type="text" id="p_initial" class="form-control"
+                                                placeholder="E.g. Mr/Ms/Dr">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Date of Birth <span class="required-star">*</span></label>
+                                        <div class="profile-field-enhanced">
+                                            <i class="fas fa-calendar-alt"></i>
+                                            <input type="date" id="p_dob" class="form-control"
+                                                onchange="calculateAge()">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Gender <span class="required-star">*</span></label>
+                                        <div class="profile-field-enhanced">
+                                            <i class="fas fa-venus-mars"></i>
+                                            <select id="p_gender" class="form-control">
+                                                <option value="Male">Male</option>
+                                                <option value="Female">Female</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Age</label>
+                                        <div class="profile-field-enhanced">
+                                            <i class="fas fa-birthday-cake"></i>
+                                            <input type="text" id="p_age" class="form-control" readonly>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;"
-                                class="mobile-grid-2">
-                                <div class="form-group">
-                                    <label>Full Name (CAPS)</label>
-                                    <input type="text" id="p_name" class="form-control"
-                                        style="text-transform: uppercase;" readonly>
+                            <!-- 2. FAMILY DETAILS CARD -->
+                            <div class="profile-group-card">
+                                <div class="profile-group-header">
+                                    <i class="fas fa-users"></i>
+                                    <h3>Family Details</h3>
                                 </div>
-                                <div class="form-group">
-                                    <label>Email</label>
-                                    <input type="email" id="p_email" class="form-control" readonly
-                                        style="background-color: #f5f5f5; cursor: not-allowed;">
+                                <div class="mobile-grid-2">
+                                    <div class="form-group">
+                                        <label>Father's Name</label>
+                                        <div class="profile-field-enhanced">
+                                            <i class="fas fa-user-friends"></i>
+                                            <input type="text" id="p_fatherName" class="form-control">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Mother's Name</label>
+                                        <div class="profile-field-enhanced">
+                                            <i class="fas fa-user-friends"></i>
+                                            <input type="text" id="p_motherName" class="form-control">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Marital Status</label>
+                                        <div class="profile-field-enhanced">
+                                            <i class="fas fa-heart"></i>
+                                            <select id="p_maritalStatus" class="form-control"
+                                                onchange="toggleSpouseFields()">
+                                                <option value="Single">Single</option>
+                                                <option value="Married">Married</option>
+                                            </select>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="form-group">
-                                    <label>Phone Number</label>
-                                    <input type="tel" id="p_phone" class="form-control" placeholder="10 digit number">
-                                </div>
-                                <div class="form-group">
-                                    <label>Initial</label>
-                                    <input type="text" id="p_initial" class="form-control">
-                                </div>
-                                <div class="form-group">
-                                    <label>Father's Name</label>
-                                    <input type="text" id="p_fatherName" class="form-control">
-                                </div>
-                                <div class="form-group">
-                                    <label>Mother's Name</label>
-                                    <input type="text" id="p_motherName" class="form-control">
-                                </div>
-                                <div class="form-group">
-                                    <label>Date of Birth</label>
-                                    <input type="date" id="p_dob" class="form-control" onchange="calculateAge()">
-                                </div>
-                                <div class="form-group">
-                                    <label>Age</label>
-                                    <input type="text" id="p_age" class="form-control" readonly>
-                                </div>
-                                <div class="form-group">
-                                    <label>Gender</label>
-                                    <select id="p_gender" class="form-control">
-                                        <option value="Male">Male</option>
-                                        <option value="Female">Female</option>
-                                        <option value="Other">Other</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label>Marital Status</label>
-                                    <select id="p_maritalStatus" class="form-control" onchange="toggleSpouseFields()">
-                                        <option value="Single">Single</option>
-                                        <option value="Married">Married</option>
-                                        <option value="Separated">Separated</option>
-                                    </select>
+
+                                <div id="spouseFields" class="mobile-grid-2"
+                                    style="display: none; margin-top: 15px; border-top: 1px dashed #eee; padding-top: 20px;">
+                                    <div class="form-group">
+                                        <label>Spouse Name</label>
+                                        <div class="profile-field-enhanced">
+                                            <i class="fas fa-user"></i>
+                                            <input type="text" id="p_spouseName" class="form-control">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Spouse Contact</label>
+                                        <div class="profile-field-enhanced">
+                                            <i class="fas fa-phone-alt"></i>
+                                            <input type="tel" id="p_spouseContact" class="form-control">
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div id="spouseFields" class="mobile-grid-2"
-                                style="display: none; padding: 20px; background: #f9f9f9; border-radius: 10px; margin-bottom: 30px;">
-                                <div class="form-group">
-                                    <label>Spouse Name</label>
-                                    <input type="text" id="p_spouseName" class="form-control">
+                            <!-- 3. ADDRESS INFORMATION CARD -->
+                            <div class="profile-group-card">
+                                <div class="profile-group-header">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <h3>Address Information</h3>
                                 </div>
-                                <div class="form-group">
-                                    <label>Spouse Contact</label>
-                                    <input type="text" id="p_spouseContact" class="form-control">
+                                <div class="mobile-grid-2">
+                                    <div class="form-group">
+                                        <label>Door Number <span class="required-star">*</span></label>
+                                        <div class="profile-field-enhanced">
+                                            <i class="fas fa-home"></i>
+                                            <input type="text" id="p_doorNumber" class="form-control">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Street Name <span class="required-star">*</span></label>
+                                        <div class="profile-field-enhanced">
+                                            <i class="fas fa-road"></i>
+                                            <input type="text" id="p_streetName" class="form-control">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Town / City <span class="required-star">*</span></label>
+                                        <div class="profile-field-enhanced">
+                                            <i class="fas fa-city"></i>
+                                            <input type="text" id="p_town" class="form-control">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>District <span class="required-star">*</span></label>
+                                        <div class="profile-field-enhanced">
+                                            <i class="fas fa-layer-group"></i>
+                                            <input type="text" id="p_district" class="form-control">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>State <span class="required-star">*</span></label>
+                                        <div class="profile-field-enhanced">
+                                            <i class="fas fa-map"></i>
+                                            <input type="text" id="p_state" class="form-control">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Pincode <span class="required-star">*</span></label>
+                                        <div class="profile-field-enhanced">
+                                            <i class="fas fa-mail-bulk"></i>
+                                            <input type="text" id="p_pincode" class="form-control">
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
-                            <h2
-                                style="margin-bottom: 25px; color: var(--color-primary); border-bottom: 2px solid #eee; padding-bottom: 10px;">
-                                Address Details</h2>
-                            <div class="mobile-grid-2">
-                                <div class="form-group"><label>Door No.</label><input type="text" id="p_doorNumber"
-                                        class="form-control"></div>
-                                <div class="form-group"><label>Street Name</label><input type="text" id="p_streetName"
-                                        class="form-control"></div>
-                                <div class="form-group"><label>Village / Town</label><input type="text" id="p_town"
-                                        class="form-control"></div>
-                                <div class="form-group"><label>District</label><input type="text" id="p_district"
-                                        class="form-control"></div>
-                                <div class="form-group"><label>Pincode</label><input type="text" id="p_pincode"
-                                        class="form-control"></div>
-                                <div class="form-group"><label>State</label><input type="text" id="p_state"
-                                        class="form-control" value="Tamil Nadu" readonly></div>
-                            </div>
-
-                            <h2
-                                style="margin-bottom: 25px; color: var(--color-primary); border-bottom: 2px solid #eee; padding-bottom: 10px;">
-                                Work Details</h2>
-                            <div class="mobile-grid-2">
-                                <div class="form-group">
-                                    <label>Designation Type</label>
-                                    <select id="p_workType" class="form-control">
-                                        <option value="Student">Student</option>
-                                        <option value="Salaried">Salaried</option>
-                                        <option value="Business">Business</option>
-                                        <option value="Daily Wages">Daily Wages</option>
-                                        <option value="Unemployed">Unemployed</option>
-                                    </select>
+                            <!-- 4. WORK DETAILS CARD -->
+                            <div class="profile-group-card">
+                                <div class="profile-group-header">
+                                    <i class="fas fa-briefcase"></i>
+                                    <h3>Work Details</h3>
                                 </div>
-                                <div class="form-group"><label>Work/Company Name</label><input type="text"
-                                        id="p_workName" class="form-control"></div>
-                                <div class="form-group"><label>WhatsApp Number</label><input type="text" id="p_whatsapp"
-                                        class="form-control"></div>
+                                <div class="mobile-grid-2">
+                                    <div class="form-group">
+                                        <label>Occupation Type</label>
+                                        <div class="profile-field-enhanced">
+                                            <i class="fas fa-tools"></i>
+                                            <select id="p_workType" class="form-control">
+                                                <option value="Student">Student</option>
+                                                <option value="Professional">Professional</option>
+                                                <option value="Self-Employed">Self-Employed</option>
+                                                <option value="Homemaker">Homemaker</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Organization / School Name</label>
+                                        <div class="profile-field-enhanced">
+                                            <i class="fas fa-building"></i>
+                                            <input type="text" id="p_workName" class="form-control">
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div class="profile-btn-row">
-                                <button type="submit" class="btn-primary" style="padding: 12px 30px;"><i
-                                        class="fas fa-save"></i>
-                                    Save Profile</button>
-                                <button type="button" onclick="openChangePasswordModal()" class="btn-primary"
-                                    style="background: #666;"><i class="fas fa-key"></i> Change Password</button>
+                            <!-- 5. SECURITY CARD -->
+                            <div class="profile-group-card" style="border-left: 4px solid #666;">
+                                <div class="profile-group-header">
+                                    <i class="fas fa-shield-alt"
+                                        style="background: rgba(102, 102, 102, 0.1); color: #666;"></i>
+                                    <h3>Security</h3>
+                                </div>
+                                <div
+                                    style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
+                                    <p style="margin: 0; color: #666; font-size: 0.9rem;">Keep your account secure by
+                                        updating your password regularly.</p>
+                                    <button type="button" onclick="openChangePasswordModal()" class="btn-primary"
+                                        style="background: #666; border: none; padding: 10px 20px;">
+                                        <i class="fas fa-key"></i> Change Password
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div
+                                style="text-align: right; margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
+                                <button type="submit" class="btn-primary"
+                                    style="padding: 15px 40px; font-size: 1.1rem; border-radius: 12px; background: linear-gradient(135deg, var(--color-primary), #303f9f); box-shadow: 0 4px 15px rgba(63, 81, 181, 0.3);">
+                                    <i class="fas fa-save"></i> Save All Profile Changes
+                                </button>
                             </div>
                         </form>
                     </div>
@@ -3183,7 +3614,7 @@
 
                 <!-- Payments Section -->
                 <div id="paymentsSection" style="display: none;">
-                    <h2 style="margin-bottom: 30px;">Payment History & Analytics</h2>
+
 
                     <!-- Spending Analytics Cards -->
                     <div class="mobile-grid-auto">
@@ -3209,7 +3640,7 @@
                                 style="width: 50px; height: 50px; border-radius: 50%; background: rgba(168, 85, 247, 0.1); color: #A855F7; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; font-size: 1.5rem;">
                                 <i class="fas fa-receipt"></i>
                             </div>
-                            <h3 id="totalTransactions" style="font-size: 2rem; margin: 0 0 5px 0; color: #A855F7;">0
+                            <h3 id="totalPayments" style="font-size: 2rem; margin: 0 0 5px 0; color: #A855F7;">0
                             </h3>
                             <p style="color: var(--color-text-secondary); font-size: 0.9rem; margin: 0;">Total Payments
                             </p>
@@ -3219,11 +3650,13 @@
                                 style="width: 50px; height: 50px; border-radius: 50%; background: rgba(239, 68, 68, 0.1); color: #EF4444; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; font-size: 1.5rem;">
                                 <i class="fas fa-exclamation-triangle"></i>
                             </div>
-                            <h3 id="failedPayments" style="font-size: 2rem; margin: 0 0 5px 0; color: #EF4444;">0</h3>
+                            <h3 id="failedAttempts" style="font-size: 2rem; margin: 0 0 5px 0; color: #EF4444;">0</h3>
                             <p style="color: var(--color-text-secondary); font-size: 0.9rem; margin: 0;">Failed Attempts
                             </p>
                         </div>
                     </div>
+
+
 
                     <!-- Payment History -->
                     <div id="paymentsList" class="glass-card" style="padding: 0;">

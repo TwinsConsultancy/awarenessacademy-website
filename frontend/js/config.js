@@ -1,5 +1,5 @@
 /**
- * InnerSpark - Application Configuration
+ * AWARNESS ACADEMY - Application Configuration
  * Centralized configuration for the frontend
  */
 

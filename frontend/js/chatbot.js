@@ -1,5 +1,5 @@
 /**
- * InnerSpark - Spiritual Guide Chatbot
+ * AWARNESS ACADEMY - Spiritual Guide Chatbot
  */
 
 (function () {

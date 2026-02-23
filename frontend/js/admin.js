@@ -1,5 +1,5 @@
 /**
- * InnerSpark - Admin Command Center Logic
+ * AWARNESS ACADEMY - Admin Command Center Logic
  */
 
 let selectedContentID = null;

@@ -1,5 +1,5 @@
 /**
- * InnerSpark - Common Auth Utility
+ * AWARNESS ACADEMY - Common Auth Utility
  */
 
 let isLoggingOut = false; // Flag to prevent multiple logout attempts

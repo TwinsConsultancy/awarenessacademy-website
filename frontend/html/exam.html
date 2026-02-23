@@ -595,7 +595,7 @@
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `InnerSpark_Certificate_${cert.studentID?.name?.replace(/\s+/g, '_') || 'Student'}.pdf`;
+                a.download = `AWARNESS_ACADEMY_Certificate_${cert.studentID?.name?.replace(/\s+/g, '_') || 'Student'}.pdf`;
                 document.body.appendChild(a);
                 a.click();
 

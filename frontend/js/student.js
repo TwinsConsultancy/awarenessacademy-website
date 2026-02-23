@@ -1245,30 +1245,60 @@ async function loadPayments() {
         }
 
         container.innerHTML = `
-            <table style="width: 100%; border-collapse: collapse; text-align: left;">
-                <thead>
-                    <tr style="background: rgba(0,0,0,0.02); border-bottom: 2px solid #eee;">
-                        <th style="padding: 15px;">Date</th>
-                        <th style="padding: 15px;">Course</th>
-                        <th style="padding: 15px;">Amount</th>
-                        <th style="padding: 15px;">Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${payments.map(p => `
-                        <tr style="border-bottom: 1px solid #eee;">
-                            <td style="padding: 15px;">${new Date(p.date).toLocaleDateString()}</td>
-                            <td style="padding: 15px;">${p.courseID?.title || 'Unknown'}</td>
-                            <td style="padding: 15px;">₹${p.amount}</td>
-                            <td style="padding: 15px;">
-                                <span style="color: ${getPaymentStatusColor(p.status)}; font-weight: 600;">
-                                    ${getPaymentStatusText(p.status)}
-                                </span>
-                            </td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
+            <div class="payment-card-list">
+                ${payments.map(p => {
+            const isSuccess = p.status === 'completed' || p.status === 'Success' || p.status === 'captured';
+            const isFailed = p.status === 'failed' || p.status === 'Failed';
+            const isPending = p.status === 'initiated' || p.status === 'pending';
+
+            let statusColor, statusIcon, statusLabel;
+            if (isSuccess) {
+                statusColor = '#10B981';
+                statusIcon = 'check-circle';
+                statusLabel = 'Successful';
+            } else if (isFailed) {
+                statusColor = '#EF4444';
+                statusIcon = 'times-circle';
+                statusLabel = 'Failed';
+            } else {
+                statusColor = '#F59E0B';
+                statusIcon = 'clock';
+                statusLabel = getPaymentStatusText(p.status);
+            }
+
+            const failureReason = p.failureReason || p.reason || 'Payment failed';
+
+            return `
+                    <div class="payment-item-card" data-failed="${isFailed}">
+                        <div class="payment-icon-box" style="background: ${statusColor}15; color: ${statusColor};">
+                            <i class="fas fa-receipt"></i>
+                        </div>
+                        
+                        <div class="payment-info">
+                            <h4 class="payment-course">${p.courseID?.title || 'Course Offering'}</h4>
+                            <div class="payment-meta">
+                                <span><i class="far fa-calendar-alt"></i> ${new Date(p.date).toLocaleDateString()}</span>
+                                <span><i class="fas fa-fingerprint"></i> ID: ${p._id?.substring(p._id.length - 8).toUpperCase() || 'N/A'}</span>
+                            </div>
+                            <div class="payment-status-badge" style="background: ${statusColor}15; color: ${statusColor};">
+                                <i class="fas fa-${statusIcon}"></i> ${statusLabel}
+                            </div>
+                        </div>
+
+                        <div class="payment-amount">
+                            ₹${p.amount}
+                        </div>
+
+                        ${isFailed ? `
+                        <div class="failure-msg-area">
+                            <strong><i class="fas fa-exclamation-triangle"></i> Failure Reason:</strong><br>
+                            ${failureReason}
+                        </div>
+                        ` : ''}
+                    </div>
+                    `;
+        }).join('')}
+            </div>
         `;
 
         // Also trigger payment analytics if the function exists (from student-dashboard.html)
@@ -1815,6 +1845,7 @@ async function loadProfile() {
         }
 
         checkProfileCompletion(); // Perform check after populating
+        setupProfileProgressListeners(); // Add listeners for real-time updates
     } catch (err) {
         UI.error('Could not load profile details.');
     } finally {
@@ -1839,7 +1870,7 @@ async function updateProfile() {
             town: document.getElementById('p_town').value,
             district: document.getElementById('p_district').value,
             pincode: document.getElementById('p_pincode').value,
-            state: 'Tamil Nadu'
+            state: document.getElementById('p_state').value || 'Tamil Nadu'
         },
         workDetails: {
             type: document.getElementById('p_workType').value,
@@ -1855,16 +1886,67 @@ async function updateProfile() {
             body: JSON.stringify(data)
         });
 
-        if (res.ok) {
+        const result = await res.json();
+
+        // API might return success even if res.ok is problematic or structured differently
+        if (res.ok || (result && (result.success || result.status === 'success'))) {
             UI.success('Profile updated successfully.');
+            // Refresh percentages
+            checkProfileCompletion();
         } else {
-            UI.error('Update failed.');
+            console.error('Update response:', result);
+            UI.error(result.message || 'Update failed.');
         }
     } catch (err) {
+        console.error('Update error:', err);
         UI.error('Connection failed.');
     } finally {
         UI.hideLoader();
     }
+}
+
+function scrollToIncompleteFields() {
+    // 1. Switch to profile section
+    switchSection('profile');
+
+    // 2. Delay slightly to ensure section is visible and layout is ready
+    setTimeout(() => {
+        // ESSENTIAL FIELDS ONLY for 100% completion
+        const mandatoryIds = [
+            'p_phone', 'p_dob', 'p_gender',
+            'p_doorNumber', 'p_streetName', 'p_town', 'p_district', 'p_pincode', 'p_state'
+        ];
+
+        // Also photo check
+        const photoPreview = document.getElementById('profilePhotoPreview');
+        const hasPhoto = photoPreview && (photoPreview.querySelector('img') !== null);
+
+        let firstEmpty = null;
+
+        // Check mandatory fields
+        mandatoryIds.forEach(id => {
+            const el = document.getElementById(id);
+            if (el && (!el.value || el.value.trim() === '')) {
+                el.classList.add('field-highlight');
+                if (!firstEmpty) firstEmpty = el;
+
+                // Remove highlight after 3 seconds
+                setTimeout(() => el.classList.remove('field-highlight'), 3000);
+            }
+        });
+
+        // Check photo
+        if (!hasPhoto && photoPreview) {
+            photoPreview.classList.add('field-highlight');
+            if (!firstEmpty) firstEmpty = photoPreview;
+            setTimeout(() => photoPreview.classList.remove('field-highlight'), 3000);
+        }
+
+        // 3. Scroll to first empty field
+        if (firstEmpty) {
+            firstEmpty.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }, 200);
 }
 
 function calculateAge() {
@@ -1931,35 +2013,104 @@ function checkProfileCompletion() {
 }
 
 function getProfileCompletionPercent() {
-    // We'll read from DOM inputs since `loadProfile` populates them.
-    const fields = [
-        document.getElementById('p_initial')?.value,
-        document.getElementById('p_fatherName')?.value,
-        document.getElementById('p_motherName')?.value,
-        document.getElementById('p_dob')?.value,
-        document.getElementById('p_gender')?.value,
-        document.getElementById('p_doorNumber')?.value,
-        document.getElementById('p_streetName')?.value,
-        document.getElementById('p_town')?.value,
-        document.getElementById('p_district')?.value,
-        document.getElementById('p_pincode')?.value
+    // ESSENTIAL FIELDS ONLY for 100% completion flow
+    const mandatoryIds = [
+        'p_phone', 'p_dob', 'p_gender',
+        'p_doorNumber', 'p_streetName', 'p_town', 'p_district', 'p_pincode', 'p_state'
     ];
 
-    const filled = fields.filter(f => f && f.trim() !== '').length;
-    const total = fields.length;
-    return Math.round((filled / total) * 100);
+    const fields = mandatoryIds.map(id => document.getElementById(id)?.value);
+
+    // Check if profile photo exists
+    const photoPreview = document.getElementById('profilePhotoPreview');
+    // It has a photo if there's an img tag and it's not the default icon
+    const hasPhoto = photoPreview && (photoPreview.querySelector('img') !== null);
+
+    const filledCount = fields.filter(f => f && f.trim() !== '').length + (hasPhoto ? 1 : 0);
+    const totalCount = fields.length + 1; // +1 for the photo
+    return Math.round((filledCount / totalCount) * 100);
+}
+
+// Setup listeners to update progress in real-time
+function setupProfileProgressListeners() {
+    const inputs = [
+        'p_phone', 'p_initial', 'p_fatherName', 'p_motherName', 'p_dob',
+        'p_doorNumber', 'p_streetName', 'p_town', 'p_district', 'p_state',
+        'p_pincode', 'p_whatsapp', 'p_spouseName', 'p_spouseContact', 'p_workName'
+    ];
+
+    inputs.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', checkProfileCompletion);
+            el.addEventListener('change', checkProfileCompletion);
+        }
+    });
+
+    // Also watch for gender and other selects
+    const selects = ['p_gender', 'p_maritalStatus', 'p_workType'];
+    selects.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('change', checkProfileCompletion);
+    });
 }
 
 function renderProfileWarning(percent) {
     const alertBox = document.getElementById('profileAlertContainer');
+    const downloadBtn = document.getElementById('downloadIDBtn');
+
+    // Update ID Download Button State
+    if (downloadBtn) {
+        if (percent < 100) {
+            downloadBtn.disabled = true;
+            downloadBtn.classList.add('disabled');
+            downloadBtn.title = `Profile incomplete (${percent}%). Complete all personal, address and photo details to enable download.`;
+            downloadBtn.style.cursor = 'not-allowed';
+        } else {
+            downloadBtn.disabled = false;
+            downloadBtn.classList.remove('disabled');
+            downloadBtn.title = "Download your official ID card";
+            downloadBtn.style.cursor = 'pointer';
+        }
+    }
+
     if (!alertBox) return;
 
     if (percent < 100) {
-        alertBox.style.display = 'flex';
-        document.getElementById('profileAlertPercent').textContent = `${percent}%`;
-        document.getElementById('profileAlertBar').style.width = `${percent}%`;
+        if (alertBox) alertBox.style.display = 'flex';
+
+        // Update TOP Alert Bar
+        const topPercentText = document.getElementById('alertProgressPercent');
+        const topAlertBar = document.getElementById('alertProgressBar');
+        if (topPercentText) topPercentText.textContent = `${percent}%`;
+        if (topAlertBar) topAlertBar.style.width = `${percent}%`;
+
+        // Update PROFILE Section Bar
+        const percentText = document.getElementById('profileAlertPercent');
+        const alertBar = document.getElementById('profileAlertBar');
+        const progressText = document.getElementById('profileProgressText');
+
+        if (percentText) percentText.textContent = `${percent}%`;
+        if (alertBar) alertBar.style.width = `${percent}%`;
+        if (progressText) {
+            progressText.innerHTML = `Complete your profile (Personal, Address, and Photo) to unlock your official ID Card. <strong>Required: 100%</strong>`;
+            progressText.style.color = '#e67e22';
+        }
     } else {
-        alertBox.style.display = 'none';
+        if (alertBox) alertBox.style.display = 'none';
+        const progressText = document.getElementById('profileProgressText');
+        if (progressText) {
+            progressText.innerHTML = `<i class="fas fa-check-circle"></i> Profile complete! You can now download your official ID Card.`;
+            progressText.style.color = '#27ae60';
+        }
+        const percentText = document.getElementById('profileAlertPercent');
+        if (percentText) percentText.textContent = '100%';
+
+        // Also update top bar just in case
+        const topPercentText = document.getElementById('alertProgressPercent');
+        const topAlertBar = document.getElementById('alertProgressBar');
+        if (topPercentText) topPercentText.textContent = '100%';
+        if (topAlertBar) topAlertBar.style.width = '100%';
     }
 }
 
@@ -2147,13 +2298,10 @@ async function handleProfileUpload(input) {
                 const profilePicUrl = data.data?.user?.profilePic || data.user?.profilePic;
                 console.log('Profile pic URL:', profilePicUrl);
 
-                // Accept base64, HTTP URLs, or file system paths
                 if (profilePicUrl && (profilePicUrl.startsWith('data:') || profilePicUrl.startsWith('http') || profilePicUrl.startsWith('/uploads/'))) {
-                    // Get user from localStorage for fallback
+                    // Update header avatar
                     const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
                     const userInitial = currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U';
-
-                    // Update top header avatar
                     const avatar = document.getElementById('userAvatar');
                     if (avatar) {
                         avatar.innerHTML = `<img src="${profilePicUrl}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" onerror="this.parentElement.textContent='${userInitial}';">`;
@@ -2164,6 +2312,7 @@ async function handleProfileUpload(input) {
                     if (photoPreview) {
                         const img = document.createElement('img');
                         img.src = profilePicUrl;
+                        img.className = 'profile-img-preview';
                         img.style.width = '100%';
                         img.style.height = '100%';
                         img.style.objectFit = 'cover';
@@ -2173,10 +2322,12 @@ async function handleProfileUpload(input) {
                         photoPreview.innerHTML = '';
                         photoPreview.appendChild(img);
                     }
+
+                    // Update completion status since photo is now present
+                    checkProfileCompletion();
                 } else {
                     console.error('Invalid profile pic URL format:', profilePicUrl);
                 }
-
             } else {
                 console.error('Upload failed:', data);
                 UI.error(data.message || 'Upload failed');
@@ -2186,7 +2337,6 @@ async function handleProfileUpload(input) {
             UI.error('Server connection failed: ' + err.message);
         } finally {
             UI.hideLoader();
-            // Reset input to allow uploading same file again
             input.value = '';
         }
     } else {
