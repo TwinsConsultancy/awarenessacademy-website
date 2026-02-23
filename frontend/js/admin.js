@@ -2963,7 +2963,7 @@ function renderCourses(courses) {
         const options = ['Draft', 'Pending', 'Approved', 'Published', 'Inactive'];
 
         return `
-                        <tr style="border-bottom:1px solid #f9f9f9; transition:background 0.2s;">
+                        <tr style="border-bottom:1px solid #f9f9f9; transition:background 0.2s; cursor: pointer;" onclick="viewCourseDetails('${c._id}')" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background=''">
                             <td style="padding:15px;">
                                 <div style="font-weight: 600; color:var(--color-text-primary);">${c.title}</div>
                                 <small style="color:#888;">${c.category || 'General'} • ${c.duration || 'N/A'}</small>
@@ -2974,7 +2974,7 @@ function renderCourses(courses) {
                 : '<span style="color:#999;">None</span>'}
                             </td>
                             <td style="padding:15px; font-weight:500;">₹${c.price}</td>
-                            <td style="padding:15px; text-align: center;">
+                            <td style="padding:15px; text-align: center;" onclick="event.stopPropagation()">
                                 <a href="course-preview.html?id=${c._id}" class="btn-primary" 
                                     title="Preview Course Content" 
                                     style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center; padding:6px 14px; font-size:0.85rem; background: #fffaf0; color: #d35400; border: 1px solid #d35400; border-radius: 20px; font-weight: 600; transition: all 0.3s;" 
@@ -2988,13 +2988,7 @@ function renderCourses(courses) {
                                     ${displayStatus}
                                 </span>
                             </td>
-                            <td style="padding:15px; text-align:right;">
-                                <button class="btn-primary" title="View Details" style="padding:6px 10px; font-size:0.8rem; margin-right:5px; background: #e0f2f1; color: #00897b; border: none; border-radius: 6px; transition: all 0.2s;" 
-                                    onmouseover="this.style.background='#00897b'; this.style.color='white'" 
-                                    onmouseout="this.style.background='#e0f2f1'; this.style.color='#00897b'"
-                                    onclick="viewCourseDetails('${c._id}')">
-                                    <i class="fas fa-eye"></i>
-                                </button>
+                            <td style="padding:15px; text-align:right;" onclick="event.stopPropagation()">
                                 <button class="btn-primary" title="Edit" style="padding:6px 10px; font-size:0.8rem; margin-right:5px;" 
                                     onclick='openCourseModal(${JSON.stringify(c).replace(/'/g, "&#39;")})'>
                                     <i class="fas fa-edit"></i>
@@ -3671,6 +3665,9 @@ async function viewCourseDetails(courseId) {
         // Render students table
         renderCourseStudents(data.students);
 
+        // Fetch and render feedback
+        loadCourseFeedback(courseId);
+
         // Show modal
         document.getElementById('viewCourseModal').style.display = 'flex';
 
@@ -3679,6 +3676,145 @@ async function viewCourseDetails(courseId) {
         UI.error('Failed to load course details');
     } finally {
         UI.hideLoader();
+    }
+}
+
+async function loadCourseFeedback(courseId) {
+    const container = document.getElementById('courseFeedbackContent');
+    container.innerHTML = '<p style="text-align: center; color: #999;"><i class="fas fa-spinner fa-spin"></i> Loading feedback...</p>';
+
+    try {
+        const res = await fetch(`${Auth.apiBase}/feedback/course/${courseId}`, {
+            headers: Auth.getHeaders()
+        });
+
+        if (!res.ok) throw new Error('Failed to fetch feedback');
+
+        const result = await res.json();
+        const { feedbacks, avgRatings, total, distribution } = result.data;
+
+        if (!total || total === 0) {
+            container.innerHTML = `
+                <div style="text-align: center; padding: 30px; color: #999;">
+                    <i class="fas fa-comment-slash" style="font-size: 2.5rem; margin-bottom: 10px; opacity: 0.4;"></i>
+                    <p style="font-size: 1rem;">No feedback received yet for this course.</p>
+                </div>
+            `;
+            return;
+        }
+
+        // Helper: render star icons
+        const renderStars = (rating) => {
+            const full = Math.floor(rating);
+            const half = rating - full >= 0.3 ? 1 : 0;
+            const empty = 5 - full - half;
+            return '<span style="color: #f59e0b; font-size: 0.9rem;">' +
+                '★'.repeat(full) +
+                (half ? '<span style="opacity: 0.6;">★</span>' : '') +
+                '<span style="color: #ddd;">★</span>'.repeat(empty) +
+                '</span>';
+        };
+
+        // Distribution bar max for scaling
+        const maxDist = Math.max(...distribution, 1);
+
+        // Build rating overview
+        const overviewHtml = `
+            <div style="display: grid; grid-template-columns: 280px 1fr; gap: 25px; margin-bottom: 25px;">
+                <!-- Left: Overall Score -->
+                <div style="text-align: center; padding: 25px; background: linear-gradient(135deg, #fffaf0 0%, #fff8e1 100%); border-radius: 12px; border: 1px solid #ffe0b2;">
+                    <div style="font-size: 3.5rem; font-weight: 700; color: var(--color-saffron); line-height: 1;">${avgRatings.overall}</div>
+                    <div style="margin: 8px 0;">${renderStars(parseFloat(avgRatings.overall))}</div>
+                    <div style="color: #888; font-size: 0.85rem;">${total} rating${total !== 1 ? 's' : ''}</div>
+
+                    <!-- Star Distribution -->
+                    <div style="margin-top: 18px; text-align: left;">
+                        ${[5, 4, 3, 2, 1].map(star => {
+            const count = distribution[star - 1];
+            const pct = total > 0 ? ((count / total) * 100).toFixed(0) : 0;
+            return `
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; font-size: 0.8rem;">
+                                    <span style="width: 14px; text-align: right; color: #888;">${star}</span>
+                                    <i class="fas fa-star" style="color: #f59e0b; font-size: 0.7rem;"></i>
+                                    <div style="flex: 1; background: #e0e0e0; border-radius: 4px; height: 8px; overflow: hidden;">
+                                        <div style="width: ${pct}%; background: linear-gradient(90deg, #f59e0b, #f9a825); height: 100%; border-radius: 4px; transition: width 0.5s;"></div>
+                                    </div>
+                                    <span style="width: 24px; text-align: right; color: #888;">${count}</span>
+                                </div>
+                            `;
+        }).join('')}
+                    </div>
+                </div>
+
+                <!-- Right: Category Breakdown -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    ${[
+                { label: 'Video Quality', key: 'videoQuality', icon: 'fa-video', color: '#6366f1' },
+                { label: 'Content Quality', key: 'contentQuality', icon: 'fa-file-alt', color: '#8b5cf6' },
+                { label: 'Content Relevance', key: 'contentRelevance', icon: 'fa-bullseye', color: '#ec4899' },
+                { label: 'Met Expectations', key: 'expectations', icon: 'fa-check-double', color: '#14b8a6' },
+                { label: 'Recommendation', key: 'recommendation', icon: 'fa-thumbs-up', color: '#f59e0b' }
+            ].map(cat => `
+                        <div style="padding: 15px; background: white; border-radius: 10px; border: 1px solid #eee; transition: box-shadow 0.2s;" onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)'" onmouseout="this.style.boxShadow='none'">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                <i class="fas ${cat.icon}" style="color: ${cat.color}; font-size: 0.9rem;"></i>
+                                <span style="font-size: 0.85rem; color: #555; font-weight: 500;">${cat.label}</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span style="font-size: 1.6rem; font-weight: 700; color: var(--color-text-primary);">${avgRatings[cat.key]}</span>
+                                <div style="flex: 1;">
+                                    <div style="background: #e5e7eb; border-radius: 4px; height: 6px; overflow: hidden;">
+                                        <div style="width: ${(avgRatings[cat.key] / 5 * 100)}%; background: ${cat.color}; height: 100%; border-radius: 4px; transition: width 0.5s;"></div>
+                                    </div>
+                                </div>
+                                <span style="font-size: 0.75rem; color: #999;">/5</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+
+            <!-- Individual Reviews -->
+            <h4 style="margin: 0 0 12px 0; color: #333; display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-comments" style="color: var(--color-saffron);"></i>
+                Student Reviews (${total})
+            </h4>
+            <div style="max-height: 350px; overflow-y: auto; border-radius: 8px;">
+                ${feedbacks.map(f => {
+                const student = f.studentId || {};
+                const initials = (student.name || 'U').charAt(0).toUpperCase();
+                const date = new Date(f.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+                return `
+                        <div style="background: white; padding: 16px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #eee; transition: box-shadow 0.2s;" onmouseover="this.style.boxShadow='0 2px 8px rgba(0,0,0,0.06)'" onmouseout="this.style.boxShadow='none'">
+                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+                                <div style="width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--color-saffron), var(--color-golden)); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.9rem; flex-shrink: 0;">${initials}</div>
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 600; font-size: 0.95rem;">${student.name || 'Anonymous'}</div>
+                                    <div style="font-size: 0.75rem; color: #999;">${student.studentID || ''} • ${date}</div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div>${renderStars(f.overallRating)}</div>
+                                    <div style="font-size: 0.8rem; color: #666; font-weight: 600;">${f.overallRating.toFixed(1)}/5</div>
+                                </div>
+                            </div>
+                            ${f.moduleName ? `<div style="font-size: 0.75rem; color: #888; margin-bottom: 6px;"><i class="fas fa-book-open" style="margin-right: 4px;"></i>Module: ${f.moduleName}</div>` : ''}
+                            ${f.comments ? `<p style="margin: 0; color: #444; font-size: 0.9rem; line-height: 1.5; padding: 10px; background: #f8f9fa; border-radius: 6px; border-left: 3px solid var(--color-saffron);">${f.comments}</p>` : '<p style="margin: 0; color: #bbb; font-style: italic; font-size: 0.85rem;">No comment provided</p>'}
+                        </div>
+                    `;
+            }).join('')}
+            </div>
+        `;
+
+        container.innerHTML = overviewHtml;
+
+    } catch (error) {
+        console.error('Load course feedback error:', error);
+        container.innerHTML = `
+            <div style="text-align: center; padding: 20px; color: #dc3545;">
+                <i class="fas fa-exclamation-circle" style="font-size: 1.5rem; margin-bottom: 8px;"></i>
+                <p>Failed to load feedback data.</p>
+            </div>
+        `;
     }
 }
 
