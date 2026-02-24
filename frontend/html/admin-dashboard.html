@@ -2358,9 +2358,9 @@
                                 </div>
                             </div>
                             <div class="stat-card">
-                                <div class="stat-icon support"><i class="fas fa-dollar-sign"></i></div>
+                                <div class="stat-icon support"><i class="fas fa-rupee-sign"></i></div>
                                 <div class="stat-info">
-                                    <h3 id="statRevenue">$0</h3>
+                                    <h3 id="statRevenue">₹0</h3>
                                     <p>Revenue</p>
                                 </div>
                             </div>
@@ -2885,6 +2885,54 @@
                     <!-- FINANCE SECTION -->
                     <section id="financeSection" class="dashboard-content-section" style="display: none;">
 
+                        <!-- Finance Statistics KPIs -->
+                        <div
+                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                            <div class="glass-card stat-card"
+                                style="border-bottom: 3px solid var(--color-success); padding: 20px;">
+                                <div class="stat-icon" style="background: rgba(46, 204, 113, 0.1); color: #2ecc71;">
+                                    <i class="fas fa-wallet"></i>
+                                </div>
+                                <div>
+                                    <h3 id="financeTotalRevenue" style="font-size: 1.8rem; margin: 0; color: #333;">₹0
+                                    </h3>
+                                    <p style="margin: 5px 0 0 0; color: #666; font-size: 0.9rem;">Total Revenue</p>
+                                </div>
+                            </div>
+                            <div class="glass-card stat-card" style="border-bottom: 3px solid #f39c12; padding: 20px;">
+                                <div class="stat-icon" style="background: rgba(243, 156, 18, 0.1); color: #f39c12;">
+                                    <i class="fas fa-percent"></i>
+                                </div>
+                                <div>
+                                    <h3 id="financeRazorpayComm" style="font-size: 1.8rem; margin: 0; color: #333;">₹0
+                                    </h3>
+                                    <p style="margin: 5px 0 0 0; color: #666; font-size: 0.9rem;">Gateway Fee (~2%)</p>
+                                </div>
+                            </div>
+                            <div class="glass-card stat-card" style="border-bottom: 3px solid #3498db; padding: 20px;">
+                                <div class="stat-icon" style="background: rgba(52, 152, 219, 0.1); color: #3498db;">
+                                    <i class="fas fa-user-graduate"></i>
+                                </div>
+                                <div style="overflow: hidden;">
+                                    <h3 id="financeTopStudent"
+                                        style="font-size: 1.1rem; margin: 0; color: #333; line-height: 1.2; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                                        -</h3>
+                                    <p style="margin: 5px 0 0 0; color: #666; font-size: 0.9rem;">Top Student</p>
+                                </div>
+                            </div>
+                            <div class="glass-card stat-card" style="border-bottom: 3px solid #9b59b6; padding: 20px;">
+                                <div class="stat-icon" style="background: rgba(155, 89, 182, 0.1); color: #9b59b6;">
+                                    <i class="fas fa-book-open"></i>
+                                </div>
+                                <div style="overflow: hidden;">
+                                    <h3 id="financeTopCourse"
+                                        style="font-size: 1.1rem; margin: 0; color: #333; line-height: 1.2; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                                        -</h3>
+                                    <p style="margin: 5px 0 0 0; color: #666; font-size: 0.9rem;">Top Course</p>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="glass-card"
                             style="padding: 15px; margin-bottom: 20px; display: flex; gap: 15px; align-items: center;">
                             <div style="flex: 1; position: relative;">
@@ -2904,24 +2952,9 @@
                             </select>
                         </div>
 
-                        <div class="glass-card" style="padding: 0; overflow: hidden;">
-                            <div style="max-height: 600px; overflow-y: auto;">
-                                <table style="width: 100%; border-collapse: collapse; text-align: left;">
-                                    <thead
-                                        style="background: #f9fafb; position: sticky; top: 0; border-bottom: 2px solid #eee; z-index: 10;">
-                                        <tr>
-                                            <th style="padding: 15px; color: #555; font-size: 0.95rem;">Transaction ID
-                                            </th>
-                                            <th style="padding: 15px; color: #555; font-size: 0.95rem;">Date & Time</th>
-                                            <th style="padding: 15px; color: #555; font-size: 0.95rem;">Student</th>
-                                            <th style="padding: 15px; color: #555; font-size: 0.95rem;">Course
-                                            </th>
-                                            <th style="padding: 15px; color: #555; font-size: 0.95rem;">Amount</th>
-                                            <th style="padding: 15px; color: #555; font-size: 0.95rem;">Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="ledgerList"></tbody>
-                                </table>
+                        <div style="padding: 0; overflow: hidden;">
+                            <div style="max-height: 600px; overflow-y: auto; padding-right: 5px;">
+                                <div id="ledgerList" style="display: grid; gap: 15px;"></div>
                             </div>
                         </div>
                     </section>
@@ -2931,7 +2964,7 @@
                         <div class="user-header-compact"
                             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                             <div>
-                                
+
                                 <p>Track, filter, and analyze student certificates and course engagement</p>
                             </div>
                         </div>
