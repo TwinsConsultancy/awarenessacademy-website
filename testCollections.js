@@ -1,21 +1,21 @@
 const mongoose = require('mongoose');
-const { Ticket, Feedback, ContactMessage } = require('./backend/models');
+const { Payment, Enrollment, Course } = require('./backend/models');
 
 require('dotenv').config({ path: './backend/.env' });
 
 async function run() {
     await mongoose.connect(process.env.MONGODB_URL);
 
-    const tickets = await Ticket.find({});
-    console.log("Tickets: ", tickets.length);
-    console.log("Ticket Statuses: ", new Set(tickets.map(t => t.status)));
+    const payments = await Payment.find({});
+    console.log("Payments: ", payments.length);
+    console.log("Payment Statuses: ", new Set(payments.map(t => t.status)));
 
-    const feedbacks = await Feedback.find({});
-    console.log("Feedbacks: ", feedbacks.length);
+    const enrollments = await Enrollment.find({});
+    console.log("Enrollments: ", enrollments.length);
 
-    const contacts = await ContactMessage.find({});
-    console.log("ContactMessages: ", contacts.length);
-    console.log("ContactMessage Statuses: ", new Set(contacts.map(c => c.status)));
+    if (enrollments.length > 0) {
+        console.log("Enrollment keys: ", Object.keys(enrollments[0].toObject()));
+    }
 
     process.exit(0);
 }

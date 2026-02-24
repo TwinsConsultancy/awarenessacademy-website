@@ -364,7 +364,7 @@ exports.getAdvancedAnalytics = async (req, res) => {
 
         // Course Enrollment Distribution
         const courseEnrollments = await Enrollment.aggregate([
-            { $match: dateFilter },
+            { $match: { enrolledAt: { $gte: filterStartDate } } },
             {
                 $group: {
                     _id: "$courseID",
@@ -426,7 +426,7 @@ exports.getAdvancedAnalytics = async (req, res) => {
 
         // Revenue Growth (Monthly)
         const revenueGrowth = await Payment.aggregate([
-            { $match: { status: 'Success', date: { $gte: filterStartDate } } },
+            { $match: { status: { $in: ['Success', 'completed'] }, date: { $gte: filterStartDate } } },
             {
                 $group: {
                     _id: {
@@ -442,13 +442,13 @@ exports.getAdvancedAnalytics = async (req, res) => {
 
         // Total Revenue
         const totalRevenue = await Payment.aggregate([
-            { $match: { status: 'Success', date: { $gte: filterStartDate } } },
+            { $match: { status: { $in: ['Success', 'completed'] }, date: { $gte: filterStartDate } } },
             { $group: { _id: null, total: { $sum: "$amount" } } }
         ]);
 
         // Revenue by Course
         const revenueByCourse = await Payment.aggregate([
-            { $match: { status: 'Success', date: { $gte: filterStartDate } } },
+            { $match: { status: { $in: ['Success', 'completed'] }, date: { $gte: filterStartDate } } },
             {
                 $group: {
                     _id: "$courseID",
@@ -477,8 +477,8 @@ exports.getAdvancedAnalytics = async (req, res) => {
         ]);
 
         // Payment Success vs Failure
-        const successPayments = await Payment.countDocuments({ status: 'Success', date: { $gte: filterStartDate } });
-        const failedPayments = await Payment.countDocuments({ status: { $in: ['Failed', 'Pending'] }, date: { $gte: filterStartDate } });
+        const successPayments = await Payment.countDocuments({ status: { $in: ['Success', 'completed'] }, date: { $gte: filterStartDate } });
+        const failedPayments = await Payment.countDocuments({ status: { $in: ['Failed', 'Pending', 'failed', 'pending'] }, date: { $gte: filterStartDate } });
 
         // === 4. CONTENT & STAFF ANALYTICS ===
 
