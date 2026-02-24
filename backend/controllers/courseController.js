@@ -5,20 +5,45 @@ const { sendCoursePublishedNotification } = require('../utils/emailService');
 exports.getEnrolledCourses = async (req, res) => {
     try {
         console.log('getEnrolledCourses - User ID:', req.user?.id);
-        
+        const { Module } = require('../models/index');
+
         const user = await User.findById(req.user.id).populate({
             path: 'enrolledCourses',
             populate: { path: 'mentors', select: 'name' }
         });
-        
+
         console.log('User found:', user ? 'Yes' : 'No');
         console.log('Enrolled courses count:', user?.enrolledCourses?.length || 0);
-        
+
         // Handle case where user has no enrolled courses
         if (!user || !user.enrolledCourses) {
             return res.status(200).json([]);
         }
-        
+
+        // Get module counts for enrolled courses
+        const courseIds = user.enrolledCourses.map(c => c._id);
+        const moduleAggregation = await Module.aggregate([
+            { 
+                $match: { 
+                    courseId: { $in: courseIds },
+                    status: 'Approved' 
+                }
+            },
+            {
+                $group: {
+                    _id: "$courseId",
+                    totalModules: { $sum: 1 }
+                }
+            }
+        ]);
+
+        const moduleMap = {};
+        moduleAggregation.forEach(stat => {
+            if (stat._id) {
+                moduleMap[stat._id.toString()] = stat.totalModules;
+            }
+        });
+
         // Fetch progress data for all enrolled courses
         const progressRecords = await Progress.find({ studentID: req.user.id }).lean();
         const progressMap = {};
@@ -29,15 +54,16 @@ exports.getEnrolledCourses = async (req, res) => {
                 lastAccessed: p.lastAccessed
             };
         });
-        
-        // Attach progress data to each course
+
+        // Attach progress data and module counts to each course
         const coursesWithProgress = user.enrolledCourses.map(course => {
             const courseObj = course.toObject ? course.toObject() : course;
             const courseId = courseObj._id.toString();
             courseObj.progress = progressMap[courseId] || { percentage: 0, completedLessons: [], lastAccessed: null };
+            courseObj.totalLessons = moduleMap[courseId] || 0;
             return courseObj;
         });
-        
+
         res.status(200).json(coursesWithProgress);
     } catch (err) {
         console.error('getEnrolledCourses error:', err.message, err.stack);
@@ -48,12 +74,72 @@ exports.getEnrolledCourses = async (req, res) => {
 // Get Marketplace Courses (Approved & Published)
 exports.getMarketplace = async (req, res) => {
     try {
+        const { Feedback, Module } = require('../models/index');
+
         // Fetch both Approved (Upcoming) and Published (Current) courses
         const courses = await Course.find({
             status: { $in: ['Approved', 'Published'] }
-        }).populate('mentors', 'name');
+        }).populate('mentors', 'name').lean();
 
-        res.status(200).json(courses);
+        // Get rating aggregation for courses
+        const ratingAggregation = await Feedback.aggregate([
+            { $match: { courseId: { $in: courses.map(c => c._id.toString()) } } }, // courseId stored as string
+            {
+                $group: {
+                    _id: "$courseId",
+                    avgRating: { $avg: "$overallRating" },
+                    totalReviews: { $sum: 1 }
+                }
+            }
+        ]);
+
+        // Get module count aggregation for courses  
+        const moduleAggregation = await Module.aggregate([
+            { 
+                $match: { 
+                    courseId: { $in: courses.map(c => c._id) }, // courseId stored as ObjectId in modules
+                    status: 'Approved' 
+                }
+            },
+            {
+                $group: {
+                    _id: "$courseId",
+                    totalModules: { $sum: 1 }
+                }
+            }
+        ]);
+
+        // Create lookup maps for ratings and module counts
+        const ratingMap = {};
+        ratingAggregation.forEach(stat => {
+            if (stat._id) {
+                ratingMap[stat._id.toString()] = {
+                    avg: parseFloat(stat.avgRating.toFixed(1)),
+                    total: stat.totalReviews
+                };
+            }
+        });
+
+        const moduleMap = {};
+        moduleAggregation.forEach(stat => {
+            if (stat._id) {
+                moduleMap[stat._id.toString()] = stat.totalModules;
+            }
+        });
+
+        // Attach ratings and module counts to course objects
+        const coursesWithData = courses.map(c => {
+            const stats = ratingMap[c._id.toString()];
+            const moduleCount = moduleMap[c._id.toString()];
+            return {
+                ...c,
+                rating: stats ? stats.avg : null, // Return null if no reviews
+                reviewCount: stats ? stats.total : 0,
+                totalLessons: moduleCount || 0 // Real module count
+            };
+        });
+
+        res.status(200).json(coursesWithData);
     } catch (err) {
         console.error('Marketplace error:', err);
         res.status(500).json({ message: 'Marketplace load failed', error: err.message });
@@ -64,11 +150,25 @@ exports.getMarketplace = async (req, res) => {
 exports.getCoursePreview = async (req, res) => {
     try {
         const { id } = req.params;
-        const { Module } = require('../models/index');
-        const course = await Course.findById(id).populate('mentors', 'name');
+        const { Feedback, Module } = require('../models/index');
+        const course = await Course.findById(id).populate('mentors', 'name').lean();
 
         if (!course) {
             return res.status(404).json({ message: 'Course not found' });
+        }
+
+        // Calculate average rating
+        const feedbackStats = await Feedback.aggregate([
+            { $match: { courseId: id.toString() } }, // courseId is stored as string
+            { $group: { _id: "$courseId", avgRating: { $avg: "$overallRating" }, totalReviews: { $sum: 1 } } }
+        ]);
+
+        if (feedbackStats.length > 0) {
+            course.rating = parseFloat(feedbackStats[0].avgRating.toFixed(1));
+            course.reviewCount = feedbackStats[0].totalReviews;
+        } else {
+            course.rating = null; // No reviews yet
+            course.reviewCount = 0;
         }
 
         // Fetch published modules
@@ -78,23 +178,13 @@ exports.getCoursePreview = async (req, res) => {
             courseId: id,
             status: { $in: validStatuses }
         }).select('title status');
-        // Assuming no granular preview logic for now or it's handled differently. 
-        // Legacy code used 'isFreePreview' on Lessons. 
-        // If Modules replace Lessons, we'd check Module fields.
 
         res.status(200).json({
             course: {
-                title: course.title,
-                description: course.description,
-                mentor: course.mentors && course.mentors.length > 0 ? course.mentors.map(m => m.name).join(', ') : 'No mentor assigned',
-                price: course.price,
-                thumbnail: course.thumbnail,
-                status: course.status,
-                introVideoUrl: course.introVideoUrl,
-                introText: course.introText,
-                previewDuration: course.previewDuration
+                ...course,
+                mentor: course.mentors && course.mentors.length > 0 ? course.mentors.map(m => m.name).join(', ') : 'No mentor assigned'
             },
-            previews: previewModules // Rename or keep as previews? Keeping generic.
+            previews: previewModules
         });
     } catch (err) {
         console.error('Preview error:', err);
@@ -106,9 +196,24 @@ exports.getCoursePreview = async (req, res) => {
 exports.getCourseDetails = async (req, res) => {
     try {
         const { id } = req.params;
-        const { Module, User, Enrollment } = require('../models/index');
+        const { Module, User, Enrollment, Feedback } = require('../models/index');
 
-        const course = await Course.findById(id).populate('mentors', 'name');
+        let course = await Course.findById(id).populate('mentors', 'name').lean();
+        if (!course) return res.status(404).json({ message: 'Course not found' });
+
+        // Calculate average rating
+        const feedbackStats = await Feedback.aggregate([
+            { $match: { courseId: id.toString() } }, // courseId is stored as string
+            { $group: { _id: "$courseId", avgRating: { $avg: "$overallRating" }, totalReviews: { $sum: 1 } } }
+        ]);
+
+        if (feedbackStats.length > 0) {
+            course.rating = parseFloat(feedbackStats[0].avgRating.toFixed(1));
+            course.reviewCount = feedbackStats[0].totalReviews;
+        } else {
+            course.rating = null; // No reviews yet
+            course.reviewCount = 0;
+        }
 
         // Fetch Modules
         // Only show Approved/Published modules
@@ -118,6 +223,9 @@ exports.getCourseDetails = async (req, res) => {
             courseId: id,
             status: { $in: validStatuses }
         }).sort({ order: 1 });
+
+        // Add real module count to course
+        course.totalLessons = modules.length;
 
         // Logic to check if user has access (purchased and not expired)
         let hasFullAccess = false;
@@ -178,16 +286,50 @@ exports.trackImpression = async (req, res) => {
 // Get All Courses (Admin View)
 exports.getAllCoursesAdmin = async (req, res) => {
     try {
+        const { Module } = require('../models/index');
+        
         const courses = await Course.find().populate('mentors', 'name email');
+
+        // Get module counts for all courses
+        const courseIds = courses.map(c => c._id);
+        const moduleAggregation = await Module.aggregate([
+            { 
+                $match: { 
+                    courseId: { $in: courseIds },
+                    status: 'Approved' 
+                }
+            },
+            {
+                $group: {
+                    _id: "$courseId",
+                    totalModules: { $sum: 1 }
+                }
+            }
+        ]);
+
+        const moduleMap = {};
+        moduleAggregation.forEach(stat => {
+            if (stat._id) {
+                moduleMap[stat._id.toString()] = stat.totalModules;
+            }
+        });
+
+        // Attach module counts to courses
+        const coursesWithModuleCounts = courses.map(course => {
+            const courseObj = course.toObject ? course.toObject() : course;
+            courseObj.totalLessons = moduleMap[courseObj._id.toString()] || 0;
+            return courseObj;
+        });
 
         // Debug: Log course statuses
         console.log('\n📚 Courses retrieved for admin:');
-        courses.forEach((course, idx) => {
+        coursesWithModuleCounts.forEach((course, idx) => {
             console.log(`${idx + 1}. ${course.title}`);
             console.log(`   Status: ${course.status}`);
+            console.log(`   Modules: ${course.totalLessons}`);
         });
 
-        res.status(200).json(courses);
+        res.status(200).json(coursesWithModuleCounts);
     } catch (err) {
         res.status(500).json({ message: 'Failed to load courses', error: err.message });
     }

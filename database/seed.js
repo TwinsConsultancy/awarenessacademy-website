@@ -123,48 +123,42 @@ const sampleCourses = [
         description: 'Discover the ancient art of meditation and mindfulness. Learn techniques to calm your mind, reduce stress, and find inner peace. Perfect for beginners seeking spiritual growth.',
         category: 'Meditation',
         price: 49.99,
-        status: 'Published',
-        totalLessons: 12
+        status: 'Published'
     },
     {
         title: 'Yoga for Inner Balance',
         description: 'Explore the holistic practice of yoga combining physical postures, breathing techniques, and meditation. Achieve harmony between body, mind, and spirit.',
         category: 'Yoga',
         price: 79.99,
-        status: 'Published',
-        totalLessons: 20
+        status: 'Published'
     },
     {
         title: 'Philosophy of the Bhagavad Gita',
         description: 'Deep dive into the timeless wisdom of the Bhagavad Gita. Understand the concepts of dharma, karma, and moksha through guided study and reflection.',
         category: 'Philosophy',
         price: 59.99,
-        status: 'Published',
-        totalLessons: 15
+        status: 'Published'
     },
     {
         title: 'Mindfulness in Daily Life',
         description: 'Practical techniques to bring mindfulness into your everyday activities. Transform routine tasks into opportunities for presence and awareness.',
         category: 'Mindfulness',
         price: 39.99,
-        status: 'Published',
-        totalLessons: 10
+        status: 'Published'
     },
     {
         title: 'Sacred Rituals and Ceremonies',
         description: 'Learn the significance and practice of various spiritual rituals. Create meaningful ceremonies to honor life transitions and sacred moments.',
         category: 'Rituals',
         price: 69.99,
-        status: 'Published',
-        totalLessons: 18
+        status: 'Published'
     },
     {
         title: 'Advanced Pranayama Techniques',
         description: 'Master the art of breath control. Advanced breathing techniques for energy cultivation, healing, and spiritual awakening.',
         category: 'Meditation',
         price: 89.99,
-        status: 'Draft',
-        totalLessons: 8
+        status: 'Draft'
     }
 ];
 
@@ -351,7 +345,8 @@ async function seedDatabase() {
         const createdContent = [];
 
         for (const course of publishedCourses) {
-            for (let i = 1; i <= Math.min(5, course.totalLessons); i++) {
+            const modulesToCreate = 5; // Create 5 modules per course
+            for (let i = 1; i <= modulesToCreate; i++) {
                 const content = await Content.create({
                     courseID: course._id,
                     uploadedBy: course.mentorID,
@@ -364,7 +359,7 @@ async function seedDatabase() {
                 });
                 createdContent.push(content);
             }
-            console.log(`  ✓ Created ${Math.min(5, course.totalLessons)} materials for: ${course.title}`);
+            console.log(`  ✓ Created 5 materials for: ${course.title}`);
         }
 
         // Create Enrollments & Payments

@@ -123,23 +123,26 @@ function renderCourses(courses) {
     // Create sections container if not present
     if (!document.getElementById('exploreSections')) {
         // Change default grid container to a flex container for sections
-        list.className = '';
-        list.style.maxWidth = '1200px';
-        list.style.margin = '0 auto 100px';
-        list.style.padding = '0 20px';
-        list.style.display = 'flex';
-        list.style.flexDirection = 'column';
-        list.style.gap = '40px';
+        list.className = 'container';
+        list.style.maxWidth = '1280px';
+        list.style.margin = '40px auto 100px';
+        list.style.padding = '0 var(--spacing-container)';
 
         list.innerHTML = `
-            <div id="exploreSections" style="width: 100%; display: flex; flex-direction: column; gap: 40px;">
+            <div id="exploreSections" style="width: 100%; display: flex; flex-direction: column; gap: 60px;">
                 <div id="upcomingSection" style="display: none;">
-                    <h2 class="section-title" style="margin-bottom: 20px; border-left: 5px solid var(--color-saffron); padding-left: 15px;">Upcoming Paths</h2>
-                    <div class="courses-grid" id="upcomingCoursesGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 30px;"></div>
+                    <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 35px;">
+                        <h2 class="section-title" style="margin: 0; font-family: var(--font-heading); font-size: 2.2rem; color: var(--color-text-primary);">Upcoming Paths</h2>
+                        <div style="flex: 1; height: 2px; background: linear-gradient(to right, var(--color-saffron), transparent); opacity: 0.3;"></div>
+                    </div>
+                    <div class="courses-grid" id="upcomingCoursesGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 40px;"></div>
                 </div>
                 <div id="currentSection">
-                    <h2 class="section-title" style="margin-bottom: 20px; border-left: 5px solid var(--color-primary); padding-left: 15px;">Explore Courses</h2>
-                    <div class="courses-grid" id="currentCoursesGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 30px;"></div>
+                    <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 35px;">
+                        <h2 class="section-title" style="margin: 0; font-family: var(--font-heading); font-size: 2.2rem; color: var(--color-text-primary);">Explore Wisdom</h2>
+                        <div style="flex: 1; height: 2px; background: linear-gradient(to right, var(--color-primary), transparent); opacity: 0.3;"></div>
+                    </div>
+                    <div class="courses-grid" id="currentCoursesGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 40px;"></div>
                 </div>
             </div>
         `;
@@ -161,7 +164,7 @@ function renderCourses(courses) {
         const isUrgent = !isUpcoming && urgentCourseIds.includes(c._id);
 
         return `
-        <div class="course-card glass-premium" ${!isUpcoming ? `onclick="window.location.href='course-intro.html?id=${c._id}'"` : ''} style="background: var(--color-bg-glass); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.4); border-radius: var(--border-radius-lg); overflow: hidden; cursor: ${isUpcoming ? 'default' : 'pointer'}; transition: var(--transition-smooth); opacity: ${isUpcoming ? '0.9' : '1'}; display: flex; flex-direction: column; height: 100%;">
+        <div class="course-card" ${!isUpcoming ? `onclick="window.location.href='course-intro.html?id=${c._id}'"` : ''} style="cursor: ${isUpcoming ? 'default' : 'pointer'}; opacity: ${isUpcoming ? '0.9' : '1'};">
             <div class="course-thumb" style="background-image: url('${getThumbnail(c.thumbnail)}'); background-size: cover; background-position: center; height: 200px; width: 100%; position: relative; flex-shrink: 0;">
                 ${isUpcoming ? '<div style="position: absolute; top: 10px; right: 10px; background: var(--color-saffron); color: white; padding: 5px 10px; border-radius: 5px; font-weight: bold; font-size: 0.8rem;">Coming Soon</div>' : ''}
                 ${isUrgent ? `
@@ -221,12 +224,12 @@ function renderCourses(courses) {
                 <p style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 15px;">By ${c.mentors && c.mentors[0] ? c.mentors[0].name : 'Mentor'}</p>
                 <div style="display: flex; align-items: center; gap: 15px; font-size: 0.8rem; color: #999; margin-bottom: 15px;">
                     <span><i class="fas fa-layer-group"></i> ${c.totalLessons || 0} Lessons</span>
-                    ${isUpcoming ? '<span><i class="fas fa-clock"></i> Releases Soon</span>' : `<span><i class="fas fa-star" style="color: var(--color-golden);"></i> ${c.rating || 5}</span>`}
+                    ${isUpcoming ? '<span><i class="fas fa-clock"></i> Releases Soon</span>' : (c.rating ? `<span><i class="fas fa-star" style="color: var(--color-golden);"></i> ${c.rating}${c.reviewCount > 0 ? ` (${c.reviewCount})` : ''}</span>` : '')}
                 </div>
                 ${isUpcoming ? `<button onclick="openNotifyModal('${c._id}', '${c.title.replace(/'/g, "\\'")}')" class="btn-primary" style="width: 100%; margin-top: auto; background: linear-gradient(135deg, #D97706 0%, #F59E0B 100%); cursor: pointer;"><i class="fas fa-bell"></i> Notify Me</button>` : `<button onclick="openExploreModal('${c._id}')" class="btn-primary" style="width: 100%; margin-top: auto; background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-golden) 100%); cursor: pointer;"><i class="fas fa-compass"></i> Explore Course</button>`}
             </div>
         </div>
-    `;
+        `;
     };
 
     // Render Upcoming
@@ -243,7 +246,7 @@ function renderCourses(courses) {
     } else {
         currentGrid.innerHTML = current.map(c => generateCard(c, false)).join('');
         // Track Impressions for current courses
-        current.forEach(c => trackMetric('View', `Course List: ${c.title}`, c._id));
+        current.forEach(c => trackMetric('View', `Course List: ${c.title} `, c._id));
     }
 }
 
@@ -665,11 +668,11 @@ function openExploreModal(courseId) {
                                 <p id="exploreModalLessons" style="font-weight: 600; color: #333; margin: 0; font-size: 1.1rem;"></p>
                                 <p style="font-size: 0.85rem; color: #666; margin: 5px 0 0 0;">Lessons</p>
                             </div>
-                            <div style="text-align: center;">
+                            <div id="exploreModalRatingContainer" style="text-align: center;">
                                 <div style="font-size: 2rem; color: var(--color-saffron); margin-bottom: 5px;">
                                     <i class="fas fa-star"></i>
                                 </div>
-                                <p id="exploreModalRating" style="font-weight: 600; color: #333; margin: 0; font-size: 1.1rem;">4.9</p>
+                                <p id="exploreModalRating" style="font-weight: 600; color: #333; margin: 0; font-size: 1.1rem;">No reviews yet</p>
                                 <p style="font-size: 0.85rem; color: #666; margin: 5px 0 0 0;">Rating</p>
                             </div>
                             <div style="text-align: center;">
@@ -733,8 +736,12 @@ async function loadCourseDetails(courseId) {
 
         // Dynamic rating
         const ratingElement = document.getElementById('exploreModalRating');
-        if (ratingElement) {
-            ratingElement.textContent = course.rating || 5;
+        const ratingContainer = document.getElementById('exploreModalRatingContainer');
+        if (course.rating && ratingElement && ratingContainer) {
+            ratingElement.textContent = `${course.rating}${course.reviewCount > 0 ? ` (${course.reviewCount})` : ''}`;
+            ratingContainer.style.display = 'block';
+        } else if (ratingContainer) {
+            ratingContainer.style.display = 'none';
         }
 
         const thumbUrl = getThumbnail(course.thumbnail);

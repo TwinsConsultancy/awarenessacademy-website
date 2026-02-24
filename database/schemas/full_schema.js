@@ -57,7 +57,6 @@ const courseSchema = new Schema({
     mentorID: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     thumbnail: { type: String },
     status: { type: String, enum: ['Draft', 'Published', 'Inactive'], default: 'Draft' },
-    totalLessons: { type: Number, default: 0 },
     createdAt: { type: Date, default: Date.now }
 });
 

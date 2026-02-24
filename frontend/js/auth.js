@@ -247,6 +247,26 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 10000); // Check every 10 seconds
         }
     }
+
+    // Update Navigation Links (authLink)
+    const auth = Auth.checkAuth([], true);
+    if (auth && auth.user) {
+        const authLinks = document.querySelectorAll('#authLink, #authLinkMobile');
+        authLinks.forEach(link => {
+            link.textContent = 'Dashboard';
+            link.href = auth.user.role === 'Student' ? 'student-dashboard.html' :
+                auth.user.role === 'Staff' ? 'staff-dashboard.html' : 'admin-dashboard.html';
+
+            // If it's the mobile link, update the icon if it exists
+            const icon = link.querySelector('i');
+            if (icon) {
+                icon.className = 'fas fa-user-circle';
+                link.innerHTML = '';
+                link.appendChild(icon);
+                link.appendChild(document.createTextNode(' Dashboard'));
+            }
+        });
+    }
 });
 
 // SECURITY: Light validation on back/forward navigation

@@ -131,6 +131,17 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'frontend/html/index.html'));
 });
 
+// 404 Handler - Handle unknown routes
+app.use((req, res) => {
+    if (req.originalUrl.startsWith('/api')) {
+        return res.status(404).json({
+            status: 'fail',
+            message: `API Route ${req.originalUrl} not found`
+        });
+    }
+    res.status(404).sendFile(path.join(__dirname, 'frontend/html/404.html'));
+});
+
 // Global Error Handler
 app.use(require('./backend/middleware/errorMiddleware'));
 

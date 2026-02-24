@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Exploring the Unknown | Awareness Academy</title>
+
+    <!-- SEO Meta Tags -->
+    <meta name="description"
+        content="This path hasn't been enlightened yet. Discover Awareness Academy's spiritual guidance and courses to find your way.">
+    <meta name="robots" content="noindex, follow">
+
+    <link rel="stylesheet" href="../css/variables.css?v=2">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Poppins:wght@300;400;600&family=Pacifico&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #FF9933 0%, #FFB347 50%, #FFC300 100%);
+            --accent-dark: #CC7A00;
+            --text-main: #2D1B00;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            background: var(--bg-gradient);
+            font-family: var(--font-body);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-main);
+            perspective: 1000px;
+        }
+
+        /* --- Immersive Background --- */
+        .cosmic-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .glow-orb {
+            position: absolute;
+            width: clamp(300px, 50vw, 600px);
+            height: clamp(300px, 50vw, 600px);
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        .orb-1 {
+            background: #FFF;
+            top: -10%;
+            left: -10%;
+            animation: orbFloat 15s infinite alternate;
+        }
+
+        .orb-2 {
+            background: #FFD633;
+            bottom: -10%;
+            right: -10%;
+            animation: orbFloat 18s infinite alternate-reverse;
+        }
+
+        @keyframes orbFloat {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            100% {
+                transform: translate(50px, 30px) scale(1.1);
+            }
+        }
+
+        /* --- Clearly Visible 404 Background --- */
+        .bg-404 {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: var(--font-heading);
+            font-size: clamp(150px, 40vw, 600px);
+            font-weight: 900;
+            color: rgba(0, 0, 0, 0.15);
+            z-index: 2;
+            user-select: none;
+            pointer-events: none;
+            white-space: nowrap;
+            letter-spacing: -0.05em;
+            text-shadow: 2px 2px 0px rgba(255, 255, 255, 0.2);
+            -webkit-text-stroke: 1px rgba(0, 0, 0, 0.05);
+        }
+
+        /* --- Main Content --- */
+        .content-wrapper {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            max-width: 90%;
+            width: 800px;
+            padding: clamp(20px, 5vw, 40px);
+        }
+
+        .zen-island {
+            width: clamp(180px, 30vw, 300px);
+            height: clamp(180px, 30vw, 300px);
+            margin: 0 auto clamp(20px, 4vh, 40px);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            animation: islandFloat 6s ease-in-out infinite;
+        }
+
+        @keyframes islandFloat {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+
+        /* CSS Zen Pebble Stack - Adjusted for light background */
+        .pebble {
+            background: linear-gradient(135deg, #444 0%, #222 100%);
+            border-radius: 50% 50% 45% 45% / 60% 60% 40% 40%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .pebble-1 {
+            width: 100%;
+            height: 20%;
+            z-index: 1;
+            margin-top: -5%;
+        }
+
+        .pebble-2 {
+            width: 80%;
+            height: 17%;
+            z-index: 2;
+            margin-top: -8%;
+        }
+
+        .pebble-3 {
+            width: 60%;
+            height: 14%;
+            z-index: 3;
+            margin-top: -7%;
+        }
+
+        .pebble-4 {
+            width: 35%;
+            height: 12%;
+            z-index: 4;
+            margin-top: -6%;
+            background: #FFF;
+            animation: pebblePulse 3s ease-in-out infinite;
+        }
+
+        @keyframes pebblePulse {
+
+            0%,
+            100% {
+                box-shadow: 0 0 15px #FFF;
+                filter: brightness(1);
+            }
+
+            50% {
+                box-shadow: 0 0 30px #FFF;
+                filter: brightness(1.2);
+            }
+        }
+
+        .island-base {
+            position: absolute;
+            bottom: 10%;
+            width: 110%;
+            height: 15%;
+            background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.2) 0%, transparent 70%);
+            filter: blur(10px);
+            border-radius: 50%;
+            z-index: 0;
+        }
+
+        /* --- Typography --- */
+        .title {
+            font-family: var(--font-heading);
+            font-size: clamp(1.8rem, 10vw, 4.5rem);
+            /* More fluid on small screens */
+            margin-bottom: clamp(10px, 2vh, 20px);
+            color: var(--text-main);
+            font-weight: 900;
+            letter-spacing: -1px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            line-height: 1.1;
+        }
+
+        .subtitle {
+            font-size: clamp(0.9rem, 1.8vw, 1.2rem);
+            color: rgba(45, 27, 0, 0.85);
+            margin-bottom: clamp(25px, 6vh, 45px);
+            line-height: 1.6;
+            max-width: 550px;
+            margin-left: auto;
+            margin-right: auto;
+            font-weight: 500;
+            padding: 0 10px;
+        }
+
+        .path-diverge {
+            font-family: 'Pacifico', cursive;
+            color: var(--accent-dark);
+            font-size: clamp(1.1rem, 4vw, 1.8rem);
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        /* --- Actions --- */
+        .actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+
+        .btn-premium {
+            padding: 14px 28px;
+            border-radius: 50px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-size: 0.95rem;
+            position: relative;
+            border: none;
+            cursor: pointer;
+            min-width: 180px;
+            /* Ensure uniform size where possible */
+        }
+
+        .btn-filled {
+            background: var(--text-main);
+            color: white;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-filled:hover {
+            transform: translateY(-3px);
+            background: #000;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-outline {
+            background: rgba(255, 255, 255, 0.2);
+            color: var(--text-main);
+            border: 2px solid var(--text-main);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+
+        .btn-outline:hover {
+            background: var(--text-main);
+            color: white;
+            transform: translateY(-3px);
+        }
+
+        /* --- Floating Particles --- */
+        .particle {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0;
+            animation: particleAnimation 10s linear infinite;
+        }
+
+        @keyframes particleAnimation {
+            0% {
+                transform: translateY(0) scale(0);
+                opacity: 0;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+
+            100% {
+                transform: translateY(-100vh) scale(1);
+                opacity: 0;
+            }
+        }
+
+        /* --- Custom Cursor Trail --- */
+        .cursor-trail {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            background: var(--accent-dark);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1000;
+            mix-blend-mode: multiply;
+            filter: blur(8px);
+            transition: transform 0.1s ease;
+            opacity: 0.6;
+        }
+
+        /* Mobile Specific Refinement */
+        @media (max-width: 480px) {
+            .btn-premium {
+                width: 100%;
+                /* Stack fully on very small phones */
+                min-width: unset;
+                padding: 12px 20px;
+                font-size: 0.9rem;
+            }
+
+            .zen-island {
+                margin-bottom: 20px;
+            }
+
+            .bg-404 {
+                font-size: 40vw;
+                /* Ensure it doesn't get TOO huge but remains visible */
+            }
+        }
+
+        /* Landscape Mobile */
+        @media (max-height: 500px) and (orientation: landscape) {
+            .zen-island {
+                display: none;
+                /* Hide island to save vertical space on landscape mobile */
+            }
+
+            .content-wrapper {
+                padding-top: 10px;
+            }
+
+            .title {
+                font-size: 1.5rem;
+                margin-bottom: 5px;
+            }
+
+            .subtitle {
+                margin-bottom: 15px;
+                font-size: 0.85rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="cosmic-background">
+        <div class="glow-orb orb-1" id="orb1"></div>
+        <div class="glow-orb orb-2" id="orb2"></div>
+        <div class="bg-404" id="bg404">
+            <span>4</span><span>0</span><span>4</span>
+        </div>
+    </div>
+
+    <div class="content-wrapper">
+        <div class="zen-island">
+            <div class="pebble pebble-4"></div>
+            <div class="pebble pebble-3"></div>
+            <div class="pebble pebble-2"></div>
+            <div class="pebble pebble-1"></div>
+            <div class="island-base"></div>
+        </div>
+
+        <span class="path-diverge">The path diverged...</span>
+        <h1 class="title">Stillness in Static</h1>
+        <p class="subtitle">You have wandered into an unwritten space. Even in the unknown, there is beauty. Let us
+            breathe together and return to the path of wisdom.</p>
+
+        <div class="actions">
+            <a href="index.html" class="btn-premium btn-filled">
+                <i class="fas fa-om"></i> Center Yourselves
+            </a>
+            <a href="courses.html" class="btn-premium btn-outline">
+                <i class="fas fa-compass"></i> Explore Paths
+            </a>
+            <button onclick="history.back()" class="btn-premium btn-outline">
+                <i class="fas fa-arrow-left"></i> Step Back
+            </button>
+        </div>
+    </div>
+
+    <div id="trail"></div>
+
+    <script>
+        // --- Parallax and Movement ---
+        document.addEventListener('mousemove', (e) => {
+            const { clientX, clientY } = e;
+            const x = (clientX / window.innerWidth - 0.5) * 2;
+            const y = (clientY / window.innerHeight - 0.5) * 2;
+
+            // Move Orbs
+            document.getElementById('orb1').style.transform = `translate(${x * 50}px, ${y * 50}px)`;
+            document.getElementById('orb2').style.transform = `translate(${-x * 50}px, ${-y * 50}px)`;
+
+            // Rotate Island
+            const island = document.querySelector('.zen-island');
+            island.style.transform = `translateY(${Math.sin(Date.now() / 1000) * 15}px) rotateY(${x * 10}deg) rotateX(${-y * 10}deg)`;
+
+            // Move Background Text is removed to keep it perfectly centered as requested
+
+            // Move Grid is removed
+
+            // Cursor Trail
+            createTrail(clientX, clientY);
+        });
+
+        // --- Cursor Trail ---
+        function createTrail(x, y) {
+            const trail = document.createElement('div');
+            trail.className = 'cursor-trail';
+            trail.style.left = (x - 10) + 'px';
+            trail.style.top = (y - 10) + 'px';
+            trail.style.background = 'var(--accent-dark)';
+            trail.style.opacity = '0.4';
+            trail.style.filter = 'blur(4px)';
+            document.body.appendChild(trail);
+
+            setTimeout(() => {
+                trail.style.opacity = '0';
+                trail.style.transform = 'scale(1.5)';
+                setTimeout(() => trail.remove(), 500);
+            }, 50);
+        }
+
+        // --- Create Floating Particles ---
+        function createParticles() {
+            const colors = ['var(--accent-primary)', 'var(--accent-secondary)', 'white'];
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+
+                const size = Math.random() * 4 + 1;
+                particle.style.width = size + 'px';
+                particle.style.height = size + 'px';
+
+                particle.style.left = Math.random() * 100 + 'vw';
+                particle.style.top = Math.random() * 100 + 'vh';
+
+                particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                particle.style.animationDelay = Math.random() * 10 + 's';
+                particle.style.animationDuration = (Math.random() * 20 + 10) + 's';
+
+                document.querySelector('.cosmic-background').appendChild(particle);
+            }
+        }
+
+        createParticles();
+
+        // --- Interactive Pebbles ---
+        document.querySelectorAll('.pebble').forEach(p => {
+            p.addEventListener('mouseover', () => {
+                p.style.transform = 'translateY(-10px) scale(1.05)';
+                p.style.transition = 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+            });
+            p.addEventListener('mouseout', () => {
+                p.style.transform = 'translateY(0) scale(1)';
+            });
+        });
+    </script>
+</body>
+
+</html>

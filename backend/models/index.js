@@ -104,7 +104,6 @@ const courseSchema = new Schema({
     // Published: Live (Current)
     // Inactive: Soft deleted/Hidden
 
-    totalLessons: { type: Number, default: 0 },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
     deletedAt: { type: Date },
     createdAt: { type: Date, default: Date.now }

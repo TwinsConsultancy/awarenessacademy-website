@@ -2330,7 +2330,7 @@
 
 <body>
     <!-- Navigation -->
-    <nav class="nav">
+    <nav class="nav" id="mainNav">
         <a href="index.html" class="logo">
             <img src="../assets/logo.png" alt="AWARENESS ACADEMY"> AWARENESS ACADEMY
         </a>
@@ -2341,7 +2341,7 @@
             <a href="gallery.html">Gallery</a>
             <a href="faq.html">FAQ</a>
             <a href="contact.html">Contact</a>
-            <a href="login.html" class="btn-primary">Login</a>
+            <a href="login.html" class="btn-primary" id="authLink">Login</a>
         </div>
         <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
             <span></span>
@@ -2355,10 +2355,11 @@
 
     <!-- Mobile Navigation -->
     <div class="mobile-nav" id="mobileNav">
-        <div class="mobile-nav-header">
-            <a href="index.html" class="logo">
-                <img src="../assets/logo.png" alt="Logo"> AWARENESS ACADEMY
-            </a>
+        <div class="mobile-nav-header" style="justify-content: flex-end; padding: 15px;">
+            <button class="mobile-nav-close" onclick="toggleMobileMenu()"
+                style="background: none; border: none; font-size: 1.5rem; color: var(--color-primary); cursor: pointer;">
+                <i class="fas fa-times"></i>
+            </button>
         </div>
         <div class="mobile-nav-links">
             <a href="index.html"><i class="fas fa-home"></i> Home</a>
@@ -2367,7 +2368,7 @@
             <a href="gallery.html"><i class="fas fa-images"></i> Gallery</a>
             <a href="faq.html"><i class="fas fa-question-circle"></i> FAQ</a>
             <a href="contact.html"><i class="fas fa-envelope"></i> Contact</a>
-            <a href="login.html"><i class="fas fa-sign-in-alt"></i> Login</a>
+            <a href="login.html" id="authLinkMobile"><i class="fas fa-sign-in-alt"></i> Login</a>
         </div>
         <div class="mobile-nav-contact">
             <div class="mobile-nav-contact-item">
