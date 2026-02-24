@@ -469,7 +469,7 @@ async function loadStats() {
         document.getElementById('statUsers').textContent = stats.totalUsers;
         document.getElementById('statMentors').textContent = stats.totalMentors;
         document.getElementById('statCourses').textContent = stats.totalCourses;
-        document.getElementById('statRevenue').textContent = `$${stats.revenue.toLocaleString()}`;
+        document.getElementById('statRevenue').textContent = `₹${stats.revenue.toLocaleString()}`;
     } catch (err) {
         console.error('Stats error:', err);
     }
@@ -1319,6 +1319,16 @@ async function submitEditUser() {
     // Remove empty password if not changing
     if (!data.password) delete data.password;
 
+    // Fix nested address fields
+    if (data['address[town]'] !== undefined || data['address[state]'] !== undefined) {
+        data.address = {
+            town: data['address[town]'],
+            state: data['address[state]']
+        };
+        delete data['address[town]'];
+        delete data['address[state]'];
+    }
+
     try {
         UI.showLoader();
         const res = await fetch(`${Auth.apiBase}/admin/users/${userId}`, {
@@ -1902,11 +1912,11 @@ function filterFinanceLedger() {
 
         let matchesStatus = true;
         if (statusFilter) {
-            const stat = p.status || 'Pending';
+            const statLower = (p.status || 'Pending').toLowerCase();
             if (statusFilter === 'Success') {
-                matchesStatus = (stat === 'Success' || stat === 'Completed');
+                matchesStatus = (statLower === 'success' || statLower === 'completed');
             } else {
-                matchesStatus = (stat === statusFilter);
+                matchesStatus = (statLower === statusFilter.toLowerCase());
             }
         }
 
@@ -1917,35 +1927,90 @@ function filterFinanceLedger() {
 }
 
 function renderLedger(ledger) {
+    // Update Stats KPIs
+    if (window.allLedger && document.getElementById('financeTotalRevenue')) {
+        let revenue = 0;
+        let students = {};
+        let courses = {};
+        window.allLedger.forEach(p => {
+            const statLower = (p.status || '').toLowerCase();
+            if (statLower === 'success' || statLower === 'completed') {
+                revenue += p.amount || 0;
+                let sName = p.studentID?.name || 'Unknown';
+                let cTitle = p.courseID?.title || 'Unknown';
+                students[sName] = (students[sName] || 0) + (p.amount || 0);
+                courses[cTitle] = (courses[cTitle] || 0) + (p.amount || 0);
+            }
+        });
+
+        let topStudent = '-';
+        let maxS = 0;
+        for (let s in students) { if (students[s] > maxS) { maxS = students[s]; topStudent = s; } }
+
+        let topCourse = '-';
+        let maxC = 0;
+        for (let c in courses) { if (courses[c] > maxC) { maxC = courses[c]; topCourse = c; } }
+
+        document.getElementById('financeTotalRevenue').textContent = `₹${revenue.toLocaleString()}`;
+        document.getElementById('financeRazorpayComm').textContent = `₹${(revenue * 0.02).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        document.getElementById('financeTopStudent').textContent = topStudent;
+        document.getElementById('financeTopCourse').textContent = topCourse;
+    }
+
     const list = document.getElementById('ledgerList');
     if (!ledger || ledger.length === 0) {
-        list.innerHTML = '<tr><td colspan="6" style="padding: 20px; text-align: center; color: #999;">No transactions found.</td></tr>';
+        list.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">No transactions found.</div>';
         return;
     }
+
     list.innerHTML = ledger.map((p, index) => {
         const dateRaw = p.date || p.createdAt || p.initiatedAt;
         const dateStr = dateRaw ? new Date(dateRaw).toLocaleString('en-US', {
             year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
         }) : 'N/A';
-        const statusIcon = p.status === 'Completed' || p.status === 'Success' ? '<i class="fas fa-check-circle" style="color:var(--color-success)"></i>' :
-            (p.status === 'Pending' ? '<i class="fas fa-clock" style="color:var(--color-warning)"></i>' : '<i class="fas fa-times-circle" style="color:var(--color-error)"></i>');
+        const statLower = (p.status || '').toLowerCase();
+        const isSuccess = statLower === 'completed' || statLower === 'success';
+        const isPending = statLower === 'pending';
+
+        const statusIcon = isSuccess ? '<i class="fas fa-check-circle" style="color:var(--color-success)"></i>' :
+            (isPending ? '<i class="fas fa-clock" style="color:var(--color-warning)"></i>' : '<i class="fas fa-times-circle" style="color:var(--color-error)"></i>');
+
+        const statusColor = isSuccess ? '#e8f5e9' : (isPending ? '#fff3e0' : '#ffebee');
+        const statusTextColor = isSuccess ? '#2e7d32' : (isPending ? '#ef6c00' : '#c62828');
+
+        let displayStatus = 'Failed';
+        if (isSuccess) displayStatus = 'Success';
+        else if (isPending) displayStatus = 'Pending';
+        else if (statLower === 'refunded') displayStatus = 'Refunded';
 
         // Safe identifier for onclick
         const txId = p._id;
 
         return `
-        <tr style="border-bottom: 1px solid #eee; transition: background 0.2s; cursor: pointer;" onclick="openTransactionDetailsModal('${txId}')" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='white'">
-            <td style="padding: 15px; font-family: monospace; font-size: 0.9rem;">${p.transactionID || 'N/A'}</td>
-            <td style="padding: 15px; color: #555; font-size: 0.9rem;">${dateStr}</td>
-            <td style="padding: 15px; font-weight: 500;">${p.studentID?.name || 'Unknown User'}</td>
-            <td style="padding: 15px; color: #666; font-size: 0.9rem;"><i class="fas fa-book-open" style="color:#999; margin-right:5px;"></i> ${p.courseID?.title || 'Unknown Course'}</td>
-            <td style="padding: 15px; font-weight: bold; color: var(--color-saffron);">₹${p.amount || 0}</td>
-            <td style="padding: 15px;">
-                <span style="display:inline-flex; align-items:center; gap:6px; padding: 4px 10px; border-radius: 20px; background: #f8f8f8; font-size: 0.85rem; font-weight: 600;">
-                    ${statusIcon} ${p.status || 'Pending'}
-                </span>
-            </td>
-        </tr>
+        <div class="glass-card" style="padding: 15px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; gap: 15px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onclick="openTransactionDetailsModal('${txId}')" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 15px rgba(0,0,0,0.05)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';">
+            <div style="display: flex; align-items: center; gap: 15px; flex: 1;">
+                <div style="width: 45px; height: 45px; border-radius: 50%; background: ${isSuccess ? 'rgba(46, 204, 113, 0.1)' : (isPending ? 'rgba(243, 156, 18, 0.1)' : 'rgba(231, 76, 60, 0.1)')}; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;">
+                    ${statusIcon}
+                </div>
+                <div>
+                    <div style="font-weight: 600; font-size: 1rem; color: #333;">${p.courseID?.title || 'Unknown Course'}</div>
+                    <div style="color: #666; font-size: 0.85rem; margin-top: 3px;">
+                        <i class="fas fa-user" style="color:#999; margin-right:4px;"></i> ${p.studentID?.name || 'Unknown User'} &bull; 
+                        <i class="fas fa-hashtag" style="color:#999; margin-right:4px; margin-left: 6px;"></i> ${p.transactionID || 'N/A'}
+                    </div>
+                </div>
+            </div>
+
+            <div style="text-align: right;">
+                <div style="font-weight: bold; font-size: 1.2rem; color: var(--color-saffron);">₹${p.amount || 0}</div>
+                <div style="color: #888; font-size: 0.8rem; margin-top: 3px;">
+                    ${dateStr}
+                    <span style="display: inline-block; margin-left: 8px; padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; background: ${statusColor}; color: ${statusTextColor};">
+                        ${displayStatus}
+                    </span>
+                </div>
+            </div>
+        </div>
         `;
     }).join('');
 }
@@ -1968,22 +2033,33 @@ function openTransactionDetailsModal(txId) {
     document.getElementById('tdmCourse').textContent = p.courseID?.title || 'Unknown Course';
     document.getElementById('tdmAmount').textContent = `₹${p.amount || 0}`;
 
-    const statusBadgeColors = {
-        'Success': { bg: 'var(--color-success)', text: '#fff' },
-        'Completed': { bg: 'var(--color-success)', text: '#fff' },
-        'Pending': { bg: 'var(--color-warning)', text: '#000' },
-        'Failed': { bg: 'var(--color-error)', text: '#fff' },
-        'Refunded': { bg: '#9E9E9E', text: '#fff' },
-    };
+    const statLower = (p.status || 'pending').toLowerCase();
 
-    const statusStyle = statusBadgeColors[p.status] || { bg: '#eee', text: '#333' };
+    // Normalize status for badge colors
+    let normalizedStatusObj = { bg: '#eee', text: '#333' };
+    let displayStatus = 'Pending';
+
+    if (statLower === 'success' || statLower === 'completed') {
+        normalizedStatusObj = { bg: 'var(--color-success)', text: '#fff' };
+        displayStatus = 'Success';
+    } else if (statLower === 'pending') {
+        normalizedStatusObj = { bg: 'var(--color-warning)', text: '#000' };
+        displayStatus = 'Pending';
+    } else if (statLower === 'refunded') {
+        normalizedStatusObj = { bg: '#9E9E9E', text: '#fff' };
+        displayStatus = 'Refunded';
+    } else {
+        normalizedStatusObj = { bg: 'var(--color-error)', text: '#fff' };
+        displayStatus = 'Failed';
+    }
+
     const statusEl = document.getElementById('tdmStatus');
-    statusEl.textContent = p.status || 'Pending';
-    statusEl.style.backgroundColor = statusStyle.bg;
-    statusEl.style.color = statusStyle.text;
+    statusEl.textContent = p.status || displayStatus;
+    statusEl.style.backgroundColor = normalizedStatusObj.bg;
+    statusEl.style.color = normalizedStatusObj.text;
 
     const failureBlock = document.getElementById('tdmFailureBlock');
-    if (p.status !== 'Success' && p.status !== 'Completed') {
+    if (statLower !== 'success' && statLower !== 'completed') {
         failureBlock.style.display = 'block';
         document.getElementById('tdmFailureReason').textContent = p.failureReason || p.paymentData?.error?.message || 'Payment interrupted or declined by gateway.';
     } else {
@@ -2872,67 +2948,56 @@ function renderCourses(courses) {
     };
 
     container.innerHTML = `
-        <div class="glass-card" style="overflow:hidden; padding:0;">
-            <table class="data-table" style="width:100%; border-collapse:collapse;">
-                <thead style="position: sticky; top: 0; background:#fafafa; border-bottom:1px solid #eee; z-index: 5;">
-                    <tr>
-                        <th style="padding:15px;">Title & Category</th>
-                        <th style="padding:15px;">Mentors</th>
-                        <th style="padding:15px;">Price</th>
-                        <th style="padding:15px; text-align: center;">Content</th>
-                        <th style="padding:15px;">Status</th>
-                        <th style="padding:15px; text-align:right;">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${courses.map(c => {
+        <div style="display: grid; gap: 25px; grid-template-columns: repeat(auto-fill, minmax(max(280px, calc(25% - 25px)), 1fr));">
+            ${courses.map(c => {
         // Display only status (Fixed field name)
         const displayStatus = c.status || 'Draft';
         const statusColor = getStatusColor(displayStatus);
 
-        // Status Options for Dropdown
-        const options = ['Draft', 'Pending', 'Approved', 'Published', 'Inactive'];
-
         return `
-                        <tr style="border-bottom:1px solid #f9f9f9; transition:background 0.2s; cursor: pointer;" onclick="viewCourseDetails('${c._id}')" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background=''">
-                            <td style="padding:15px;">
-                                <div style="font-weight: 600; color:var(--color-text-primary);">${c.title}</div>
-                                <small style="color:#888;">${c.category || 'General'} • ${c.duration || 'N/A'}</small>
-                            </td>
-                            <td style="padding:15px;">
-                                ${(c.mentors && c.mentors.length > 0)
-                ? c.mentors.map(m => m.name).join(', ')
-                : '<span style="color:#999;">None</span>'}
-                            </td>
-                            <td style="padding:15px; font-weight:500;">₹${c.price}</td>
-                            <td style="padding:15px; text-align: center;" onclick="event.stopPropagation()">
-                                <a href="course-preview.html?id=${c._id}" class="btn-primary" 
-                                    title="Preview Course Content" 
-                                    style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center; padding:6px 14px; font-size:0.85rem; background: #fffaf0; color: #d35400; border: 1px solid #d35400; border-radius: 20px; font-weight: 600; transition: all 0.3s;" 
-                                    onmouseover="this.style.background='#d35400'; this.style.color='white'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 8px rgba(211,84,0,0.2)'"
-                                    onmouseout="this.style.background='#fffaf0'; this.style.color='#d35400'; this.style.transform='none'; this.style.boxShadow='none'">
-                                    <i class="fas fa-play-circle" style="margin-right:6px;"></i> Preview
-                                </a>
-                            </td>
-                            <td style="padding:15px; text-align: center;">
-                                <span style="background-color: ${statusColor.bg}; color: ${statusColor.text}; padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; display: inline-block; min-width: 80px;">
-                                    ${displayStatus}
-                                </span>
-                            </td>
-                            <td style="padding:15px; text-align:right;" onclick="event.stopPropagation()">
-                                <button class="btn-primary" title="Edit" style="padding:6px 10px; font-size:0.8rem; margin-right:5px;" 
-                                    onclick='openCourseModal(${JSON.stringify(c).replace(/'/g, "&#39;")})'>
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="btn-primary" title="Delete" style="background: #fff; border:1px solid #d9534f; color:#d9534f; padding:6px 10px; font-size:0.8rem;" 
-                                    onclick="deleteCourse('${c._id}')">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    `}).join('')}
-                </tbody>
-            </table>
+            <div class="glass-card" style="padding: 22px; border-radius: 12px; display: flex; flex-direction: column; gap: 20px; transition: transform 0.2s, box-shadow 0.2s; position: relative;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 15px rgba(0,0,0,0.05)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';">
+                
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 15px;">
+                    <div style="flex: 1; cursor: pointer; padding-right: 10px;" onclick="viewCourseDetails('${c._id}')">
+                        <div style="font-weight: 700; font-size: 1.25rem; color: var(--color-text-primary); margin-bottom: 12px; line-height: 1.4;">${c.title}</div>
+                        <div style="color: #666; font-size: 0.9rem; display: flex; flex-direction: column; gap: 8px;">
+                            <span><i class="fas fa-folder-open" style="color: #999; margin-right: 8px; width: 16px; text-align: center;"></i> ${c.category || 'General'}</span>
+                            <span><i class="fas fa-clock" style="color: #999; margin-right: 8px; width: 16px; text-align: center;"></i> ${c.duration || 'N/A'}</span>
+                            <span><i class="fas fa-user-tie" style="color: #999; margin-right: 8px; width: 16px; text-align: center;"></i> ${(c.mentors && c.mentors.length > 0) ? c.mentors.map(m => m.name).join(', ') : 'No Mentors'}</span>
+                        </div>
+                    </div>
+                    <div style="text-align: right; flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 10px;">
+                        <div style="font-weight: bold; font-size: 1.35rem; color: var(--color-saffron); background: #fffaf0; padding: 5px 12px; border-radius: 8px; border: 1px solid #ffe0b2;">₹${c.price}</div>
+                        <span style="background-color: ${statusColor.bg}; color: ${statusColor.text}; padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; display: inline-block; letter-spacing: 0.5px;">
+                            ${displayStatus}
+                        </span>
+                    </div>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #eee; padding-top: 20px; flex-wrap: wrap; gap: 15px;">
+                    <a href="course-preview.html?id=${c._id}" class="btn-primary" 
+                        title="Preview Course Content" 
+                        style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center; padding:6px 14px; font-size:0.85rem; background: #fffaf0; color: #d35400; border: 1px solid #d35400; border-radius: 20px; font-weight: 600; transition: all 0.3s;" 
+                        onmouseover="this.style.background='#d35400'; this.style.color='white'"
+                        onmouseout="this.style.background='#fffaf0'; this.style.color='#d35400'">
+                        <i class="fas fa-play-circle" style="margin-right:6px;"></i> Preview
+                    </a>
+                    
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn-primary" title="Edit" style="padding:6px 12px; font-size:0.85rem; background: #f0f0f0; color: #333; border: 1px solid #ddd;" 
+                            onclick='openCourseModal(${JSON.stringify(c).replace(/'/g, "&#39;")})'>
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button class="btn-primary" title="Delete" style="background: #fff; border:1px solid #d9534f; color:#d9534f; padding:6px 12px; font-size:0.85rem;" 
+                            onclick="deleteCourse('${c._id}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+            `;
+    }).join('')}
         </div>
     `;
 }
@@ -3903,14 +3968,14 @@ async function updatePlatformInfo() {
 // Switch Edit User Modal Tabs
 function switchEditTab(tabName, buttonElement, tabIndex) {
     // Hide all tab contents
-    const tabs = ['identityTab', 'profileTab', 'securityTab'];
+    const tabs = ['editTab_identity', 'editTab_profile', 'editTab_security'];
     tabs.forEach(tab => {
         const el = document.getElementById(tab);
         if (el) el.style.display = 'none';
     });
 
     // Show selected tab
-    const targetTab = document.getElementById(tabName + 'Tab');
+    const targetTab = document.getElementById('editTab_' + tabName);
     if (targetTab) targetTab.style.display = 'block';
 
     // Update active button state

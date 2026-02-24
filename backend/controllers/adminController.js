@@ -234,7 +234,7 @@ exports.getAdminStats = async (req, res) => {
         const totalUsers = await User.countDocuments({ role: 'Student' });
         const totalMentors = await User.countDocuments({ role: 'Staff' });
         const totalCourses = await Course.countDocuments();
-        const payments = await Payment.find({ status: 'Success' });
+        const payments = await Payment.find({ status: { $in: ['Success', 'completed'] } });
         const revenue = payments.reduce((sum, p) => sum + p.amount, 0);
 
         res.status(200).json({
