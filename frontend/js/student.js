@@ -198,6 +198,7 @@ window.joinLive = joinLive;
 window.downloadCertificate = downloadCertificate;
 window.purchaseCourse = purchaseCourse;
 window.updateProfile = updateProfile;
+window.showReadOnlyWarning = showReadOnlyWarning;
 window.openChangePasswordModal = openChangePasswordModal;
 window.submitPasswordChange = submitPasswordChange;
 window.closeProfileModal = closeProfileModal;
@@ -1585,8 +1586,11 @@ async function loadMarketplace() {
 
     try {
         UI.showLoader();
-        const res = await fetch(`${Auth.apiBase}/courses?category=${category}`, { headers: Auth.getHeaders() });
+        const res = await fetch(`${Auth.apiBase}/courses`, { headers: Auth.getHeaders() });
         const courses = await res.json();
+
+        // Store courses globally for filtering
+        window.allMarketplaceCourses = courses;
 
         let enrolledIds = [];
         try {
@@ -1594,14 +1598,25 @@ async function loadMarketplace() {
             enrolledIds = enrolled.map(c => c._id);
         } catch (e) { }
 
+        // Store enrolled status with courses for filtering
+        window.allMarketplaceCourses = courses.map(c => ({
+            ...c,
+            isEnrolled: enrolledIds.includes(c._id),
+            instructor: c.mentors && c.mentors.length > 0 ? c.mentors.map(m => m.name).join(', ') : 'Instructor'
+        }));
+
         if (courses.length === 0) {
             container.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--color-text-secondary);">No paths found for this category at the moment.</p>';
             return;
         }
 
-        container.innerHTML = courses.map(c => {
-            const isEnrolled = enrolledIds.includes(c._id);
-            const mentorName = c.mentors && c.mentors.length > 0 ? c.mentors.map(m => m.name).join(', ') : 'Instructor';
+        // Apply initial filters
+        filterMarketplace();
+
+        function renderMarketplaceCourses(coursesToRender) {
+            container.innerHTML = coursesToRender.map(c => {
+            const isEnrolled = c.isEnrolled;
+            const mentorName = c.instructor;
             const thumb = getThumbnail(c.thumbnail);
 
             let ctaBtn = '';
@@ -1703,7 +1718,11 @@ async function loadMarketplace() {
                     ${ctaBtn}
                 </div>
             </div>`;
-        }).join('');
+            }).join('');
+        }
+
+        // Initial render with all courses
+        renderMarketplaceCourses(window.allMarketplaceCourses);
 
         // Inject responsive marketplace grid CSS once
         if (!document.getElementById('mktGridStyle')) {
@@ -1726,10 +1745,60 @@ async function loadMarketplace() {
             document.head.appendChild(s);
         }
 
+        // Setup event listeners for real-time filtering
+        setupMarketplaceEventListeners();
+
     } catch (err) {
         UI.error('Course catalog temporarily unavailable.');
     } finally {
         UI.hideLoader();
+    }
+}
+
+// Setup event listeners for marketplace filtering
+function setupMarketplaceEventListeners() {
+    const searchInput = document.getElementById('marketplaceSearch');
+    const categorySelect = document.getElementById('marketplaceCategory');
+    const priceSelect = document.getElementById('marketplacePriceFilter');
+    const searchButton = document.querySelector('.mkt-search-btn');
+
+    // Real-time search with debouncing
+    let searchTimeout;
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                filterMarketplace();
+            }, 300);
+        });
+        
+        // Also filter on Enter key
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                filterMarketplace();
+            }
+        });
+    }
+
+    // Search button
+    if (searchButton) {
+        searchButton.addEventListener('click', () => {
+            filterMarketplace();
+        });
+    }
+
+    // Category filter
+    if (categorySelect) {
+        categorySelect.addEventListener('change', () => {
+            filterMarketplace();
+        });
+    }
+
+    // Price filter  
+    if (priceSelect) {
+        priceSelect.addEventListener('change', () => {
+            filterMarketplace();
+        });
     }
 }
 
@@ -2111,6 +2180,13 @@ function renderProfileWarning(percent) {
         const topAlertBar = document.getElementById('alertProgressBar');
         if (topPercentText) topPercentText.textContent = '100%';
         if (topAlertBar) topAlertBar.style.width = '100%';
+    }
+}
+
+// Show warning for non-editable fields
+function showReadOnlyWarning() {
+    if (typeof UI !== 'undefined' && UI.showNotification) {
+        UI.showNotification('This field is not editable once created. Raise a ticket or contact admin for changes.', 'warning');
     }
 }
 
