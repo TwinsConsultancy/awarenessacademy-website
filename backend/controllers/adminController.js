@@ -426,12 +426,12 @@ exports.getAdvancedAnalytics = async (req, res) => {
 
         // Revenue Growth (Monthly)
         const revenueGrowth = await Payment.aggregate([
-            { $match: { status: 'Success', createdAt: { $gte: filterStartDate } } },
+            { $match: { status: 'Success', date: { $gte: filterStartDate } } },
             {
                 $group: {
                     _id: {
-                        year: { $year: "$createdAt" },
-                        month: { $month: "$createdAt" }
+                        year: { $year: "$date" },
+                        month: { $month: "$date" }
                     },
                     revenue: { $sum: "$amount" },
                     count: { $sum: 1 }
@@ -442,13 +442,13 @@ exports.getAdvancedAnalytics = async (req, res) => {
 
         // Total Revenue
         const totalRevenue = await Payment.aggregate([
-            { $match: { status: 'Success', createdAt: { $gte: filterStartDate } } },
+            { $match: { status: 'Success', date: { $gte: filterStartDate } } },
             { $group: { _id: null, total: { $sum: "$amount" } } }
         ]);
 
         // Revenue by Course
         const revenueByCourse = await Payment.aggregate([
-            { $match: { status: 'Success', createdAt: { $gte: filterStartDate } } },
+            { $match: { status: 'Success', date: { $gte: filterStartDate } } },
             {
                 $group: {
                     _id: "$courseID",
@@ -477,8 +477,8 @@ exports.getAdvancedAnalytics = async (req, res) => {
         ]);
 
         // Payment Success vs Failure
-        const successPayments = await Payment.countDocuments({ status: 'Success', createdAt: { $gte: filterStartDate } });
-        const failedPayments = await Payment.countDocuments({ status: { $in: ['Failed', 'Pending'] }, createdAt: { $gte: filterStartDate } });
+        const successPayments = await Payment.countDocuments({ status: 'Success', date: { $gte: filterStartDate } });
+        const failedPayments = await Payment.countDocuments({ status: { $in: ['Failed', 'Pending'] }, date: { $gte: filterStartDate } });
 
         // === 4. CONTENT & STAFF ANALYTICS ===
 
@@ -593,7 +593,7 @@ exports.getAdvancedAnalytics = async (req, res) => {
             {
                 $bucket: {
                     groupBy: "$percentComplete",
-                    boundaries: [0, 25, 50, 75, 100],
+                    boundaries: [0, 25, 50, 75, 101], // 101 so 100% falls into 75-100% and not 'Other'
                     default: "Other",
                     output: {
                         count: { $sum: 1 }
@@ -635,6 +635,7 @@ exports.getAdvancedAnalytics = async (req, res) => {
 
         // Ticket Status Distribution
         const openTickets = await Ticket.countDocuments({ status: 'Open', createdAt: { $gte: filterStartDate } });
+        const inProgressTickets = await Ticket.countDocuments({ status: 'In Progress', createdAt: { $gte: filterStartDate } });
         const resolvedTickets = await Ticket.countDocuments({ status: 'Resolved', createdAt: { $gte: filterStartDate } });
         const closedTickets = await Ticket.countDocuments({ status: 'Closed', createdAt: { $gte: filterStartDate } });
 
@@ -700,7 +701,7 @@ exports.getAdvancedAnalytics = async (req, res) => {
 
             // Support
             supportRequests,
-            ticketStatus: { open: openTickets, resolved: resolvedTickets, closed: closedTickets },
+            ticketStatus: { open: openTickets, inProgress: inProgressTickets, resolved: resolvedTickets, closed: closedTickets },
 
             // System Health
             loginActivity,

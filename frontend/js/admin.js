@@ -2559,87 +2559,18 @@ async function loadAnalytics() {
             }
         });
 
-        // Live Classes by Staff Chart
-        const liveStaffLabels = data.liveClassesByStaff.map(s => s.staffName || 'Unknown');
-        const liveStaffData = data.liveClassesByStaff.map(s => s.classCount);
-        window.analyticsCharts.liveClassStaff = new Chart(document.getElementById('liveClassStaffChart'), {
-            type: 'bar',
-            data: {
-                labels: liveStaffLabels,
-                datasets: [{
-                    label: 'Live Classes',
-                    data: liveStaffData,
-                    backgroundColor: 'rgba(52, 152, 219, 0.8)',
-                    borderColor: '#3498db',
-                    borderWidth: 1,
-                    borderRadius: 6,
-                    hoverBackgroundColor: '#3498db'
-                }]
-            },
-            options: {
-                ...commonOptions,
-                plugins: {
-                    ...commonOptions.plugins,
-                    legend: { display: false }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: { color: 'rgba(0, 0, 0, 0.05)' }
-                    },
-                    x: { grid: { display: false } }
-                }
-            }
-        });
-
-        // === 5. LIVE CLASS & ATTENDANCE ANALYTICS ===
-
-        // Attendance Rate Chart
-        const attendanceLabels = data.attendanceRate.map(a => new Date(a.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
-        const attendanceData = data.attendanceRate.map(a => a.attendanceRate);
-        window.analyticsCharts.attendanceRate = new Chart(document.getElementById('attendanceRateChart'), {
-            type: 'line',
-            data: {
-                labels: attendanceLabels,
-                datasets: [{
-                    label: 'Attendance %',
-                    data: attendanceData,
-                    borderColor: '#2ecc71',
-                    backgroundColor: 'rgba(46, 204, 113, 0.2)',
-                    fill: true,
-                    tension: 0.4,
-                    pointRadius: 4,
-                    pointHoverRadius: 6,
-                    pointBackgroundColor: '#2ecc71',
-                    pointBorderColor: '#fff',
-                    pointBorderWidth: 2
-                }]
-            },
-            options: {
-                ...commonOptions,
-                plugins: {
-                    ...commonOptions.plugins,
-                    legend: { display: true, position: 'top' }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 100,
-                        grid: { color: 'rgba(0, 0, 0, 0.05)' },
-                        ticks: {
-                            callback: value => value + '%'
-                        }
-                    },
-                    x: { grid: { display: false } }
-                }
-            }
-        });
 
         // === 6. STUDENT ENGAGEMENT ANALYTICS ===
 
         // Video Completion Chart
         const completionRanges = ['0-25%', '25-50%', '50-75%', '75-100%'];
-        const completionCounts = data.videoCompletion.map(v => v.count || 0);
+        const completionCounts = [0, 0, 0, 0];
+        data.videoCompletion.forEach(v => {
+            if (v._id === 0) completionCounts[0] = v.count;
+            else if (v._id === 25) completionCounts[1] = v.count;
+            else if (v._id === 50) completionCounts[2] = v.count;
+            else if (v._id === 75 || v._id === 'Other') completionCounts[3] += v.count;
+        });
         window.analyticsCharts.videoCompletion = new Chart(document.getElementById('videoCompletionChart'), {
             type: 'bar',
             data: {
@@ -2720,10 +2651,10 @@ async function loadAnalytics() {
         window.analyticsCharts.ticketStatus = new Chart(document.getElementById('ticketStatusChart'), {
             type: 'doughnut',
             data: {
-                labels: ['Open', 'Resolved', 'Closed'],
+                labels: ['Open', 'In Progress', 'Resolved', 'Closed'],
                 datasets: [{
-                    data: [data.ticketStatus.open, data.ticketStatus.resolved, data.ticketStatus.closed],
-                    backgroundColor: ['#f39c12', '#2ecc71', '#95a5a6'],
+                    data: [data.ticketStatus.open, data.ticketStatus.inProgress, data.ticketStatus.resolved, data.ticketStatus.closed],
+                    backgroundColor: ['#f39c12', '#3498db', '#2ecc71', '#95a5a6'],
                     borderWidth: 2,
                     borderColor: '#fff',
                     hoverOffset: 10
