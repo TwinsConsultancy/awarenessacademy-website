@@ -48,49 +48,49 @@ let allCourses = [];
 // Function to determine which courses should show urgency message today
 function getUrgentCoursesToday(courses) {
     if (!courses || courses.length === 0) return [];
-    
+
     // Use current date to create a consistent selection for the entire day
     const today = new Date();
     const dateString = `${today.getFullYear()}-${String(today.getMonth()).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-    
+
     // Create a stable seed from the date
     let seed = 0;
     for (let i = 0; i < dateString.length; i++) {
         seed = ((seed << 5) - seed + dateString.charCodeAt(i)) & 0xffffffff;
     }
-    
+
     // Filter and sort published courses by ID for consistent ordering
     const publishedCourses = courses
         .filter(c => c.status === 'Published')
         .sort((a, b) => a._id.localeCompare(b._id)); // Consistent sort by ID
-    
+
     if (publishedCourses.length === 0) return [];
-    
+
     // Determine how many courses should show urgency (max 3, or all if less than 3)
     const urgentCount = Math.min(3, publishedCourses.length);
     const urgentCourses = [];
-    
+
     // Create a deterministic selection using a simple seeded random
     function seededRandom(s) {
         s = Math.sin(s) * 10000;
         return s - Math.floor(s);
     }
-    
+
     const usedIndices = new Set();
     for (let i = 0; i < urgentCount; i++) {
         let attempts = 0;
         let selectedIndex;
-        
+
         do {
             const randomValue = seededRandom(seed + i * 1234 + attempts * 567);
             selectedIndex = Math.floor(randomValue * publishedCourses.length);
             attempts++;
         } while (usedIndices.has(selectedIndex) && attempts < publishedCourses.length);
-        
+
         usedIndices.add(selectedIndex);
         urgentCourses.push(publishedCourses[selectedIndex]);
     }
-    
+
     return urgentCourses.map(c => c._id);
 }
 
@@ -159,7 +159,7 @@ function renderCourses(courses) {
     // Helper to generate Card HTML
     const generateCard = (c, isUpcoming) => {
         const isUrgent = !isUpcoming && urgentCourseIds.includes(c._id);
-        
+
         return `
         <div class="course-card glass-premium" ${!isUpcoming ? `onclick="window.location.href='course-intro.html?id=${c._id}'"` : ''} style="background: var(--color-bg-glass); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.4); border-radius: var(--border-radius-lg); overflow: hidden; cursor: ${isUpcoming ? 'default' : 'pointer'}; transition: var(--transition-smooth); opacity: ${isUpcoming ? '0.9' : '1'}; display: flex; flex-direction: column; height: 100%;">
             <div class="course-thumb" style="background-image: url('${getThumbnail(c.thumbnail)}'); background-size: cover; background-position: center; height: 200px; width: 100%; position: relative; flex-shrink: 0;">
@@ -215,13 +215,13 @@ function renderCourses(courses) {
             <div style="padding: 20px; flex: 1; display: flex; flex-direction: column;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                     <span style="font-size: 0.75rem; text-transform: uppercase; color: var(--color-saffron); font-weight: 700;">${c.category}</span>
-                    <span style="font-weight: 700; color: var(--color-saffron); font-size: 1.1rem;">$${c.price}</span>
+                    <span style="font-weight: 700; color: var(--color-saffron); font-size: 1.1rem;">${(c.price === 0 || c.price === "0") ? 'Free' : '$' + c.price}</span>
                 </div>
                 <h3 style="margin-bottom: 10px; font-family: var(--font-heading); flex: 1;">${c.title}</h3>
                 <p style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 15px;">By ${c.mentors && c.mentors[0] ? c.mentors[0].name : 'Mentor'}</p>
                 <div style="display: flex; align-items: center; gap: 15px; font-size: 0.8rem; color: #999; margin-bottom: 15px;">
                     <span><i class="fas fa-layer-group"></i> ${c.totalLessons || 0} Lessons</span>
-                    ${isUpcoming ? '<span><i class="fas fa-clock"></i> Releases Soon</span>' : '<span><i class="fas fa-star" style="color: var(--color-golden);"></i> 4.9</span>'}
+                    ${isUpcoming ? '<span><i class="fas fa-clock"></i> Releases Soon</span>' : `<span><i class="fas fa-star" style="color: var(--color-golden);"></i> ${c.rating || 5}</span>`}
                 </div>
                 ${isUpcoming ? `<button onclick="openNotifyModal('${c._id}', '${c.title.replace(/'/g, "\\'")}')" class="btn-primary" style="width: 100%; margin-top: auto; background: linear-gradient(135deg, #D97706 0%, #F59E0B 100%); cursor: pointer;"><i class="fas fa-bell"></i> Notify Me</button>` : `<button onclick="openExploreModal('${c._id}')" class="btn-primary" style="width: 100%; margin-top: auto; background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-golden) 100%); cursor: pointer;"><i class="fas fa-compass"></i> Explore Course</button>`}
             </div>
@@ -314,7 +314,7 @@ async function openCourseModal(id) {
         document.getElementById('modalTitle').textContent = course.title;
         document.getElementById('modalMentor').textContent = `By ${course.mentors && course.mentors.length > 0 ? course.mentors.map(m => m.name).join(', ') : 'Mentor'}`;
         document.getElementById('modalDesc').textContent = course.description;
-        document.getElementById('modalPrice').textContent = `$${course.price}`;
+        document.getElementById('modalPrice').textContent = (course.price === 0 || course.price === "0") ? 'Free' : `$${course.price}`;
         document.getElementById('modalImg').src = getThumbnail(course.thumbnail);
         document.getElementById('modalImg').onerror = function () {
             this.src = 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80';
@@ -332,7 +332,7 @@ async function openCourseModal(id) {
             enrollBtn.onclick = () => { window.location.href = `checkout.html?course=${id}`; };
             UI.info('Your previous enrollment in this path has reached its conclusion. Renew to continue.');
         } else {
-            enrollBtn.textContent = `Enroll for $${course.price}`;
+            enrollBtn.textContent = (course.price === 0 || course.price === "0") ? 'Enroll for Free' : `Enroll for $${course.price}`;
             enrollBtn.disabled = false;
             enrollBtn.onclick = () => { window.location.href = `checkout.html?course=${id}`; };
         }
@@ -669,7 +669,7 @@ function openExploreModal(courseId) {
                                 <div style="font-size: 2rem; color: var(--color-saffron); margin-bottom: 5px;">
                                     <i class="fas fa-star"></i>
                                 </div>
-                                <p style="font-weight: 600; color: #333; margin: 0; font-size: 1.1rem;">4.9</p>
+                                <p id="exploreModalRating" style="font-weight: 600; color: #333; margin: 0; font-size: 1.1rem;">4.9</p>
                                 <p style="font-size: 0.85rem; color: #666; margin: 5px 0 0 0;">Rating</p>
                             </div>
                             <div style="text-align: center;">
@@ -727,9 +727,15 @@ async function loadCourseDetails(courseId) {
         document.getElementById('exploreModalTitle').textContent = course.title;
         document.getElementById('exploreModalMentor').querySelector('span').textContent = course.mentors && course.mentors.length > 0 ? course.mentors.map(m => m.name).join(', ') : 'Mentor';
         document.getElementById('exploreModalCategory').querySelector('span').textContent = course.category || 'General';
-        document.getElementById('exploreModalPrice').textContent = `$${course.price}`;
+        document.getElementById('exploreModalPrice').textContent = (course.price === 0 || course.price === "0") ? 'Free' : `$${course.price}`;
         document.getElementById('exploreModalDescription').textContent = course.description || 'Discover the transformative power of this course.';
         document.getElementById('exploreModalLessons').textContent = course.totalLessons || 0;
+
+        // Dynamic rating
+        const ratingElement = document.getElementById('exploreModalRating');
+        if (ratingElement) {
+            ratingElement.textContent = course.rating || 5;
+        }
 
         const thumbUrl = getThumbnail(course.thumbnail);
         document.getElementById('exploreModalThumb').style.backgroundImage = `url('${thumbUrl}')`;

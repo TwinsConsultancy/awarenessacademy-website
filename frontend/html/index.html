@@ -944,6 +944,9 @@
             animation: scroll-banners 30s linear infinite;
             will-change: transform;
             cursor: pointer;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            transform-style: preserve-3d;
         }
 
         .banner-carousel-container:hover .banner-carousel-track {
@@ -999,12 +1002,8 @@
 
         @media (max-width: 768px) {
             .banner-carousel-container {
-                aspect-ratio: 16 / 6;
-            }
-
-            .banner-carousel-track {
-                animation-duration: 5s;
-                /* Faster on mobile */
+                aspect-ratio: 16 / 9;
+                /* Slightly taller on mobile for better visibility */
             }
         }
 
@@ -1804,7 +1803,7 @@
         }
 
         .hero-subtitle {
-            color: rgba(255, 255, 255, 0.95);
+            color: rgba(255, 255, 255, 0);
             font-family: var(--font-body);
             font-size: 1.8rem;
             margin-bottom: 3rem;
@@ -1918,10 +1917,11 @@
 
     <!-- Mobile Navigation -->
     <div class="mobile-nav" id="mobileNav">
-        <div class="mobile-nav-header">
-            <a href="index.html" class="logo">
-                <img src="../assets/logo.png" alt="Logo"> AWARENESS ACADEMY
-            </a>
+        <div class="mobile-nav-header" style="justify-content: flex-end; padding: 15px;">
+            <button class="mobile-nav-close" onclick="toggleMobileMenu()"
+                style="background: none; border: none; font-size: 1.5rem; color: var(--color-primary); cursor: pointer;">
+                <i class="fas fa-times"></i>
+            </button>
         </div>
         <div class="mobile-nav-links">
             <a href="index.html" class="active"><i class="fas fa-home"></i> Home</a>
@@ -1958,10 +1958,12 @@
         <!-- Hero Buttons (Hidden initially, shown at end of animation) -->
         <div class="hero-overlay-content">
             <h1 class="hero-title">Awaken Your Potential</h1>
-            <p class="hero-subtitle">Discover inner peace and transformation through our guided spiritual courses.</p>
+            <p class="hero-subtitle" style="color: #ffae00cb; font-weight: 500;">Discover inner peace and transformation
+                through our guided spiritual courses.</p>
             <div class="hero-buttons">
                 <a href="courses.html" class="btn-hero-primary">Begin Your Journey</a>
-                <a href="about.html" class="btn-hero-secondary" style="border-color: white; color: white;">Discover
+                <a href="about.html" class="btn-hero-secondary"
+                    style="background: var(--color-saffron); color: white; border-color: var(--color-saffron);">Discover
                     More</a>
             </div>
         </div>

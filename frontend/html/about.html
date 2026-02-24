@@ -5,33 +5,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>About Awareness Academy | Founder Abhishek Rajan | Est. 2014</title>
-    
+
     <!-- SEO Meta Tags -->
-    <meta name="description" content="Founded in 2014 by Abhishek Rajan, Awareness Academy transforms lives through meditation, spiritual coaching & holistic healing in Thammampatty, Tamil Nadu, India.">
-    <meta name="keywords" content="Abhishek Rajan, spiritual academy founder, awareness academy history, meditation center Tamil Nadu, holistic healing Salem, spiritual retreat India">
+    <meta name="description"
+        content="Founded in 2014 by Abhishek Rajan, Awareness Academy transforms lives through meditation, spiritual coaching & holistic healing in Thammampatty, Tamil Nadu, India.">
+    <meta name="keywords"
+        content="Abhishek Rajan, spiritual academy founder, awareness academy history, meditation center Tamil Nadu, holistic healing Salem, spiritual retreat India">
     <meta name="author" content="Abhishek Rajan - Awareness Academy">
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
     <link rel="canonical" href="https://awarenessacademy.in/about.html">
-    
+
     <!-- Geographic Meta Tags -->
     <meta name="geo.region" content="IN-TN">
     <meta name="geo.placename" content="Thammampatty, Salem, Tamil Nadu">
-    
+
     <!-- Open Graph Meta Tags -->
     <meta property="og:title" content="About Awareness Academy | Founder Abhishek Rajan">
-    <meta property="og:description" content="Discover our journey since 2014. Meet founder Abhishek Rajan and learn about our mission to transform lives through spiritual wisdom.">
+    <meta property="og:description"
+        content="Discover our journey since 2014. Meet founder Abhishek Rajan and learn about our mission to transform lives through spiritual wisdom.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://awarenessacademy.in/about.html">
     <meta property="og:image" content="https://awarenessacademy.in/assets/og-about.jpg">
     <meta property="og:site_name" content="Awareness Academy">
     <meta property="og:locale" content="en_IN">
-    
+
     <!-- Twitter Card Meta Tags -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="About Awareness Academy | Est. 2014">
-    <meta name="twitter:description" content="Founded by Abhishek Rajan in 2014. 10+ years transforming lives through meditation & spiritual coaching in Tamil Nadu.">
+    <meta name="twitter:description"
+        content="Founded by Abhishek Rajan in 2014. 10+ years transforming lives through meditation & spiritual coaching in Tamil Nadu.">
     <meta name="twitter:image" content="https://awarenessacademy.in/assets/og-about.jpg">
-    
+
     <!-- Schema.org Structured Data -->
     <script type="application/ld+json">
     {
@@ -53,7 +57,7 @@
         }
     }
     </script>
-    
+
     <script type="application/ld+json">
     {
         "@context": "https://schema.org",
@@ -74,7 +78,7 @@
         ]
     }
     </script>
-    
+
     <link rel="stylesheet" href="../css/variables.css?v=2">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link
@@ -1003,7 +1007,8 @@
             padding: 120px 50px;
             background: linear-gradient(180deg, #ffffff 0%, #faf8f5 100%);
             position: relative;
-            overflow: hidden;
+            overflow: visible !important;
+            /* Force visible for sticky support */
         }
 
         .founder-section::before {
@@ -1027,6 +1032,7 @@
         }
 
         .founder-image-wrapper {
+            position: -webkit-sticky;
             position: sticky;
             top: 100px;
             z-index: 10;
@@ -1834,7 +1840,8 @@
             .founder-image-wrapper {
                 position: relative !important;
                 top: 0 !important;
-                max-width: 400px;
+                max-width: 320px;
+                /* Slightly smaller for mobile */
                 margin: 0 auto;
                 width: 100% !important;
             }
@@ -1846,11 +1853,14 @@
             .founder-badge {
                 bottom: -15px;
                 right: 10px;
-                padding: 15px 20px;
+                padding: 10px 15px;
+                /* Reduced padding */
+                border-radius: 15px;
             }
 
             .founder-badge span {
-                font-size: 2rem;
+                font-size: 1.5rem;
+                /* Reduced font size */
             }
 
             .harmony-grid {
@@ -2824,11 +2834,6 @@
             updateCounter();
         }
 
-        // Founder Section Sticky - now handled by CSS position: sticky
-        function handleFounderSticky() {
-            // Disabled - using CSS sticky instead
-            return;
-        }
 
         // Scroll animations
         document.addEventListener('DOMContentLoaded', () => {
@@ -2876,19 +2881,7 @@
                 counterObserver.observe(counter);
             });
 
-            // Founder sticky handler
-            window.addEventListener('scroll', handleFounderSticky);
-            window.addEventListener('resize', () => {
-                const founderWrapper = document.querySelector('.founder-image-wrapper');
-                if (founderWrapper && window.innerWidth <= 900) {
-                    founderWrapper.style.position = 'relative';
-                    founderWrapper.style.top = '0';
-                    founderWrapper.style.width = '100%';
-                } else {
-                    handleFounderSticky();
-                }
-            });
-            handleFounderSticky();
+            // Removed founder sticky handlers - handled by pure CSS
         });
     </script>
 </body>
