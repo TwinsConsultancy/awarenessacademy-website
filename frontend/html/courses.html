@@ -142,32 +142,20 @@
             position: fixed;
             top: 0;
             width: 100%;
-            padding: 25px 50px;
+            padding: 15px 50px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             z-index: 1000;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            background: transparent;
-            box-shadow: none;
-        }
-
-        .nav.scrolled {
             background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.1);
-            padding: 15px 50px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
         }
 
         .nav .logo,
         .nav a {
-            color: white;
-            transition: all 0.3s ease;
-        }
-
-        .nav.scrolled .logo,
-        .nav.scrolled a {
             color: var(--color-text-primary);
+            transition: all 0.3s ease;
         }
 
         .nav-links {
@@ -204,12 +192,19 @@
         }
 
         .logo {
-            font-size: 1.8rem;
+            font-size: 1.4rem;
             font-family: var(--font-heading);
             font-weight: 700;
+            color: var(--color-text-primary);
             display: flex;
             align-items: center;
             gap: 10px;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .logo img {
+            height: 40px;
         }
 
         /* --- Header --- */
@@ -1359,9 +1354,9 @@
         window.addEventListener('scroll', function () {
             const nav = document.getElementById('mainNav');
             if (window.scrollY > 50) {
-                nav.classList.add('scrolled');
+                nav.style.boxShadow = '0 5px 20px rgba(0, 0, 0, 0.1)';
             } else {
-                nav.classList.remove('scrolled');
+                nav.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.05)';
             }
         });
     </script>

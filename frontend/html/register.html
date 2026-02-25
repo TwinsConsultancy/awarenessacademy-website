@@ -368,15 +368,48 @@
             position: fixed;
             top: 0;
             width: 100%;
-            padding: 20px 50px;
+            padding: 15px 50px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             z-index: 1000;
-            transition: all 0.3s ease;
             background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 5px 30px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav a {
+            color: var(--color-text-primary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: var(--transition-smooth);
+            position: relative;
+            white-space: nowrap;
+        }
+
+        .nav-links a {
+            padding: 8px 16px;
+        }
+
+        .nav-links a:not(.btn-primary)::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--color-saffron);
+            transition: var(--transition-smooth);
+        }
+
+        .nav-links a:not(.btn-primary):hover::after {
+            width: 100%;
         }
 
         .logo {
@@ -393,27 +426,6 @@
 
         .logo img {
             height: 40px;
-        }
-
-        .nav-links {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .nav-links a {
-            text-decoration: none;
-            font-weight: 500;
-            color: var(--color-text-primary);
-            padding: 8px 16px;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-            white-space: nowrap;
-        }
-
-        .nav-links a:hover {
-            background: rgba(255, 153, 51, 0.1);
-            color: var(--color-saffron);
         }
 
         .nav-links a.active {
@@ -608,7 +620,7 @@
             height: 100vh;
             background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
             z-index: 999;
-            padding: 100px 0 50px;
+            padding: 80px 0 20px;
             display: flex;
             flex-direction: column;
             transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
@@ -620,36 +632,54 @@
         }
 
         .mobile-nav-header {
-            padding: 0 30px 30px;
+            padding: 0 20px 20px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
 
         .mobile-nav-header .logo {
             color: white;
-            font-size: 1.2rem;
+            font-size: 1rem;
+        }
+
+        .mobile-nav-header .logo img {
+            height: 30px !important;
         }
 
         .mobile-nav-links {
             flex: 1;
-            padding: 0 20px;
+            padding: 0 16px;
             overflow-y: auto;
+        }
+
+        .mobile-nav-links::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .mobile-nav-links::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .mobile-nav-links::-webkit-scrollbar-thumb {
+            background: rgba(255, 153, 51, 0.5);
+            border-radius: 2px;
         }
 
         .mobile-nav-links a {
             display: flex;
             align-items: center;
-            gap: 15px;
-            font-size: 1.1rem;
+            gap: 12px;
+            font-size: 1rem;
             font-weight: 500;
             color: rgba(255, 255, 255, 0.8);
             text-decoration: none;
-            padding: 16px 20px;
-            border-radius: 12px;
-            margin-bottom: 8px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-bottom: 4px;
             transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
+            min-height: 44px;
         }
 
         .mobile-nav-links a::before {
@@ -677,24 +707,40 @@
         }
 
         .mobile-nav-links a i {
-            width: 24px;
+            width: 20px;
             text-align: center;
             color: var(--color-saffron);
+            font-size: 0.9rem;
         }
 
         .mobile-nav-footer {
-            padding: 20px 30px;
+            padding: 12px 20px;
             border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .mobile-nav-footer .social-icons {
+            display: flex;
             justify-content: center;
+            gap: 10px;
+            margin-top: 0;
         }
 
         .mobile-nav-footer .social-icons a {
-            width: 40px;
-            height: 40px;
+            width: 36px;
+            height: 36px;
             background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .mobile-nav-footer .social-icons a:hover {
+            background: var(--color-saffron);
+            transform: translateY(-3px);
         }
 
         .mobile-nav-contact {
@@ -888,10 +934,11 @@
 
     <!-- Mobile Navigation -->
     <div class="mobile-nav" id="mobileNav">
-        <div class="mobile-nav-header">
-            <a href="index.html" class="logo">
-                <img src="../assets/logo.png" alt="Logo"> AWARENESS ACADEMY
-            </a>
+        <div class="mobile-nav-header" style="justify-content: flex-end; padding: 15px;">
+            <button class="mobile-nav-close" onclick="toggleMobileMenu()"
+                style="background: none; border: none; font-size: 1.5rem; color: var(--color-primary); cursor: pointer;">
+                <i class="fas fa-times"></i>
+            </button>
         </div>
         <div class="mobile-nav-links">
             <a href="index.html"><i class="fas fa-home"></i> Home</a>
@@ -900,7 +947,7 @@
             <a href="gallery.html"><i class="fas fa-images"></i> Gallery</a>
             <a href="faq.html"><i class="fas fa-question-circle"></i> FAQ</a>
             <a href="contact.html"><i class="fas fa-envelope"></i> Contact</a>
-            <a href="login.html"><i class="fas fa-sign-in-alt"></i> Login</a>
+            <a href="login.html" id="authLinkMobile" class="active"><i class="fas fa-sign-in-alt"></i> Login</a>
         </div>
         <div class="mobile-nav-contact">
             <div class="mobile-nav-contact-item">
@@ -1095,65 +1142,21 @@
     </div>
 
     <!-- Footer -->
-    <footer class="footer">
-        <div class="footer-grid">
-            <div class="footer-brand">
-                <a href="index.html" class="logo">
-                    <img src="../assets/logo.png" alt="AWARENESS ACADEMY"> AWARENESS ACADEMY
-                </a>
-                <p>A sanctuary for transformation, empowering individuals to live with clarity, purpose, and harmony
-                    through ancient wisdom and modern practices.</p>
-                <div class="social-icons">
-                    <a href="https://www.instagram.com/awarenessacademy_abishek" target="_blank"><i
-                            class="fab fa-instagram"></i></a>
-                    <a href="https://www.youtube.com/@awarenessacademy4396" target="_blank"><i
-                            class="fab fa-youtube"></i></a>
-                    <a href="https://www.facebook.com/Awarenessacademy-103831264982368/" target="_blank"><i
-                            class="fab fa-facebook-f"></i></a>
-                    <a href="https://wa.me/919843341742" target="_blank"><i class="fab fa-whatsapp"></i></a>
-                </div>
-            </div>
-            <div>
-                <h4>Quick Links</h4>
-                <ul>
-                    <li><a href="index.html">Home</a></li>
-                    <li><a href="about.html">About Us</a></li>
-                    <li><a href="courses.html">Courses</a></li>
-                    <li><a href="gallery.html">Gallery</a></li>
-                    <li><a href="contact.html">Contact</a></li>
-                </ul>
-            </div>
-            <div>
-                <h4>Legal</h4>
-                <ul>
-                    <li><a href="terms.html">Terms & Conditions</a></li>
-                    <li><a href="privacy.html">Privacy Policy</a></li>
-                    <li><a href="login.html">Login / Register</a></li>
-                </ul>
-            </div>
-            <div>
-                <h4>Contact Info</h4>
-                <ul style="opacity: 0.7;">
-                    <li style="margin-bottom: 15px;"><i class="fas fa-envelope"
-                            style="margin-right: 10px; color: var(--color-saffron);"></i> awarenessacademy26@gmail.com
-                    </li>
-                    <li style="margin-bottom: 15px;"><i class="fas fa-phone"
-                            style="margin-right: 10px; color: var(--color-saffron);"></i> +91 98433 41742</li>
-                    <li style="margin-bottom: 15px;"><i class="fas fa-phone"
-                            style="margin-right: 10px; color: var(--color-saffron);"></i> +91 87541 23775</li>
-                    <li><i class="fas fa-map-marker-alt" style="margin-right: 10px; color: var(--color-saffron);"></i>
-                        Thammampatty, Salem District, Tamil Nadu, India</li>
-                </ul>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            &copy; 2026 AWARENESS ACADEMY. All rights reserved.
-        </div>
-    </footer>
+
 
     <script src="../js/auth.js"></script>
     <script src="../js/utils.js"></script>
     <script>
+        // Navbar scroll effect
+        window.addEventListener('scroll', function () {
+            const nav = document.getElementById('mainNav');
+            if (window.scrollY > 50) {
+                nav.style.boxShadow = '0 5px 20px rgba(0, 0, 0, 0.1)';
+            } else {
+                nav.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.05)';
+            }
+        });
+
         // Mobile menu toggle
         function toggleMobileMenu() {
             const mobileNav = document.getElementById('mobileNav');

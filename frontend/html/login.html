@@ -5,26 +5,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login | Awareness Academy Student Portal</title>
-    
+
     <!-- SEO Meta Tags -->
-    <meta name="description" content="Login to your Awareness Academy student portal. Access your courses, track progress, and continue your spiritual development journey.">
+    <meta name="description"
+        content="Login to your Awareness Academy student portal. Access your courses, track progress, and continue your spiritual development journey.">
     <meta name="robots" content="noindex, follow">
     <link rel="canonical" href="https://awarenessacademy.in/login.html">
-    
+
     <!-- Open Graph Meta Tags -->
     <meta property="og:title" content="Login | Awareness Academy">
     <meta property="og:description" content="Access your student portal at Awareness Academy.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://awarenessacademy.in/login.html">
     <meta property="og:site_name" content="Awareness Academy">
-    
+
     <link rel="stylesheet" href="../css/variables.css?v=2">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link
         href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;600&display=swap"
         rel="stylesheet">
     <style>
-        html, body {
+        html,
+        body {
             overflow-x: hidden;
             width: 100%;
         }
@@ -46,8 +48,8 @@
             right: 0;
             bottom: 0;
             background: radial-gradient(ellipse at 20% 50%, rgba(255, 179, 102, 0.3) 0%, transparent 50%),
-                        radial-gradient(ellipse at 80% 20%, rgba(255, 215, 150, 0.4) 0%, transparent 50%),
-                        radial-gradient(ellipse at 40% 80%, rgba(255, 201, 139, 0.3) 0%, transparent 50%);
+                radial-gradient(ellipse at 80% 20%, rgba(255, 215, 150, 0.4) 0%, transparent 50%),
+                radial-gradient(ellipse at 40% 80%, rgba(255, 201, 139, 0.3) 0%, transparent 50%);
             pointer-events: none;
             z-index: 0;
         }
@@ -91,8 +93,13 @@
         }
 
         @keyframes shimmer {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
+            0% {
+                background-position: -200% 0;
+            }
+
+            100% {
+                background-position: 200% 0;
+            }
         }
 
         @keyframes slideUp {
@@ -100,6 +107,7 @@
                 opacity: 0;
                 transform: translateY(30px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -138,15 +146,24 @@
             animation: fadeInUp 0.5s ease-out backwards;
         }
 
-        .form-group:nth-child(1) { animation-delay: 0.1s; }
-        .form-group:nth-child(2) { animation-delay: 0.2s; }
-        .form-group:nth-child(3) { animation-delay: 0.3s; }
+        .form-group:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .form-group:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .form-group:nth-child(3) {
+            animation-delay: 0.3s;
+        }
 
         @keyframes fadeInUp {
             from {
                 opacity: 0;
                 transform: translateY(10px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -283,15 +300,49 @@
         .nav {
             position: fixed;
             top: 0;
-            left: 0;
-            right: 0;
-            padding: 20px 50px;
+            width: 100%;
+            padding: 15px 50px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             z-index: 1000;
-            background: white;
-            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav a {
+            color: var(--color-text-primary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: var(--transition-smooth);
+            position: relative;
+            white-space: nowrap;
+        }
+
+        .nav-links a {
+            padding: 8px 16px;
+        }
+
+        .nav-links a:not(.btn-primary)::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--color-saffron);
+            transition: var(--transition-smooth);
+        }
+
+        .nav-links a:not(.btn-primary):hover::after {
+            width: 100%;
         }
 
         .logo {
@@ -303,29 +354,11 @@
             align-items: center;
             gap: 10px;
             text-decoration: none;
+            white-space: nowrap;
         }
 
         .logo img {
             height: 40px;
-        }
-
-        .nav-links {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .nav-links a {
-            color: var(--color-text-primary);
-            text-decoration: none;
-            padding: 8px 16px;
-            font-weight: 500;
-            transition: color 0.3s;
-            white-space: nowrap;
-        }
-
-        .nav-links a:hover {
-            color: var(--color-saffron);
         }
 
         .nav-links a.active {
@@ -334,15 +367,33 @@
 
         .nav-links .btn-primary {
             background: linear-gradient(135deg, var(--color-saffron), var(--color-golden));
-            color: white;
-            padding: 12px 30px;
+            color: white !important;
+            padding: 12px 28px;
             border-radius: 30px;
-            margin-left: 10px;
+            font-weight: 600;
         }
 
-        .nav-links .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(255, 107, 53, 0.4);
+        .social-icons {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .social-icons a {
+            width: 45px;
+            height: 45px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .social-icons a:hover {
+            background: var(--color-saffron);
+            transform: translateY(-3px);
         }
 
         /* Mobile Menu Button */
@@ -559,8 +610,10 @@
         }
 
         .mobile-nav-footer .social-icons {
+            display: flex;
             justify-content: center;
             gap: 10px;
+            margin-top: 0;
         }
 
         .mobile-nav-footer .social-icons a {
@@ -568,6 +621,11 @@
             height: 36px;
             background: rgba(255, 255, 255, 0.1);
             font-size: 0.9rem;
+        }
+
+        .mobile-nav-footer .social-icons a:hover {
+            background: var(--color-saffron);
+            transform: translateY(-3px);
         }
 
         /* Responsive */
@@ -731,10 +789,11 @@
 
     <!-- Mobile Navigation -->
     <div class="mobile-nav" id="mobileNav">
-        <div class="mobile-nav-header">
-            <a href="index.html" class="logo">
-                <img src="../assets/logo.png" alt="Logo"> AWARENESS ACADEMY
-            </a>
+        <div class="mobile-nav-header" style="justify-content: flex-end; padding: 15px;">
+            <button class="mobile-nav-close" onclick="toggleMobileMenu()"
+                style="background: none; border: none; font-size: 1.5rem; color: var(--color-primary); cursor: pointer;">
+                <i class="fas fa-times"></i>
+            </button>
         </div>
         <div class="mobile-nav-links">
             <a href="index.html"><i class="fas fa-home"></i> Home</a>
@@ -743,7 +802,7 @@
             <a href="gallery.html"><i class="fas fa-images"></i> Gallery</a>
             <a href="faq.html"><i class="fas fa-question-circle"></i> FAQ</a>
             <a href="contact.html"><i class="fas fa-envelope"></i> Contact</a>
-            <a href="login.html"><i class="fas fa-sign-in-alt"></i> Login</a>
+            <a href="login.html" id="authLinkMobile" class="active"><i class="fas fa-sign-in-alt"></i> Login</a>
         </div>
         <div class="mobile-nav-contact">
             <div class="mobile-nav-contact-item">
@@ -753,9 +812,12 @@
         </div>
         <div class="mobile-nav-footer">
             <div class="social-icons">
-                <a href="https://www.instagram.com/awarenessacademy_abishek" target="_blank"><i class="fab fa-instagram"></i></a>
-                <a href="https://www.youtube.com/@awarenessacademy4396" target="_blank"><i class="fab fa-youtube"></i></a>
-                <a href="https://www.facebook.com/Awarenessacademy-103831264982368/" target="_blank"><i class="fab fa-facebook-f"></i></a>
+                <a href="https://www.instagram.com/awarenessacademy_abishek" target="_blank"><i
+                        class="fab fa-instagram"></i></a>
+                <a href="https://www.youtube.com/@awarenessacademy4396" target="_blank"><i
+                        class="fab fa-youtube"></i></a>
+                <a href="https://www.facebook.com/Awarenessacademy-103831264982368/" target="_blank"><i
+                        class="fab fa-facebook-f"></i></a>
                 <a href="https://wa.me/919843341742" target="_blank"><i class="fab fa-whatsapp"></i></a>
             </div>
         </div>
@@ -807,12 +869,22 @@
     <script src="../js/auth.js"></script>
     <script src="../js/utils.js"></script>
     <script>
+        // Navbar scroll effect
+        window.addEventListener('scroll', function () {
+            const nav = document.getElementById('mainNav');
+            if (window.scrollY > 50) {
+                nav.style.boxShadow = '0 5px 20px rgba(0, 0, 0, 0.1)';
+            } else {
+                nav.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.05)';
+            }
+        });
+
         // Mobile menu toggle
         function toggleMobileMenu() {
             const mobileNav = document.getElementById('mobileNav');
             const mobileNavOverlay = document.getElementById('mobileNavOverlay');
             const menuBtn = document.querySelector('.mobile-menu-btn');
-            
+
             mobileNav.classList.toggle('active');
             mobileNavOverlay.classList.toggle('active');
             menuBtn.classList.toggle('active');

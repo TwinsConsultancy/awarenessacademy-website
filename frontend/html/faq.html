@@ -202,24 +202,26 @@
             position: fixed;
             top: 0;
             width: 100%;
-            padding: 20px 50px;
+            padding: 15px 50px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             z-index: 1000;
-            background: white;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
         }
 
         .logo {
             font-size: 1.4rem;
+            font-family: var(--font-heading);
             font-weight: 700;
             color: var(--color-text-primary);
-            text-decoration: none;
             display: flex;
             align-items: center;
             gap: 10px;
-            font-family: var(--font-heading);
+            text-decoration: none;
+            white-space: nowrap;
         }
 
         .logo img {
@@ -236,19 +238,37 @@
             color: var(--color-text-primary);
             text-decoration: none;
             font-weight: 500;
-            transition: color 0.3s;
+            transition: all 0.3s ease;
             padding: 8px 16px;
             white-space: nowrap;
+            position: relative;
         }
 
-        .nav-links a:hover {
+        .nav-links a:not(.btn-primary)::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--color-saffron);
+            transition: var(--transition-smooth);
+        }
+
+        .nav-links a.active::after,
+        .nav-links a:not(.btn-primary):hover::after {
+            width: 100%;
+        }
+
+        .nav-links a:not(.btn-primary):hover,
+        .nav-links a:not(.btn-primary).active {
             color: var(--color-saffron);
         }
 
         .nav-links .btn-primary {
             background: linear-gradient(135deg, var(--color-saffron) 0%, var(--color-golden) 100%);
             color: white;
-            padding: 12px 30px;
+            padding: 12px 28px;
             border-radius: 30px;
             margin-left: 20px;
             transition: transform 0.3s, box-shadow 0.3s;
@@ -446,15 +466,28 @@
         }
 
         .mobile-nav-footer .social-icons {
+            display: flex;
             justify-content: center;
             gap: 10px;
+            margin-top: 5px;
         }
 
         .mobile-nav-footer .social-icons a {
             width: 36px;
             height: 36px;
             background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            transition: all 0.3s ease;
             font-size: 0.9rem;
+        }
+
+        .mobile-nav-footer .social-icons a:hover {
+            background: var(--color-saffron);
+            transform: translateY(-3px);
         }
 
         .mobile-nav-contact {
@@ -483,9 +516,7 @@
             font-size: 0.85rem;
         }
 
-        /* --- Responsive Design --- */
-        @media (max-width: 1200px) {
-
+        /* --- Main Content Styles --- */
         .container {
             max-width: 900px;
             margin: 120px auto 60px;
@@ -843,8 +874,8 @@
             background: var(--color-saffron);
             transform: translateY(-3px);
         }
-        }
 
+        /* --- Responsive Design --- */
         @media (max-width: 1200px) {
             .nav {
                 padding: 20px 30px;
@@ -951,11 +982,13 @@
             }
 
             .header h1 {
-                font-size: 2.2rem;
+                font-size: 1.8rem;
+                letter-spacing: -0.5px;
             }
 
             .header p {
-                font-size: 1rem;
+                font-size: 0.95rem;
+                line-height: 1.6;
             }
 
             .content-box {
@@ -1300,19 +1333,18 @@
         <div class="footer-grid">
             <div class="footer-brand">
                 <a href="index.html" class="logo">
-                    <img src="../assets/logo.png" alt="Awareness Academy Logo"> AWARENESS ACADEMY
+                    <img src="../assets/logo.png" alt="AWARENESS ACADEMY"> AWARENESS ACADEMY
                 </a>
                 <p>A sanctuary for transformation, empowering individuals to live with clarity, purpose, and harmony
-                    through ancient wisdom and modern practices since 2014.</p>
+                    through ancient wisdom and modern practices.</p>
                 <div class="social-icons">
-                    <a href="https://www.instagram.com/awarenessacademy_abishek" target="_blank"
-                        aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-                    <a href="https://www.youtube.com/@awarenessacademy4396" target="_blank" aria-label="YouTube"><i
+                    <a href="https://www.instagram.com/awarenessacademy_abishek" target="_blank"><i
+                            class="fab fa-instagram"></i></a>
+                    <a href="https://www.youtube.com/@awarenessacademy4396" target="_blank"><i
                             class="fab fa-youtube"></i></a>
-                    <a href="https://www.facebook.com/Awarenessacademy-103831264982368/" target="_blank"
-                        aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
-                    <a href="https://wa.me/919843341742" target="_blank" aria-label="WhatsApp"><i
-                            class="fab fa-whatsapp"></i></a>
+                    <a href="https://www.facebook.com/Awarenessacademy-103831264982368/" target="_blank"><i
+                            class="fab fa-facebook-f"></i></a>
+                    <a href="https://wa.me/919843341742" target="_blank"><i class="fab fa-whatsapp"></i></a>
                 </div>
             </div>
             <div>
@@ -1330,7 +1362,6 @@
                 <ul>
                     <li><a href="terms.html">Terms & Conditions</a></li>
                     <li><a href="privacy.html">Privacy Policy</a></li>
-                    <li><a href="faq.html">FAQ</a></li>
                     <li><a href="login.html">Login / Register</a></li>
                 </ul>
             </div>
@@ -1399,6 +1430,16 @@
                 if (menuBtn) menuBtn.classList.remove('active');
                 document.body.style.overflow = '';
             });
+        });
+
+        // Scroll effect for navbar
+        window.addEventListener('scroll', () => {
+            const nav = document.querySelector('.nav');
+            if (window.scrollY > 50) {
+                nav.classList.add('scrolled');
+            } else {
+                nav.classList.remove('scrolled');
+            }
         });
 
         // Initialize animations on load
