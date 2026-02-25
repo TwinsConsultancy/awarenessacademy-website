@@ -308,7 +308,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!authData) return;
 
     const { user } = authData;
-    document.getElementById('mentorName').textContent = user.name;
 
     // Set staff name and avatar in top header
     if (user) {
@@ -412,13 +411,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 // previewPlayer.src = data.url;
                 uploadProgress.style.display = 'none';
             } else {
-                throw new Error('Upload failed');
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.message || 'Upload failed');
             }
         } catch (err) {
-            console.error(err);
-            uploadStatus.textContent = 'Upload Failed';
-            uploadStatus.style.color = 'var(--color-error)';
-            progressBar.style.background = 'var(--color-error)';
+            UI.handleError(err, 'Intro Upload', 'Video upload failed. Please try a different file or format.');
             dropzoneContent.style.display = 'block';
         }
     }
@@ -482,13 +479,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     loadMyMaterials();
                 }
             } else {
-                const err = await res.json();
-                console.error('❌ Upload failed with error:', err);
-                UI.error('Upload failed: ' + (err.message || 'Unknown error'));
+                const err = await res.json().catch(() => ({}));
+                console.error('❌ Upload failed:', err);
+                UI.error('Upload failed: ' + (err.message || 'Server error. Please try again.'));
             }
         } catch (err) {
-            console.error('💥 Upload caught exception:', err);
-            UI.error('Upload failed: ' + err.message + '. Check MongoDB connection.');
+            UI.handleError(err, 'Material Upload', 'Failed to upload material. Please check your connection.');
         } finally {
             btn.textContent = originalText;
             btn.disabled = false;
@@ -570,11 +566,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 resetExamForm();
                 if (window.loadMyAssessments) loadMyAssessments();
             } else {
+                const result = await res.json().catch(() => ({}));
                 UI.error(result.message || 'Assessment creation failed');
             }
         } catch (err) {
-            console.error('Exam creation error:', err);
-            UI.error('Assessment creation failed. Please try again.');
+            UI.handleError(err, 'Exam Creation');
         }
         finally { UI.hideLoader(); }
     };
@@ -606,8 +602,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 UI.success('Live flow scheduled!');
                 document.getElementById('scheduleModal').style.display = 'none';
                 if (currentSection === 'live') loadSchedules();
+            } else {
+                const errData = await res.json().catch(() => ({}));
+                UI.error(errData.message || 'Scheduling failed');
             }
-        } catch (err) { UI.error('Scheduling failed.'); }
+        } catch (err) {
+            UI.handleError(err, 'Scheduling');
+        }
         finally { UI.hideLoader(); }
     });
 
@@ -714,8 +715,8 @@ async function loadOverview() {
             </div>
         `;
     } catch (err) {
-        console.error('Error loading overview:', err);
-        container.innerHTML = '<p style="color: var(--color-error);">Failed to load statistics.</p>';
+        UI.handleError(err, 'Overview Stats', 'Failed to load dashboard statistics.');
+        container.innerHTML = '<div style="text-align: center; padding: 40px; color: #999;"><i class="fas fa-exclamation-circle" style="font-size: 2rem; margin-bottom: 10px;"></i><p>Failed to load dashboard statistics. Please refresh the page.</p></div>';
     }
 }
 
@@ -798,9 +799,15 @@ async function loadEnrolledStudents() {
 
         console.log('Student insights loaded successfully');
 
+        if (res.ok) {
+            UI.success('Student insights loaded');
+        } else {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.message || 'Failed to fetch student insights');
+        }
     } catch (err) {
-        console.error('Error loading student insights:', err);
-        list.innerHTML = '<tr><td colspan="6" style="padding:20px; text-align:center; color: var(--color-error);">Error loading student insights. Please try again.</td></tr>';
+        UI.handleError(err, 'Student Insights', 'Failed to load student insights. Please try again.');
+        list.innerHTML = '<tr><td colspan="6" style="padding:20px; text-align:center; color: var(--color-error);">Error loading student online metrics.</td></tr>';
         if (filterDropdown) {
             filterDropdown.innerHTML = '<option value="">All Courses</option>';
         }
@@ -811,13 +818,15 @@ async function loadSchedules() {
     const list = document.getElementById('scheduleList');
     try {
         const res = await fetch(`${Auth.apiBase}/schedules/my-timetable`, { headers: Auth.getHeaders() });
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.message || 'Failed to fetch schedules');
+        }
         const schedules = await res.json();
-
         if (schedules.length === 0) {
             list.innerHTML = '<p>No live flows scheduled.</p>';
             return;
         }
-
         list.innerHTML = schedules.map(s => `
             <div class="course-list-item">
                 <div>
@@ -832,7 +841,8 @@ async function loadSchedules() {
             </div>
         `).join('');
     } catch (err) {
-        list.innerHTML = '<p>Error loading schedules.</p>';
+        UI.handleError(err, 'Live Schedules', 'Failed to load your schedules.');
+        list.innerHTML = '<p style="color: var(--color-error);">Error loading schedules.</p>';
     }
 }
 
@@ -985,56 +995,48 @@ function renumberQuestions() {
 
 async function loadCourses() {
     try {
-        const res = await fetch(`${Auth.apiBase}/staff/courses`, {
-            headers: Auth.getHeaders()
-        });
+        const res = await fetch(`${Auth.apiBase}/staff/courses`, { headers: Auth.getHeaders() });
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.message || 'Failed to fetch courses');
+        }
         const courses = await res.json();
         localStorage.setItem('staffCourses', JSON.stringify(courses));
         const list = document.getElementById('courseList');
-
         if (courses.length === 0) {
             list.innerHTML = '<p>You haven\'t started any sanctuary projects yet.</p>';
             return;
         }
-
         list.innerHTML = courses.map(c => {
-            // Display Logic: Prefer Approval Status if not Approved
             let displayStatus = c.status;
             if (c.approvalStatus && c.approvalStatus !== 'Approved') {
                 displayStatus = c.approvalStatus;
             } else if (c.approvalStatus === 'Approved' && c.status === 'Draft') {
                 displayStatus = 'Approved (Unpublished)';
             }
-            // Simple color map
-            const colorMap = {
-                'Published': '#28a745', 'Approved': '#28a745',
-                'Draft': '#666', 'Pending': '#fd7e14',
-                'Rejected': '#dc3545'
-            };
+            const colorMap = { 'Published': '#28a745', 'Approved': '#28a745', 'Draft': '#666', 'Pending': '#fd7e14', 'Rejected': '#dc3545' };
             const statusColor = colorMap[displayStatus.split(' ')[0]] || '#666';
-
             return `
-            <div class="course-list-item" data-course-id="${c._id}">
-                <div>
-                    <strong>${c.title}</strong>
-                    <p style="font-size: 0.8rem; color: var(--color-text-secondary); margin-top:5px;">
-                        ${c.category} | 
-                        <span style="color:white; background:${statusColor}; padding:2px 8px; border-radius:4px; font-weight:bold; font-size:0.75rem;">${displayStatus}</span>
-                    </p>
+                <div class="course-list-item" data-course-id="${c._id}">
+                    <div>
+                        <strong>${c.title}</strong>
+                        <p style="font-size: 0.8rem; color: var(--color-text-secondary); margin-top:5px;">
+                            ${c.category} | <span style="color:white; background:${statusColor}; padding:2px 8px; border-radius:4px; font-weight:bold; font-size:0.75rem;">${displayStatus}</span>
+                        </p>
+                    </div>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <a href="course-preview.html?id=${c._id}" class="btn-primary" style="background: #17a2b8; padding: 5px 15px; font-size: 0.8rem; text-decoration: none; display: inline-flex; align-items: center; gap: 5px;">
+                            <i class="fas fa-eye"></i> Preview
+                        </a>
+                        <a href="module-manager.html?courseId=${c._id}" class="btn-primary" style="background: var(--color-golden); padding: 5px 15px; font-size: 0.8rem; text-decoration: none; display: inline-flex; align-items: center; gap: 5px;">
+                            <i class="fas fa-book"></i> Manage Modules
+                        </a>
+                    </div>
                 </div>
-                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                    <a href="course-preview.html?id=${c._id}" class="btn-primary" style="background: #17a2b8; padding: 5px 15px; font-size: 0.8rem; text-decoration: none; display: inline-flex; align-items: center; gap: 5px;">
-                        <i class="fas fa-eye"></i> Preview
-                    </a>
-                    <a href="module-manager.html?courseId=${c._id}" class="btn-primary" style="background: var(--color-golden); padding: 5px 15px; font-size: 0.8rem; text-decoration: none; display: inline-flex; align-items: center; gap: 5px;">
-                        <i class="fas fa-book"></i> Manage Modules
-                    </a>
-                </div>
-            </div>
-        `;
+            `;
         }).join('');
     } catch (err) {
-        console.error(err);
+        UI.handleError(err, 'Course List', 'Failed to load your projects.');
     }
 }
 
@@ -1068,66 +1070,39 @@ function openScheduleModal() {
 async function loadMyMaterials() {
     try {
         UI.showLoader();
-        const res = await fetch(`${Auth.apiBase}/staff/modules`, {
-            headers: Auth.getHeaders()
-        });
-
-        if (!res.ok) throw new Error('Failed to load modules');
-
+        const res = await fetch(`${Auth.apiBase}/staff/modules`, { headers: Auth.getHeaders() });
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.message || 'Failed to load modules');
+        }
         const modules = await res.json();
         const list = document.getElementById('myMaterialsList');
-
-        // Store modules globally for filtering
         window.staffModules = modules;
-
         if (modules.length === 0) {
             list.innerHTML = `
                 <div class="glass-card" style="text-align: center; padding: 40px 20px;">
-                    <div style="font-size: 3rem; margin-bottom: 15px; color: var(--color-text-secondary); opacity: 0.5;">
-                        <i class="fas fa-book-open"></i>
-                    </div>
+                    <div style="font-size: 3rem; margin-bottom: 15px; color: var(--color-text-secondary); opacity: 0.5;"><i class="fas fa-book-open"></i></div>
                     <h4 style="color: var(--color-text-secondary); margin-bottom: 10px;">No Modules Yet</h4>
-                    <p style="color: var(--color-text-secondary); font-size: 0.9rem; margin-bottom: 20px;">
-                        You haven't created any modules yet. Create your first module to get started!
-                    </p>
-                    <button onclick="switchSection('modules')" class="btn-primary" style="border: none; cursor: pointer; padding: 12px 24px;">
-                        <i class="fas fa-plus"></i> Create Module
-                    </button>
+                    <p style="color: var(--color-text-secondary); font-size: 0.9rem; margin-bottom: 20px;">You haven't created any modules yet. Create your first module to get started!</p>
+                    <button onclick="switchSection('modules')" class="btn-primary" style="border: none; cursor: pointer; padding: 12px 24px;"><i class="fas fa-plus"></i> Create Module</button>
                 </div>
             `;
             return;
         }
-
-        // Populate course filter dropdown
         const courseFilter = document.getElementById('materialCourseFilter');
         if (courseFilter) {
             const uniqueCourses = [...new Map(modules.map(m => [m.courseId?._id, m.courseId])).values()];
-            courseFilter.innerHTML = '<option value="">All Courses</option>' + 
-                uniqueCourses.filter(c => c).map(course => 
-                    `<option value="${course._id}">${course.title}</option>`
-                ).join('');
+            courseFilter.innerHTML = '<option value="">All Courses</option>' +
+                uniqueCourses.filter(c => c).map(course => `<option value="${course._id}">${course.title}</option>`).join('');
         }
-
-        // Group modules by course
         const modulesByCourse = {};
         modules.forEach(module => {
             const courseId = module.courseId?._id || 'uncategorized';
             const courseTitle = module.courseId?.title || 'Uncategorized';
-            if (!modulesByCourse[courseId]) {
-                modulesByCourse[courseId] = {
-                    title: courseTitle,
-                    modules: []
-                };
-            }
+            if (!modulesByCourse[courseId]) modulesByCourse[courseId] = { title: courseTitle, modules: [] };
             modulesByCourse[courseId].modules.push(module);
         });
-
-        // Sort modules by order within each course
-        Object.values(modulesByCourse).forEach(course => {
-            course.modules.sort((a, b) => (a.order || 0) - (b.order || 0));
-        });
-
-        // Render modules grouped by course
+        Object.values(modulesByCourse).forEach(course => { course.modules.sort((a, b) => (a.order || 0) - (b.order || 0)); });
         list.innerHTML = Object.entries(modulesByCourse).map(([courseId, course]) => `
             <div class="course-group-container" data-course-id="${courseId}" style="margin-bottom: 30px;">
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid var(--color-golden);">
@@ -1142,10 +1117,8 @@ async function loadMyMaterials() {
                 </div>
             </div>
         `).join('');
-
     } catch (err) {
-        console.error(err);
-        UI.error('Failed to load modules');
+        UI.handleError(err, 'Materials List', 'Failed to load your modules.');
     } finally {
         UI.hideLoader();
     }
@@ -1167,10 +1140,10 @@ function renderModuleCard(module) {
 
     const typeInfo = contentTypeIcons[module.contentType] || contentTypeIcons['rich-content'];
     const statusColor = statusColors[module.status] || '#6c757d';
-    
+
     // Extract courseId properly (handle both object and string)
     const courseIdValue = module.courseId?._id || module.courseId || '';
-    
+
     return `
         <div class="module-card" data-module-id="${module._id}" data-course-title="${module.courseId?.title || ''}" data-content-type="${module.contentType || 'rich-content'}">
             <div style="display: flex; gap: 15px; align-items: flex-start; padding: 15px; background: white; border-radius: 10px; border: 1px solid #e0e0e0; transition: all 0.3s;">
@@ -1211,61 +1184,61 @@ function renderModuleCard(module) {
 }
 
 // Function to open module edit modal
-window.viewModuleInManager = async function(courseId, moduleId) {
+window.viewModuleInManager = async function (courseId, moduleId) {
     if (!courseId || !moduleId) {
         UI.error('Module information not available');
         console.error('Missing IDs - courseId:', courseId, 'moduleId:', moduleId);
         return;
     }
-    
+
     try {
         UI.showLoader();
-        
+
         console.log('Loading module for editing - courseId:', courseId, 'moduleId:', moduleId);
-        
+
         // Fetch module details
         const res = await fetch(`${Auth.apiBase}/modules/${moduleId}`, {
             headers: Auth.getHeaders()
         });
-        
+
         if (!res.ok) {
             const errorText = await res.text();
             console.error('API Error:', res.status, errorText);
             throw new Error('Failed to load module');
         }
-        
+
         const module = await res.json();
         console.log('Module loaded successfully:', module);
-        
+
         // Populate the modal
         document.getElementById('editModuleId').value = module._id;
         // Extract courseId properly (handle if it's an object reference)
         const extractedCourseId = module.courseId?._id || module.courseId || courseId;
         document.getElementById('editModuleCourseId').value = extractedCourseId;
-        
+
         console.log('Set hidden inputs - moduleId:', module._id, 'courseId:', extractedCourseId);
-        
+
         document.getElementById('editModuleTitle').value = module.title || '';
         document.getElementById('editModuleDescription').value = module.description || '';
         document.getElementById('editModuleDuration').value = module.minDuration || 10;
-        
+
         // Display module info card
         const contentTypeIcons = {
             'video': { icon: 'fa-video', color: '#856404', label: 'Video' },
             'pdf': { icon: 'fa-file-pdf', color: '#721c24', label: 'PDF' },
             'rich-content': { icon: 'fa-align-left', color: '#0056b3', label: 'Rich Content' }
         };
-        
+
         const statusColors = {
             'Published': '#28a745',
             'Approved': '#17a2b8',
             'Draft': '#ffc107',
             'Pending': '#ffc107'
         };
-        
+
         const typeInfo = contentTypeIcons[module.contentType] || contentTypeIcons['rich-content'];
         const statusColor = statusColors[module.status] || '#6c757d';
-        
+
         // Update info card
         document.getElementById('editModuleInfoCard').style.display = 'block';
         document.getElementById('editModuleIcon').className = `fas ${typeInfo.icon}`;
@@ -1275,13 +1248,13 @@ window.viewModuleInManager = async function(courseId, moduleId) {
         document.getElementById('editModuleCurrentStatus').style.color = statusColor;
         document.getElementById('editModuleCurrentContentType').textContent = typeInfo.label;
         document.getElementById('editModuleCurrentContentType').style.color = typeInfo.color;
-        
+
         // Display content preview
         displayContentPreview(module);
-        
+
         // Show modal
         document.getElementById('editModuleModal').style.display = 'flex';
-        
+
     } catch (err) {
         console.error('Failed to load module:', err);
         UI.error('Failed to load module details');
@@ -1294,15 +1267,15 @@ window.viewModuleInManager = async function(courseId, moduleId) {
 function displayContentPreview(module) {
     const previewContainer = document.getElementById('editModuleContentPreview');
     if (!previewContainer) return;
-    
+
     const contentType = module.contentType || 'rich-content';
-    
+
     if (contentType === 'rich-content') {
         // Show text preview
         const content = module.content || '';
         const textContent = content.replace(/<[^>]*>/g, ''); // Strip HTML tags
         const preview = textContent.substring(0, 200) + (textContent.length > 200 ? '...' : '');
-        
+
         previewContainer.innerHTML = `
             <div style="background: #f8f9fa; padding: 12px; border-radius: 8px; border-left: 3px solid #0056b3;">
                 <div style="font-size: 0.8rem; color: #666; margin-bottom: 5px; font-weight: 600;">
@@ -1316,10 +1289,10 @@ function displayContentPreview(module) {
     } else if (contentType === 'video' && module.fileUrl) {
         // Show video file info
         const fileName = module.fileMetadata?.originalName || 'Video file';
-        const fileSize = module.fileMetadata?.fileSize 
-            ? (module.fileMetadata.fileSize / (1024 * 1024)).toFixed(2) + ' MB' 
+        const fileSize = module.fileMetadata?.fileSize
+            ? (module.fileMetadata.fileSize / (1024 * 1024)).toFixed(2) + ' MB'
             : 'Unknown size';
-        
+
         previewContainer.innerHTML = `
             <div style="background: #fff3cd; padding: 12px; border-radius: 8px; border-left: 3px solid #856404;">
                 <div style="font-size: 0.8rem; color: #856404; margin-bottom: 8px; font-weight: 600;">
@@ -1341,10 +1314,10 @@ function displayContentPreview(module) {
     } else if (contentType === 'pdf' && module.fileUrl) {
         // Show PDF file info
         const fileName = module.fileMetadata?.originalName || 'PDF document';
-        const fileSize = module.fileMetadata?.fileSize 
-            ? (module.fileMetadata.fileSize / (1024 * 1024)).toFixed(2) + ' MB' 
+        const fileSize = module.fileMetadata?.fileSize
+            ? (module.fileMetadata.fileSize / (1024 * 1024)).toFixed(2) + ' MB'
             : 'Unknown size';
-        
+
         previewContainer.innerHTML = `
             <div style="background: #f8d7da; padding: 12px; border-radius: 8px; border-left: 3px solid #721c24;">
                 <div style="font-size: 0.8rem; color: #721c24; margin-bottom: 8px; font-weight: 600;">
@@ -1377,10 +1350,10 @@ function displayContentPreview(module) {
 }
 
 // Close module edit modal
-window.closeEditModuleModal = function() {
+window.closeEditModuleModal = function () {
     document.getElementById('editModuleModal').style.display = 'none';
     document.getElementById('editModuleForm').reset();
-    
+
     // Clear content preview
     const previewContainer = document.getElementById('editModuleContentPreview');
     if (previewContainer) {
@@ -1389,23 +1362,23 @@ window.closeEditModuleModal = function() {
 };
 
 // Open full module editor in new page
-window.openFullModuleEditor = function() {
+window.openFullModuleEditor = function () {
     const courseId = document.getElementById('editModuleCourseId').value;
     const moduleId = document.getElementById('editModuleId').value;
-    
+
     if (!courseId || !moduleId) {
         UI.error('Module information not available');
         console.error('Missing IDs - courseId:', courseId, 'moduleId:', moduleId);
         return;
     }
-    
+
     // Validate IDs are not 'undefined' or 'null' strings
     if (courseId === 'undefined' || courseId === 'null' || moduleId === 'undefined' || moduleId === 'null') {
         UI.error('Invalid module information');
         console.error('Invalid IDs - courseId:', courseId, 'moduleId:', moduleId);
         return;
     }
-    
+
     console.log('Opening editor with courseId:', courseId, 'moduleId:', moduleId);
     window.location.href = `module-editor.html?courseId=${courseId}&moduleId=${moduleId}`;
 };
@@ -1414,7 +1387,7 @@ window.openFullModuleEditor = function() {
 if (document.getElementById('editModuleForm')) {
     document.getElementById('editModuleForm').addEventListener('submit', async (e) => {
         e.preventDefault();
-        
+
         const moduleId = document.getElementById('editModuleId').value;
         const data = {
             title: document.getElementById('editModuleTitle').value,
@@ -1422,10 +1395,10 @@ if (document.getElementById('editModuleForm')) {
             minDuration: parseInt(document.getElementById('editModuleDuration').value) || 10,
             status: 'Pending'  // Always set to Pending after staff edits
         };
-        
+
         try {
             UI.showLoader();
-            
+
             const res = await fetch(`${Auth.apiBase}/modules/${moduleId}`, {
                 method: 'PUT',
                 headers: {
@@ -1434,23 +1407,23 @@ if (document.getElementById('editModuleForm')) {
                 },
                 body: JSON.stringify(data)
             });
-            
+
             if (!res.ok) {
                 const error = await res.json();
                 throw new Error(error.message || 'Failed to update module');
             }
-            
+
             UI.success('Module updated and sent for approval!');
             closeEditModuleModal();
-            
+
             // Reload the materials section to show updated data
             loadMyMaterials();
-            
+
             // If in modules section, reload that too
             if (currentModuleCourse) {
                 await loadCourseModules(currentModuleCourse);
             }
-            
+
         } catch (err) {
             console.error('Update failed:', err);
             UI.error('Failed to update module: ' + err.message);
@@ -1686,7 +1659,7 @@ function searchMaterials() {
     const searchTerm = document.getElementById('materialSearchInput')?.value.toLowerCase();
     const filterType = document.getElementById('materialTypeFilter')?.value;
     const filterCourse = document.getElementById('materialCourseFilter')?.value;
-    
+
     const courseGroups = document.querySelectorAll('#myMaterialsList .course-group-container');
     const moduleCards = document.querySelectorAll('#myMaterialsList .module-card');
 
@@ -1700,13 +1673,13 @@ function searchMaterials() {
         const contentType = card.dataset.contentType || '';
         const courseId = card.closest('.course-group-container')?.dataset.courseId;
 
-        const matchesSearch = !searchTerm || 
-            moduleTitle.includes(searchTerm) || 
-            moduleDesc.includes(searchTerm) || 
+        const matchesSearch = !searchTerm ||
+            moduleTitle.includes(searchTerm) ||
+            moduleDesc.includes(searchTerm) ||
             courseTitle.includes(searchTerm);
-        
+
         const matchesType = !filterType || filterType === '' || contentType === filterType;
-        const matchesCourse = !filterCourse || filterCourse === '' || 
+        const matchesCourse = !filterCourse || filterCourse === '' ||
             card.closest('.course-group-container')?.dataset.courseId === filterCourse;
 
         const isVisible = matchesSearch && matchesType && matchesCourse;
@@ -1803,8 +1776,7 @@ async function loadProfile() {
             document.getElementById('lastLoginDisplay').textContent = 'No login history available';
         }
     } catch (err) {
-        console.error('Error loading profile:', err);
-        alert('Failed to load profile. Please try again.');
+        UI.handleError(err, 'Profile Load', 'Failed to load your profile. Please refresh the page.');
     }
 }
 
@@ -1851,16 +1823,15 @@ document.getElementById('personalDetailsForm')?.addEventListener('submit', async
         const data = await res.json();
 
         if (res.ok) {
-            alert('✓ Personal details updated successfully');
+            UI.success('Personal details updated successfully!');
             if (personalData.name) {
                 document.getElementById('mentorName').textContent = personalData.name;
             }
         } else {
-            alert(data.message || 'Failed to update personal details');
+            UI.error(data.message || 'Failed to update personal details');
         }
     } catch (err) {
-        console.error('Error updating personal details:', err);
-        alert('Failed to update personal details. Please try again.');
+        UI.handleError(err, 'Personal Details Update');
     }
 });
 
@@ -1886,13 +1857,12 @@ document.getElementById('addressDetailsForm')?.addEventListener('submit', async 
         const data = await res.json();
 
         if (res.ok) {
-            alert('✓ Address details updated successfully');
+            UI.success('Address details updated successfully!');
         } else {
-            alert(data.message || 'Failed to update address details');
+            UI.error(data.message || 'Failed to update address details');
         }
     } catch (err) {
-        console.error('Error updating address details:', err);
-        alert('Failed to update address details. Please try again.');
+        UI.handleError(err, 'Address Details Update');
     }
 });
 
@@ -1907,12 +1877,12 @@ document.getElementById('contactDetailsForm')?.addEventListener('submit', async 
 
     // Validate phone number
     if (contactData.phone && !/^\d{10}$/.test(contactData.phone)) {
-        alert('Please enter a valid 10-digit phone number');
+        UI.error('Please enter a valid 10-digit phone number.');
         return;
     }
 
     if (contactData.additionalPhone && !/^\d{10}$/.test(contactData.additionalPhone)) {
-        alert('Please enter a valid 10-digit additional phone number');
+        UI.error('Please enter a valid 10-digit additional phone number.');
         return;
     }
 
@@ -1926,13 +1896,12 @@ document.getElementById('contactDetailsForm')?.addEventListener('submit', async 
         const data = await res.json();
 
         if (res.ok) {
-            alert('✓ Contact details updated successfully');
+            UI.success('Contact details updated successfully!');
         } else {
-            alert(data.message || 'Failed to update contact details');
+            UI.error(data.message || 'Failed to update contact details');
         }
     } catch (err) {
-        console.error('Error updating contact details:', err);
-        alert('Failed to update contact details. Please try again.');
+        UI.handleError(err, 'Contact Details Update');
     }
 });
 
@@ -1958,13 +1927,12 @@ document.getElementById('bankDetailsForm')?.addEventListener('submit', async fun
         const data = await res.json();
 
         if (res.ok) {
-            alert('✓ Bank details updated successfully');
+            UI.success('Bank details updated successfully!');
         } else {
-            alert(data.message || 'Failed to update bank details');
+            UI.error(data.message || 'Failed to update bank details');
         }
     } catch (err) {
-        console.error('Error updating bank details:', err);
-        alert('Failed to update bank details. Please try again.');
+        UI.handleError(err, 'Bank Details Update');
     }
 });
 
@@ -1978,12 +1946,12 @@ document.getElementById('changePasswordForm')?.addEventListener('submit', async 
 
     // Validation
     if (newPassword.length < 8) {
-        alert('New password must be at least 8 characters long');
+        UI.error('New password must be at least 8 characters long.');
         return;
     }
 
     if (newPassword !== confirmPassword) {
-        alert('New passwords do not match');
+        UI.error('New passwords do not match. Please re-enter.');
         return;
     }
 
@@ -1997,15 +1965,13 @@ document.getElementById('changePasswordForm')?.addEventListener('submit', async 
         const data = await res.json();
 
         if (res.ok) {
-            alert('✓ Password changed successfully');
-            // Clear form
+            UI.success('Password changed successfully!');
             document.getElementById('changePasswordForm').reset();
         } else {
-            alert(data.message || 'Failed to change password');
+            UI.error(data.message || 'Failed to change password');
         }
     } catch (err) {
-        console.error('Error changing password:', err);
-        alert('Failed to change password. Please try again.');
+        UI.handleError(err, 'Change Password');
     }
 });
 
@@ -2078,8 +2044,8 @@ async function loadMyTickets() {
             </div>
         `;
     } catch (error) {
-        console.error('Load tickets error:', error);
-        container.innerHTML = '<p style="text-align: center; color: #e74c3c; padding: 40px;">Failed to load tickets. Please try again.</p>';
+        UI.handleError(error, 'My Tickets', 'Failed to load your tickets. Please try again.');
+        container.innerHTML = '<div style="text-align: center; padding: 40px; color: #999;"><i class="fas fa-exclamation-circle" style="font-size: 2rem; opacity: 0.4; margin-bottom: 10px;"></i><p>Failed to load tickets. Please refresh the page.</p></div>';
     }
 }
 
@@ -2411,9 +2377,9 @@ async function loadModulesSection() {
 
         const courses = await res.json();
         const select = document.getElementById('modulesCourseSelect');
-        
+
         select.innerHTML = '<option value="">-- Select a course --</option>';
-        
+
         if (!courses || courses.length === 0) {
             select.innerHTML += '<option value="" disabled>No courses available</option>';
             return;
@@ -2541,13 +2507,13 @@ function renderModulesList() {
                                 <span>${module.order + 1}. ${module.title}</span>
                             </div>
                             <div class="module-meta">
-                                ${module.status === 'Published' ? 
-                                    '<span style="color: #28a745;">• Published</span>' : 
-                                    (module.status === 'Approved' ? 
-                                        '<span style="color: #17a2b8;">• Approved (Upcoming)</span>' : 
-                                        '<span style="color: #ffc107;">• ' + module.status + '</span>'
-                                    )
-                                }
+                                ${module.status === 'Published' ?
+            '<span style="color: #28a745;">• Published</span>' :
+            (module.status === 'Approved' ?
+                '<span style="color: #17a2b8;">• Approved (Upcoming)</span>' :
+                '<span style="color: #ffc107;">• ' + module.status + '</span>'
+            )
+        }
                             </div>
                         </div>
                         <div class="module-actions">
@@ -2628,14 +2594,14 @@ function handleAddModule() {
         UI.error('Please select a course first');
         return;
     }
-    
+
     // Set course ID and open modal
     document.getElementById('addModuleCourseId').value = currentModuleCourse;
     document.getElementById('addModuleModal').style.display = 'flex';
 }
 
 // Close add module modal
-window.closeAddModuleModal = function() {
+window.closeAddModuleModal = function () {
     document.getElementById('addModuleModal').style.display = 'none';
     document.getElementById('addModuleForm').reset();
 };
@@ -2644,10 +2610,10 @@ window.closeAddModuleModal = function() {
 if (document.getElementById('addModuleForm')) {
     document.getElementById('addModuleForm').addEventListener('submit', async (e) => {
         e.preventDefault();
-        
+
         const courseId = document.getElementById('addModuleCourseId').value;
         const contentType = document.querySelector('input[name="contentType"]:checked').value;
-        
+
         const data = {
             title: document.getElementById('addModuleTitle').value,
             description: document.getElementById('addModuleDescription').value,
@@ -2656,10 +2622,10 @@ if (document.getElementById('addModuleForm')) {
             status: 'Pending',  // New modules start as Pending
             courseId: courseId
         };
-        
+
         try {
             UI.showLoader();
-            
+
             const res = await fetch(`${Auth.apiBase}/courses/${courseId}/modules`, {
                 method: 'POST',
                 headers: {
@@ -2668,24 +2634,24 @@ if (document.getElementById('addModuleForm')) {
                 },
                 body: JSON.stringify(data)
             });
-            
+
             if (!res.ok) {
                 const error = await res.json();
                 throw new Error(error.message || 'Failed to create module');
             }
-            
+
             const result = await res.json();
             UI.success('Module created successfully! Redirecting to editor...');
             closeAddModuleModal();
-            
+
             // Reload modules list
             await loadCourseModules(courseId);
-            
+
             // Redirect to editor to add content
             setTimeout(() => {
                 window.location.href = `module-editor.html?courseId=${courseId}&moduleId=${result._id || result.module?._id}`;
             }, 1000);
-            
+
         } catch (err) {
             console.error('Creation failed:', err);
             UI.error('Failed to create module: ' + err.message);
@@ -2697,7 +2663,7 @@ if (document.getElementById('addModuleForm')) {
 
 window.editModule = async function (moduleId) {
     if (!currentModuleCourse) return;
-    
+
     // Use the same modal as materials section for consistency
     await viewModuleInManager(currentModuleCourse, moduleId);
 };

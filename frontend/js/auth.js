@@ -61,8 +61,19 @@ const Auth = {
             if (passive) {
                 return null; // Return null if role doesn't match in passive mode
             }
-            alert('Access Denied: You do not have permission to view this page.');
-            window.location.href = 'index.html';
+            if (typeof UI !== 'undefined' && UI.createPopup) {
+                UI.createPopup({
+                    title: 'Access Denied',
+                    message: 'You do not have permission to view this page. You will be redirected.',
+                    type: 'error',
+                    icon: 'lock',
+                    confirmText: 'Go to Home',
+                    onConfirm: () => { window.location.href = 'index.html'; }
+                });
+            } else {
+                alert('Access Denied: You do not have permission to view this page.');
+                window.location.href = 'index.html';
+            }
             return;
         }
 

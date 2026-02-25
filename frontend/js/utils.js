@@ -182,8 +182,42 @@ const UI = {
             .replace(/href=["']\/uploads\//g, `href="${backendUrl}/uploads/`);
 
         return fixedContent;
+    },
+
+    /**
+     * Centralized error handler for consistent user-friendly messages
+     * @param {Error|Object|string} error - The error object or message
+     * @param {string} context - Where the error occurred (for logging)
+     * @param {string} friendlyMsg - Custom friendly message to show the user
+     */
+    handleError(error, context = 'App', friendlyMsg = 'Something went wrong. Please try again later.') {
+        console.error(`[${context}] Error:`, error);
+
+        let message = friendlyMsg;
+
+        if (error && error.message) {
+            // Check for specific common technical error patterns to mask or translate
+            if (error.message.includes('fetch') || error.message.includes('network') || error.message.includes('Load failed')) {
+                message = 'Connection issue. Please check your internet or try again later.';
+            } else if (error.message.includes('Unexpected token') || error.message.includes('JSON')) {
+                message = 'Server response error. Please try again soon.';
+            }
+        } else if (typeof error === 'string' && error.length > 0) {
+            message = error;
+        }
+
+        this.error(message);
+        this.hideLoader(); // Always hide loader on error
     }
 };
+
+// Global Error Safety Net
+window.addEventListener('unhandledrejection', (event) => {
+    console.error('Unhandled Promise Rejection:', event.reason);
+    if (typeof UI !== 'undefined' && UI.handleError) {
+        UI.handleError(event.reason, 'Global Safety Net', 'A background task failed. You may need to refresh the page.');
+    }
+});
 
 // Initialize on load
 document.addEventListener('DOMContentLoaded', () => {
@@ -219,7 +253,7 @@ function applyDefaultSettings() {
         isMaintenanceMode: false,
         maintenanceMessage: ''
     };
-    
+
     processSettings(defaultSettings);
 }
 
@@ -278,7 +312,7 @@ function initScrollAnimations() {
 function setupNewsletter() {
     const form = document.getElementById('newsletterForm');
     const feedback = document.getElementById('newsletterFeedback');
-    
+
     if (form) {
         // Show feedback message
         function showFeedback(message, isSuccess = false) {
@@ -286,7 +320,7 @@ function setupNewsletter() {
                 feedback.textContent = message;
                 feedback.style.opacity = '1';
                 feedback.style.color = isSuccess ? '#4ade80' : '#f87171';
-                
+
                 // Auto-hide after 4 seconds
                 setTimeout(() => {
                     feedback.style.opacity = '0';
@@ -300,7 +334,7 @@ function setupNewsletter() {
                 }
             }
         }
-        
+
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = form.querySelector('button');
@@ -314,7 +348,7 @@ function setupNewsletter() {
                 input.focus();
                 return;
             }
-            
+
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) {
                 showFeedback('Please enter a valid email address', false);
@@ -360,7 +394,7 @@ function setupNewsletter() {
                 input.disabled = false;
             }
         });
-        
+
         // Add input validation feedback
         const input = form.querySelector('input[name="email"]');
         if (input) {
@@ -370,7 +404,7 @@ function setupNewsletter() {
                     showFeedback('Please enter a valid email address', false);
                 }
             });
-            
+
             input.addEventListener('input', () => {
                 if (feedback && feedback.style.opacity === '1') {
                     feedback.style.opacity = '0';
@@ -384,7 +418,7 @@ function setupNewsletter() {
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Utils.js loaded - Setting up newsletter functionality...');
     setupNewsletter();
-    
+
     // Additional check to ensure newsletter form exists
     const form = document.getElementById('newsletterForm');
     if (form) {

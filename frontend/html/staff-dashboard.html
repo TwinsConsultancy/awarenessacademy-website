@@ -549,11 +549,11 @@
             transform: translateY(-2px);
         }
 
-        .module-card > div {
+        .module-card>div {
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         }
 
-        .module-card:hover > div {
+        .module-card:hover>div {
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             border-color: var(--color-golden);
         }
@@ -567,17 +567,231 @@
                 opacity: 0;
                 transform: translateY(10px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
+            }
+        }
+
+        /* Sidebar Overlay for Mobile */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 998;
+            backdrop-filter: blur(4px);
+        }
+
+        .sidebar-overlay.active {
+            display: block;
+        }
+
+        /* Mobile Menu Toggle Button */
+        .mobile-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #333;
+            cursor: pointer;
+            padding: 5px;
+            margin-right: 15px;
+        }
+
+        /* --- Responsive Styles --- */
+        @media (max-width: 1024px) {
+            .dashboard-container {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                position: fixed !important;
+                left: -280px !important;
+                top: 0 !important;
+                width: 280px !important;
+                z-index: 1001 !important;
+                box-shadow: 10px 0 30px rgba(0, 0, 0, 0.1) !important;
+                padding: 30px !important;
+                visibility: visible !important;
+                height: 100vh !important;
+            }
+
+            .sidebar.active {
+                left: 0 !important;
+            }
+
+            .sidebar .sidebar-text {
+                display: inline !important;
+            }
+
+            .sidebar .sidebar-subtitle {
+                display: block !important;
+            }
+
+            .sidebar .sidebar-logo {
+                display: none !important;
+            }
+
+            .sidebar .sidebar-logo-full {
+                display: block !important;
+            }
+
+            .sidebar .nav-link {
+                justify-content: flex-start !important;
+                padding: 12px 15px !important;
+            }
+
+            .sidebar .nav-link i {
+                margin-right: 10px !important;
+            }
+
+            .mobile-toggle {
+                display: block;
+            }
+
+            .top-header {
+                padding: 12px 20px;
+            }
+
+            .top-header-brand span {
+                display: none;
+            }
+
+            .content-wrapper {
+                padding: 20px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .top-header-right {
+                gap: 15px;
+            }
+
+            .user-name {
+                display: none;
+            }
+
+            .search-filter-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-input {
+                width: 100% !important;
+                min-width: 0;
+            }
+
+            .filter-select {
+                width: 100%;
+            }
+
+            .course-list-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            .course-list-item>div:last-child {
+                width: 100%;
+                justify-content: flex-start;
+                border-top: 1px solid #eee;
+                padding-top: 15px;
+                display: flex;
+                gap: 10px;
+            }
+
+            .module-item {
+                padding: 15px;
+            }
+        }
+
+        /* Table & Container Responsiveness */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-bottom: 20px;
+            border-radius: 12px;
+        }
+
+        .table-responsive::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .table-responsive::-webkit-scrollbar-thumb {
+            background: #e0e0e0;
+            border-radius: 10px;
+        }
+
+        /* Modal & Section Refinements */
+        @media (max-width: 768px) {
+            .modal-content {
+                padding: 20px !important;
+                border-radius: 15px !important;
+                max-width: 95% !important;
+                margin: 10px auto !important;
+            }
+
+            .modal-content>div:first-child {
+                margin: -20px -20px 20px -20px !important;
+                padding: 15px 20px !important;
+            }
+
+            #ticketsSection {
+                height: auto !important;
+                overflow: visible !important;
+            }
+
+            #myTicketsContainer {
+                max-height: 500px;
+            }
+
+            .exam-step h3 {
+                font-size: 1.2rem !important;
+            }
+
+            .form-group label {
+                font-size: 0.85rem !important;
+            }
+
+            #examStep2>div {
+                grid-template-columns: 1fr !important;
+                gap: 10px !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .step-indicator {
+                padding: 0 !important;
+            }
+
+            .step-circle {
+                width: 25px !important;
+                height: 25px !important;
+                font-size: 0.8rem !important;
+                margin-bottom: 5px;
+            }
+
+            .step-label {
+                display: none !important;
+            }
+
+            .top-header-brand span {
+                display: none !important;
             }
         }
     </style>
 </head>
 
 <body>
+    <div id="staffSidebarOverlay" class="sidebar-overlay" onclick="toggleMobileSidebar()"></div>
     <div class="dashboard-container">
-        <aside class="sidebar">
+        <aside class="sidebar" id="staffSidebar">
             <div class="sidebar-header" style="text-align: center; margin-bottom: 40px; white-space: nowrap;">
                 <a href="index.html"
                     style="text-decoration: none; display: flex; align-items: center; gap: 10px; justify-content: center;">
@@ -632,6 +846,9 @@
             <!-- Top Header Bar -->
             <div class="top-header">
                 <div class="top-header-brand" style="display: flex; align-items: center; gap: 10px;">
+                    <button class="mobile-toggle" onclick="toggleMobileSidebar()">
+                        <i class="fas fa-bars"></i>
+                    </button>
                     <img src="../assets/logo.png" alt="AWARENESS ACADEMY" style="height: 40px;"> <span
                         style="font-family: var(--font-heading); font-weight: bold;">AWARENESS ACADEMY</span>
                 </div>
@@ -649,13 +866,6 @@
             <div class="content-wrapper">
                 <!-- Overview Section (Default) -->
                 <section id="overviewSection">
-                    <header
-                        style="margin-bottom: 40px; display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <h1>Mentor Workshop</h1>
-                            <p>Welcome, <span id="mentorName">Mentor</span>. Your wisdom empowers many.</p>
-                        </div>
-                    </header>
 
                     <h3 style="margin-bottom: 20px;">Dashboard Overview</h3>
                     <div id="overviewStats">
@@ -694,8 +904,10 @@
                     <div style="margin-bottom: 30px;">
                         <h3 style="margin-bottom: 10px;">My Course Modules</h3>
                         <p style="color: var(--color-text-secondary); font-size: 0.9rem;">
-                            All your course modules across different courses. For advanced management, visit the 
-                            <a href="#" onclick="switchSection('modules'); return false;" style="color: var(--color-primary); text-decoration: none; font-weight: 600;">Modules</a> section.
+                            All your course modules across different courses. For advanced management, visit the
+                            <a href="#" onclick="switchSection('modules'); return false;"
+                                style="color: var(--color-primary); text-decoration: none; font-weight: 600;">Modules</a>
+                            section.
                         </p>
                     </div>
                     <div class="search-filter-bar">
@@ -711,8 +923,10 @@
                             <option value="rich-content">Rich Content</option>
                         </select>
                     </div>
-                    <div id="myMaterialsList" style="max-width: 100%; overflow-x: hidden;">
-                        <p style="color: var(--color-text-secondary);">Loading your modules...</p>
+                    <div class="table-responsive">
+                        <div id="myMaterialsList" style="max-width: 100%; overflow-x: hidden;">
+                            <p style="color: var(--color-text-secondary);">Loading your modules...</p>
+                        </div>
                     </div>
                 </section>
 
@@ -727,7 +941,8 @@
 
                     <!-- Course Selection -->
                     <div class="glass-card" style="padding: 20px; margin-bottom: 20px;">
-                        <label for="modulesCourseSelect" style="display: block; font-weight: 600; margin-bottom: 10px; color: #333;">
+                        <label for="modulesCourseSelect"
+                            style="display: block; font-weight: 600; margin-bottom: 10px; color: #333;">
                             Select Course:
                         </label>
                         <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
@@ -743,10 +958,12 @@
                     <!-- Modules List -->
                     <div id="modulesList" style="max-width: 100%; overflow-x: hidden;">
                         <div class="glass-card" style="text-align: center; padding: 40px 20px;">
-                            <div style="font-size: 3rem; margin-bottom: 15px; color: var(--color-text-secondary); opacity: 0.3;">
+                            <div
+                                style="font-size: 3rem; margin-bottom: 15px; color: var(--color-text-secondary); opacity: 0.3;">
                                 <i class="fas fa-layer-group"></i>
                             </div>
-                            <p style="color: var(--color-text-secondary);">Select a course to view and manage modules</p>
+                            <p style="color: var(--color-text-secondary);">Select a course to view and manage modules
+                            </p>
                         </div>
                     </div>
                 </section>
@@ -761,22 +978,24 @@
                             <option value="">All Courses</option>
                         </select>
                     </div>
-                    <div class="glass-card" style="padding: 0; overflow: hidden;">
-                        <table style="width: 100%; border-collapse: collapse; text-align: left;">
-                            <thead style="background: rgba(0,0,0,0.02);">
-                                <tr>
-                                    <th style="padding: 15px;">#</th>
-                                    <th style="padding: 15px;">Seeker</th>
-                                    <th style="padding: 15px;">Student ID</th>
-                                    <th style="padding: 15px;">Course</th>
-                                    <th style="padding: 15px;">Enrolled On</th>
-                                    <th style="padding: 15px;">Progress</th>
-                                </tr>
-                            </thead>
-                            <tbody id="studentInsightList">
-                                <!-- Data loads here -->
-                            </tbody>
-                        </table>
+                    <div class="table-responsive">
+                        <div class="glass-card" style="padding: 0; overflow: hidden; min-width: 800px;">
+                            <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                                <thead style="background: rgba(0,0,0,0.02);">
+                                    <tr>
+                                        <th style="padding: 15px;">#</th>
+                                        <th style="padding: 15px;">Seeker</th>
+                                        <th style="padding: 15px;">Student ID</th>
+                                        <th style="padding: 15px;">Course</th>
+                                        <th style="padding: 15px;">Enrolled On</th>
+                                        <th style="padding: 15px;">Progress</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="studentInsightList">
+                                    <!-- Data loads here -->
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </section>
 
@@ -1384,23 +1603,32 @@
     <!-- Edit Module Modal - Compact Step-by-Step -->
     <div class="modal" id="editModuleModal" style="display: none;">
         <div class="modal-content glass-card" style="max-width: 550px; max-height: 90vh; overflow-y: auto;">
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 15px 20px; margin: -30px -30px 20px -30px; border-radius: 20px 20px 0 0; display: flex; justify-content: space-between; align-items: center;">
+            <div
+                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 15px 20px; margin: -30px -30px 20px -30px; border-radius: 20px 20px 0 0; display: flex; justify-content: space-between; align-items: center;">
                 <h2 style="margin: 0; color: white; font-size: 1.3rem;">
                     <i class="fas fa-edit"></i> Edit Module
                 </h2>
-                <button onclick="closeEditModuleModal()" style="background: rgba(255,255,255,0.2); border: none; width: 32px; height: 32px; border-radius: 50%; color: white; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+                <button onclick="closeEditModuleModal()"
+                    style="background: rgba(255,255,255,0.2); border: none; width: 32px; height: 32px; border-radius: 50%; color: white; cursor: pointer; transition: all 0.2s;"
+                    onmouseover="this.style.background='rgba(255,255,255,0.3)'"
+                    onmouseout="this.style.background='rgba(255,255,255,0.2)'">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            
+
             <!-- Module Info Card -->
-            <div id="editModuleInfoCard" style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 20px; display: none;">
+            <div id="editModuleInfoCard"
+                style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 20px; display: none;">
                 <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-                    <div style="width: 45px; height: 45px; background: white; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
-                        <i id="editModuleIcon" class="fas fa-file-alt" style="font-size: 1.3rem; color: var(--color-golden);"></i>
+                    <div
+                        style="width: 45px; height: 45px; background: white; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                        <i id="editModuleIcon" class="fas fa-file-alt"
+                            style="font-size: 1.3rem; color: var(--color-golden);"></i>
                     </div>
                     <div style="flex: 1;">
-                        <div style="font-size: 0.75rem; color: #999; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px;">Current Module</div>
+                        <div
+                            style="font-size: 0.75rem; color: #999; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px;">
+                            Current Module</div>
                         <div id="editModuleCurrentTitle" style="font-weight: 600; color: #333; font-size: 1rem;"></div>
                     </div>
                 </div>
@@ -1419,53 +1647,58 @@
             <form id="editModuleForm">
                 <input type="hidden" id="editModuleId">
                 <input type="hidden" id="editModuleCourseId">
-                
+
                 <!-- Step 1: Basic Info -->
                 <div style="margin-bottom: 20px;">
                     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-                        <div style="width: 28px; height: 28px; background: var(--color-golden); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.85rem;">1</div>
+                        <div
+                            style="width: 28px; height: 28px; background: var(--color-golden); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.85rem;">
+                            1</div>
                         <h4 style="margin: 0; color: #333; font-size: 1rem;">Basic Information</h4>
                     </div>
-                    
+
                     <div class="form-group" style="margin-bottom: 15px;">
-                        <label style="font-weight: 600; color: #555; margin-bottom: 6px; display: block; font-size: 0.9rem;">
+                        <label
+                            style="font-weight: 600; color: #555; margin-bottom: 6px; display: block; font-size: 0.9rem;">
                             Module Title *
                         </label>
-                        <input type="text" id="editModuleTitle" class="form-control" required 
-                               placeholder="Enter module title"
-                               style="padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px; width: 100%; font-size: 0.95rem; transition: border-color 0.2s;" 
-                               onfocus="this.style.borderColor='var(--color-golden)'" 
-                               onblur="this.style.borderColor='#e0e0e0'">
+                        <input type="text" id="editModuleTitle" class="form-control" required
+                            placeholder="Enter module title"
+                            style="padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px; width: 100%; font-size: 0.95rem; transition: border-color 0.2s;"
+                            onfocus="this.style.borderColor='var(--color-golden)'"
+                            onblur="this.style.borderColor='#e0e0e0'">
                     </div>
-                    
+
                     <div class="form-group" style="margin-bottom: 0;">
-                        <label style="font-weight: 600; color: #555; margin-bottom: 6px; display: block; font-size: 0.9rem;">
+                        <label
+                            style="font-weight: 600; color: #555; margin-bottom: 6px; display: block; font-size: 0.9rem;">
                             Description
                         </label>
-                        <textarea id="editModuleDescription" rows="2" 
-                                  placeholder="Brief description (optional)"
-                                  style="padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px; width: 100%; font-size: 0.9rem; resize: vertical; font-family: inherit; transition: border-color 0.2s;"
-                                  onfocus="this.style.borderColor='var(--color-golden)'" 
-                                  onblur="this.style.borderColor='#e0e0e0'"></textarea>
+                        <textarea id="editModuleDescription" rows="2" placeholder="Brief description (optional)"
+                            style="padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px; width: 100%; font-size: 0.9rem; resize: vertical; font-family: inherit; transition: border-color 0.2s;"
+                            onfocus="this.style.borderColor='var(--color-golden)'"
+                            onblur="this.style.borderColor='#e0e0e0'"></textarea>
                     </div>
                 </div>
 
                 <!-- Step 2: Settings -->
                 <div style="margin-bottom: 20px;">
                     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-                        <div style="width: 28px; height: 28px; background: var(--color-golden); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.85rem;">2</div>
+                        <div
+                            style="width: 28px; height: 28px; background: var(--color-golden); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.85rem;">
+                            2</div>
                         <h4 style="margin: 0; color: #333; font-size: 1rem;">Module Settings</h4>
                     </div>
-                    
+
                     <div class="form-group" style="margin-bottom: 0;">
-                        <label style="font-weight: 600; color: #555; margin-bottom: 6px; display: block; font-size: 0.9rem;">
+                        <label
+                            style="font-weight: 600; color: #555; margin-bottom: 6px; display: block; font-size: 0.9rem;">
                             Minimum Duration (Minutes)
                         </label>
-                        <input type="number" id="editModuleDuration" min="1" value="10" 
-                               placeholder="Time in minutes"
-                               style="padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px; width: 100%; font-size: 0.95rem; transition: border-color 0.2s;"
-                               onfocus="this.style.borderColor='var(--color-golden)'" 
-                               onblur="this.style.borderColor='#e0e0e0'">
+                        <input type="number" id="editModuleDuration" min="1" value="10" placeholder="Time in minutes"
+                            style="padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px; width: 100%; font-size: 0.95rem; transition: border-color 0.2s;"
+                            onfocus="this.style.borderColor='var(--color-golden)'"
+                            onblur="this.style.borderColor='#e0e0e0'">
                         <small style="color: #999; display: block; margin-top: 5px; font-size: 0.8rem;">
                             <i class="fas fa-info-circle"></i> Minimum time students should spend on this module
                         </small>
@@ -1475,34 +1708,40 @@
                 <!-- Step 3: Current Content Preview -->
                 <div style="margin-bottom: 20px;">
                     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-                        <div style="width: 28px; height: 28px; background: var(--color-golden); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.85rem;">3</div>
+                        <div
+                            style="width: 28px; height: 28px; background: var(--color-golden); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.85rem;">
+                            3</div>
                         <h4 style="margin: 0; color: #333; font-size: 1rem;">Current Content</h4>
                     </div>
-                    
+
                     <div id="editModuleContentPreview">
                         <!-- Content preview will be loaded here -->
                     </div>
                 </div>
 
                 <!-- Info Note -->
-                <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
+                <div
+                    style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
                     <div style="display: flex; align-items: start; gap: 10px;">
                         <i class="fas fa-exclamation-triangle" style="color: #856404; margin-top: 2px;"></i>
                         <div style="flex: 1;">
-                            <div style="font-weight: 600; color: #856404; font-size: 0.85rem; margin-bottom: 3px;">Review Required</div>
+                            <div style="font-weight: 600; color: #856404; font-size: 0.85rem; margin-bottom: 3px;">
+                                Review Required</div>
                             <div style="color: #856404; font-size: 0.8rem; line-height: 1.4;">
-                                After saving changes, this module will be set to <strong>Pending</strong> status and require admin approval before being published.
+                                After saving changes, this module will be set to <strong>Pending</strong> status and
+                                require admin approval before being published.
                             </div>
                         </div>
                     </div>
                 </div>
-                
+
                 <div style="display: flex; gap: 10px; padding-top: 15px; border-top: 2px solid #f0f0f0;">
-                    <button type="submit" class="btn-primary" style="flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.95rem;">
+                    <button type="submit" class="btn-primary"
+                        style="flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.95rem;">
                         <i class="fas fa-save"></i> Save Changes
                     </button>
-                    <button type="button" onclick="openFullModuleEditor()" class="btn-primary" 
-                            style="flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); font-size: 0.95rem;">
+                    <button type="button" onclick="openFullModuleEditor()" class="btn-primary"
+                        style="flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); font-size: 0.95rem;">
                         <i class="fas fa-pen"></i> Edit Content
                     </button>
                 </div>
@@ -1513,79 +1752,104 @@
     <!-- Add Module Modal -->
     <div class="modal" id="addModuleModal" style="display: none;">
         <div class="modal-content glass-card" style="max-width: 550px; max-height: 90vh; overflow-y: auto;">
-            <div style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); padding: 15px 20px; margin: -30px -30px 20px -30px; border-radius: 20px 20px 0 0; display: flex; justify-content: space-between; align-items: center;">
+            <div
+                style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); padding: 15px 20px; margin: -30px -30px 20px -30px; border-radius: 20px 20px 0 0; display: flex; justify-content: space-between; align-items: center;">
                 <h2 style="margin: 0; color: white; font-size: 1.3rem;">
                     <i class="fas fa-plus-circle"></i> Create New Module
                 </h2>
-                <button onclick="closeAddModuleModal()" style="background: rgba(255,255,255,0.2); border: none; width: 32px; height: 32px; border-radius: 50%; color: white; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+                <button onclick="closeAddModuleModal()"
+                    style="background: rgba(255,255,255,0.2); border: none; width: 32px; height: 32px; border-radius: 50%; color: white; cursor: pointer; transition: all 0.2s;"
+                    onmouseover="this.style.background='rgba(255,255,255,0.3)'"
+                    onmouseout="this.style.background='rgba(255,255,255,0.2)'">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
 
             <form id="addModuleForm">
                 <input type="hidden" id="addModuleCourseId">
-                
+
                 <!-- Step 1: Basic Info -->
                 <div style="margin-bottom: 20px;">
                     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-                        <div style="width: 28px; height: 28px; background: #28a745; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.85rem;">1</div>
+                        <div
+                            style="width: 28px; height: 28px; background: #28a745; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.85rem;">
+                            1</div>
                         <h4 style="margin: 0; color: #333; font-size: 1rem;">Basic Information</h4>
                     </div>
-                    
+
                     <div class="form-group" style="margin-bottom: 15px;">
-                        <label style="font-weight: 600; color: #555; margin-bottom: 6px; display: block; font-size: 0.9rem;">
+                        <label
+                            style="font-weight: 600; color: #555; margin-bottom: 6px; display: block; font-size: 0.9rem;">
                             Module Title *
                         </label>
-                        <input type="text" id="addModuleTitle" class="form-control" required 
-                               placeholder="e.g., Introduction to Meditation"
-                               style="padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px; width: 100%; font-size: 0.95rem; transition: border-color 0.2s;" 
-                               onfocus="this.style.borderColor='#28a745'" 
-                               onblur="this.style.borderColor='#e0e0e0'">
+                        <input type="text" id="addModuleTitle" class="form-control" required
+                            placeholder="e.g., Introduction to Meditation"
+                            style="padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px; width: 100%; font-size: 0.95rem; transition: border-color 0.2s;"
+                            onfocus="this.style.borderColor='#28a745'" onblur="this.style.borderColor='#e0e0e0'">
                     </div>
-                    
+
                     <div class="form-group" style="margin-bottom: 0;">
-                        <label style="font-weight: 600; color: #555; margin-bottom: 6px; display: block; font-size: 0.9rem;">
+                        <label
+                            style="font-weight: 600; color: #555; margin-bottom: 6px; display: block; font-size: 0.9rem;">
                             Description
                         </label>
-                        <textarea id="addModuleDescription" rows="2" 
-                                  placeholder="Brief overview of the module content"
-                                  style="padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px; width: 100%; font-size: 0.9rem; resize: vertical; font-family: inherit; transition: border-color 0.2s;"
-                                  onfocus="this.style.borderColor='#28a745'" 
-                                  onblur="this.style.borderColor='#e0e0e0'"></textarea>
+                        <textarea id="addModuleDescription" rows="2" placeholder="Brief overview of the module content"
+                            style="padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px; width: 100%; font-size: 0.9rem; resize: vertical; font-family: inherit; transition: border-color 0.2s;"
+                            onfocus="this.style.borderColor='#28a745'"
+                            onblur="this.style.borderColor='#e0e0e0'"></textarea>
                     </div>
                 </div>
 
                 <!-- Step 2: Content Type -->
                 <div style="margin-bottom: 20px;">
                     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-                        <div style="width: 28px; height: 28px; background: #28a745; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.85rem;">2</div>
+                        <div
+                            style="width: 28px; height: 28px; background: #28a745; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.85rem;">
+                            2</div>
                         <h4 style="margin: 0; color: #333; font-size: 1rem;">Content Type</h4>
                     </div>
-                    
+
                     <div class="form-group" style="margin-bottom: 0;">
-                        <label style="font-weight: 600; color: #555; margin-bottom: 8px; display: block; font-size: 0.9rem;">
+                        <label
+                            style="font-weight: 600; color: #555; margin-bottom: 8px; display: block; font-size: 0.9rem;">
                             Select Content Format *
                         </label>
                         <div style="display: grid; gap: 10px;">
-                            <label style="display: flex; align-items: center; gap: 12px; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='#28a745'; this.style.background='#f8fff9'" onmouseout="this.style.borderColor='#e0e0e0'; this.style.background='white'">
-                                <input type="radio" name="contentType" value="rich-content" checked style="width: 18px; height: 18px; cursor: pointer;">
-                                <i class="fas fa-align-left" style="font-size: 1.2rem; color: #0056b3; width: 24px; text-align: center;"></i>
+                            <label
+                                style="display: flex; align-items: center; gap: 12px; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer; transition: all 0.2s;"
+                                onmouseover="this.style.borderColor='#28a745'; this.style.background='#f8fff9'"
+                                onmouseout="this.style.borderColor='#e0e0e0'; this.style.background='white'">
+                                <input type="radio" name="contentType" value="rich-content" checked
+                                    style="width: 18px; height: 18px; cursor: pointer;">
+                                <i class="fas fa-align-left"
+                                    style="font-size: 1.2rem; color: #0056b3; width: 24px; text-align: center;"></i>
                                 <div style="flex: 1;">
                                     <div style="font-weight: 600; color: #333; font-size: 0.9rem;">Rich Content</div>
-                                    <div style="font-size: 0.75rem; color: #999;">Text editor with formatting, images, and embeds</div>
+                                    <div style="font-size: 0.75rem; color: #999;">Text editor with formatting, images,
+                                        and embeds</div>
                                 </div>
                             </label>
-                            <label style="display: flex; align-items: center; gap: 12px; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='#28a745'; this.style.background='#f8fff9'" onmouseout="this.style.borderColor='#e0e0e0'; this.style.background='white'">
-                                <input type="radio" name="contentType" value="video" style="width: 18px; height: 18px; cursor: pointer;">
-                                <i class="fas fa-video" style="font-size: 1.2rem; color: #856404; width: 24px; text-align: center;"></i>
+                            <label
+                                style="display: flex; align-items: center; gap: 12px; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer; transition: all 0.2s;"
+                                onmouseover="this.style.borderColor='#28a745'; this.style.background='#f8fff9'"
+                                onmouseout="this.style.borderColor='#e0e0e0'; this.style.background='white'">
+                                <input type="radio" name="contentType" value="video"
+                                    style="width: 18px; height: 18px; cursor: pointer;">
+                                <i class="fas fa-video"
+                                    style="font-size: 1.2rem; color: #856404; width: 24px; text-align: center;"></i>
                                 <div style="flex: 1;">
                                     <div style="font-weight: 600; color: #333; font-size: 0.9rem;">Video Content</div>
                                     <div style="font-size: 0.75rem; color: #999;">Upload or embed video content</div>
                                 </div>
                             </label>
-                            <label style="display: flex; align-items: center; gap: 12px; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='#28a745'; this.style.background='#f8fff9'" onmouseout="this.style.borderColor='#e0e0e0'; this.style.background='white'">
-                                <input type="radio" name="contentType" value="pdf" style="width: 18px; height: 18px; cursor: pointer;">
-                                <i class="fas fa-file-pdf" style="font-size: 1.2rem; color: #721c24; width: 24px; text-align: center;"></i>
+                            <label
+                                style="display: flex; align-items: center; gap: 12px; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer; transition: all 0.2s;"
+                                onmouseover="this.style.borderColor='#28a745'; this.style.background='#f8fff9'"
+                                onmouseout="this.style.borderColor='#e0e0e0'; this.style.background='white'">
+                                <input type="radio" name="contentType" value="pdf"
+                                    style="width: 18px; height: 18px; cursor: pointer;">
+                                <i class="fas fa-file-pdf"
+                                    style="font-size: 1.2rem; color: #721c24; width: 24px; text-align: center;"></i>
                                 <div style="flex: 1;">
                                     <div style="font-weight: 600; color: #333; font-size: 0.9rem;">PDF Document</div>
                                     <div style="font-size: 0.75rem; color: #999;">Upload PDF file for reading</div>
@@ -1598,19 +1862,20 @@
                 <!-- Step 3: Settings -->
                 <div style="margin-bottom: 20px;">
                     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-                        <div style="width: 28px; height: 28px; background: #28a745; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.85rem;">3</div>
+                        <div
+                            style="width: 28px; height: 28px; background: #28a745; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.85rem;">
+                            3</div>
                         <h4 style="margin: 0; color: #333; font-size: 1rem;">Settings</h4>
                     </div>
-                    
+
                     <div class="form-group" style="margin-bottom: 0;">
-                        <label style="font-weight: 600; color: #555; margin-bottom: 6px; display: block; font-size: 0.9rem;">
+                        <label
+                            style="font-weight: 600; color: #555; margin-bottom: 6px; display: block; font-size: 0.9rem;">
                             Minimum Duration (Minutes)
                         </label>
-                        <input type="number" id="addModuleDuration" min="1" value="10" 
-                               placeholder="Time in minutes"
-                               style="padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px; width: 100%; font-size: 0.95rem; transition: border-color 0.2s;"
-                               onfocus="this.style.borderColor='#28a745'" 
-                               onblur="this.style.borderColor='#e0e0e0'">
+                        <input type="number" id="addModuleDuration" min="1" value="10" placeholder="Time in minutes"
+                            style="padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px; width: 100%; font-size: 0.95rem; transition: border-color 0.2s;"
+                            onfocus="this.style.borderColor='#28a745'" onblur="this.style.borderColor='#e0e0e0'">
                         <small style="color: #999; display: block; margin-top: 5px; font-size: 0.8rem;">
                             <i class="fas fa-info-circle"></i> Recommended time for students to complete this module
                         </small>
@@ -1618,24 +1883,28 @@
                 </div>
 
                 <!-- Success Note -->
-                <div style="background: #d4edda; border-left: 4px solid #28a745; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
+                <div
+                    style="background: #d4edda; border-left: 4px solid #28a745; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
                     <div style="display: flex; align-items: start; gap: 10px;">
                         <i class="fas fa-check-circle" style="color: #155724; margin-top: 2px;"></i>
                         <div style="flex: 1;">
-                            <div style="font-weight: 600; color: #155724; font-size: 0.85rem; margin-bottom: 3px;">What happens next?</div>
+                            <div style="font-weight: 600; color: #155724; font-size: 0.85rem; margin-bottom: 3px;">What
+                                happens next?</div>
                             <div style="color: #155724; font-size: 0.8rem; line-height: 1.4;">
-                                After creation, you can add content using the module editor. The module will be sent for admin review and approval.
+                                After creation, you can add content using the module editor. The module will be sent for
+                                admin review and approval.
                             </div>
                         </div>
                     </div>
                 </div>
-                
+
                 <div style="display: flex; gap: 10px; padding-top: 15px; border-top: 2px solid #f0f0f0;">
                     <button type="button" onclick="closeAddModuleModal()" class="btn-primary"
-                            style="padding: 12px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; background: #6c757d; font-size: 0.95rem;">
+                        style="padding: 12px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; background: #6c757d; font-size: 0.95rem;">
                         Cancel
                     </button>
-                    <button type="submit" class="btn-primary" style="flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); font-size: 0.95rem;">
+                    <button type="submit" class="btn-primary"
+                        style="flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); font-size: 0.95rem;">
                         <i class="fas fa-plus-circle"></i> Create Module
                     </button>
                 </div>
@@ -1982,7 +2251,7 @@
                 gap: 15px;
             }
 
-            .course-list-item > div:last-child {
+            .course-list-item>div:last-child {
                 width: 100%;
                 justify-content: flex-start;
             }
@@ -2166,13 +2435,41 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <!-- Quill Editor -->
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
-    
+
     <script src="../js/utils.js"></script>
     <script src="../js/auth.js"></script>
     <script src="../js/staff.js"></script>
     <script src="../js/staff-assessments.js"></script>
     <script src="../js/chatbot.js"></script>
 
+    <script>
+        function toggleMobileSidebar() {
+            const sidebar = document.getElementById('staffSidebar');
+            const overlay = document.getElementById('staffSidebarOverlay');
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+
+            // Prevent body scroll when sidebar is open
+            if (sidebar.classList.contains('active')) {
+                document.body.style.overflow = 'hidden';
+            } else {
+                document.body.style.overflow = '';
+            }
+        }
+
+        // Close sidebar when clicking a nav link on mobile
+        document.querySelectorAll('.sidebar .nav-link').forEach(link => {
+            link.addEventListener('click', () => {
+                const sidebar = document.getElementById('staffSidebar');
+                const overlay = document.getElementById('staffSidebarOverlay');
+                if (sidebar.classList.contains('active')) {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            });
+        });
+    </script>
 </body>
 
 </html>
