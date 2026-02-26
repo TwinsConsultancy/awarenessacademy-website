@@ -19,7 +19,6 @@ const getMongoAtlasAuth = () => ({
 // Extract MongoDB connection details from URL
 const getMongoConnectionDetails = () => {
     const url = process.env.MONGODB_URL || '';
-    // Extract cluster name from URL: mongodb+srv://user:pass@cluster-name.xxx.mongodb.net/
     const match = url.match(/@([^.]+)\./);
     const clusterName = match ? match[1] : null;
 
