@@ -1460,42 +1460,28 @@ async function loadNotifications() {
     container.innerHTML = '<p style="color: var(--color-text-secondary); text-align: center; padding: 20px;">Loading notifications...</p>';
 
     try {
-        const url = `${Auth.apiBase}/staff/deleted-courses`;
-        console.log('🌐 Fetching from:', url);
-
-        const res = await fetch(url, {
+        const res = await fetch(`${Auth.apiBase}/staff/notifications`, {
             headers: Auth.getHeaders()
         });
 
-        console.log('📡 Response status:', res.status);
-
         if (res.ok) {
-            const deletedCourses = await res.json();
-            console.log('📦 Deleted courses received:', deletedCourses);
-
-            // Convert deleted courses to notification format
-            allNotifications = deletedCourses.map(course => ({
-                id: course._id,
-                type: 'course_deleted',
-                title: `Course "${course.title}" was deleted`,
-                message: `Your course "${course.title}" (${course.category || 'General'}) has been removed from the platform by an administrator.`,
-                timestamp: course.deletedAt || course.updatedAt || course.createdAt || new Date(),
-                seen: false
+            const raw = await res.json();
+            allNotifications = raw.map(n => ({
+                id: n._id,
+                type: n.type,
+                title: n.title,
+                message: n.message,
+                timestamp: n.createdAt,
+                seen: n.read
             }));
-
-            console.log('✅ Notifications created:', allNotifications.length);
         } else {
-            console.warn('⚠️ Failed to fetch deleted courses:', res.status);
-            const errorText = await res.text();
-            console.warn('Error response:', errorText);
+            console.warn('⚠️ Failed to fetch notifications:', res.status);
             allNotifications = [];
         }
     } catch (err) {
         console.error('❌ Error loading notifications:', err);
         allNotifications = [];
     } finally {
-        // Always display notifications (even if empty)
-        console.log('🎨 Displaying notifications...');
         displayNotifications(allNotifications);
         updateNotificationBadge();
     }
@@ -1576,31 +1562,45 @@ function filterNotifications(filter) {
 }
 
 // Mark Notification as Seen
-function markAsSeen(notificationId) {
+async function markAsSeen(notificationId) {
     const notification = allNotifications.find(n => n.id === notificationId);
     if (notification) {
         notification.seen = true;
         displayNotifications(allNotifications);
         updateNotificationBadge();
+        await fetch(`${Auth.apiBase}/staff/notifications/${notificationId}/read`, {
+            method: 'PUT',
+            headers: { ...Auth.getHeaders(), 'Content-Type': 'application/json' },
+            body: JSON.stringify({ read: true })
+        }).catch(err => console.error('markAsSeen API error:', err));
     }
 }
 
 // Mark Notification as Unread
-function markAsUnread(notificationId) {
+async function markAsUnread(notificationId) {
     const notification = allNotifications.find(n => n.id === notificationId);
     if (notification) {
         notification.seen = false;
         displayNotifications(allNotifications);
         updateNotificationBadge();
+        await fetch(`${Auth.apiBase}/staff/notifications/${notificationId}/read`, {
+            method: 'PUT',
+            headers: { ...Auth.getHeaders(), 'Content-Type': 'application/json' },
+            body: JSON.stringify({ read: false })
+        }).catch(err => console.error('markAsUnread API error:', err));
     }
 }
 
 // Delete Notification
-function deleteNotification(notificationId) {
+async function deleteNotification(notificationId) {
     if (confirm('Delete this notification?')) {
         allNotifications = allNotifications.filter(n => n.id !== notificationId);
         displayNotifications(allNotifications);
         updateNotificationBadge();
+        await fetch(`${Auth.apiBase}/staff/notifications/${notificationId}`, {
+            method: 'DELETE',
+            headers: Auth.getHeaders()
+        }).catch(err => console.error('deleteNotification API error:', err));
     }
 }
 
@@ -1825,7 +1825,8 @@ document.getElementById('personalDetailsForm')?.addEventListener('submit', async
         if (res.ok) {
             UI.success('Personal details updated successfully!');
             if (personalData.name) {
-                document.getElementById('mentorName').textContent = personalData.name;
+                const el = document.getElementById('mentorName');
+                if (el) el.textContent = personalData.name;
             }
         } else {
             UI.error(data.message || 'Failed to update personal details');

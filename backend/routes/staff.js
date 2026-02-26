@@ -43,4 +43,10 @@ router.put('/profile', staffController.updateProfile);
 // @desc    Change password
 router.post('/change-password', staffController.changePassword);
 
+// --- Notification Routes ---
+router.get('/notifications', staffController.getNotifications);
+router.put('/notifications/read-all', staffController.markAllNotificationsRead);
+router.put('/notifications/:id/read', staffController.toggleNotificationRead);
+router.delete('/notifications/:id', staffController.deleteNotification);
+
 module.exports = router;

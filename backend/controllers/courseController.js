@@ -1,4 +1,4 @@
-const { Course, Content, Impression, User, CourseSubscriber, Progress } = require('../models/index');
+const { Course, Content, Impression, User, CourseSubscriber, Progress, Notification } = require('../models/index');
 const { sendCoursePublishedNotification } = require('../utils/emailService');
 
 // Get Enrolled Courses for Student
@@ -23,10 +23,10 @@ exports.getEnrolledCourses = async (req, res) => {
         // Get module counts for enrolled courses
         const courseIds = user.enrolledCourses.map(c => c._id);
         const moduleAggregation = await Module.aggregate([
-            { 
-                $match: { 
+            {
+                $match: {
                     courseId: { $in: courseIds },
-                    status: 'Approved' 
+                    status: 'Approved'
                 }
             },
             {
@@ -95,10 +95,10 @@ exports.getMarketplace = async (req, res) => {
 
         // Get module count aggregation for courses  
         const moduleAggregation = await Module.aggregate([
-            { 
-                $match: { 
+            {
+                $match: {
                     courseId: { $in: courses.map(c => c._id) }, // courseId stored as ObjectId in modules
-                    status: 'Approved' 
+                    status: 'Approved'
                 }
             },
             {
@@ -287,16 +287,16 @@ exports.trackImpression = async (req, res) => {
 exports.getAllCoursesAdmin = async (req, res) => {
     try {
         const { Module } = require('../models/index');
-        
+
         const courses = await Course.find().populate('mentors', 'name email');
 
         // Get module counts for all courses
         const courseIds = courses.map(c => c._id);
         const moduleAggregation = await Module.aggregate([
-            { 
-                $match: { 
+            {
+                $match: {
                     courseId: { $in: courseIds },
-                    status: 'Approved' 
+                    status: 'Approved'
                 }
             },
             {
@@ -384,6 +384,18 @@ exports.updateCourse = async (req, res) => {
         if (!oldCourse) return res.status(404).json({ message: 'Course not found' });
 
         const course = await Course.findByIdAndUpdate(id, updates, { new: true }).populate('mentors', 'name');
+
+        // Notify course mentors on status change
+        if (updates.status && oldCourse.status !== updates.status) {
+            const notifPromises = course.mentors.map(mentor => new Notification({
+                recipient: mentor._id,
+                type: 'Course',
+                title: 'Course Status Updated',
+                message: `Your course "${course.title}" status changed from ${oldCourse.status} to ${updates.status}.`,
+                relatedId: course._id
+            }).save());
+            await Promise.allSettled(notifPromises);
+        }
 
         // If status changed from anything to Published, notify subscribers
         if (oldCourse.status !== 'Published' && updates.status === 'Published') { // Status changed to Published
