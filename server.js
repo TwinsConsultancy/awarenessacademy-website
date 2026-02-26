@@ -17,6 +17,27 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+// Global Rate Limiting
+const rateLimit = require('express-rate-limit');
+const globalLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 1000, // Limit each IP to 1000 requests per `window` (here, per 15 minutes)
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { status: 'error', message: 'Too many requests, please try again later.' }
+});
+
+// We need to export the limiter configuration so our developer dashboard can read its store
+app.locals.globalLimiter = globalLimiter;
+
+app.use('/api/', globalLimiter); // Apply only to /api/ routes
+
+// Error Handling Middleware (placed here as per instruction, though typically after all other routes)
+app.use((err, req, res, next) => {
+    console.error('❌ Server Error:', err.stack);
+    res.status(500).json({ error: 'Something broke!', message: err.message });
+});
+
 // Debug Logging Middleware
 app.use((req, res, next) => {
     console.log(`📡 REQUEST: ${req.method} ${req.url}`);
@@ -119,6 +140,7 @@ app.use('/api/banners', require('./backend/routes/banner'));
 app.use('/api/enrollments', require('./backend/routes/enrollments'));
 app.use('/api/students', require('./backend/routes/students'));
 app.use('/api/feedback', require('./backend/routes/feedback'));
+app.use('/api/developer', require('./backend/routes/developer'));
 
 // New modular content system routes
 app.use('/api', require('./backend/routes/modules'));
@@ -176,8 +198,20 @@ if (require.main === module) {
         // Schedule cleanup every 6 hours
         setInterval(cleanupIncompleteRegistrations, 6 * 60 * 60 * 1000);
 
-        app.listen(PORT, () => {
+        const http = require('http');
+        const WebSocket = require('ws');
+
+        const server = http.createServer(app);
+
+        // Initialize WebSocket server
+        const wss = new WebSocket.Server({ server, path: '/api/developer/metrics/ws' });
+
+        // Store it in app so the controller can access it
+        app.locals.wss = wss;
+
+        server.listen(PORT, () => {
             console.log(`🚀 InnerSpark Server running on http://localhost:${PORT}`);
+            console.log(`🔌 WebSocket Server initialized on /api/developer/metrics/ws`);
         });
     });
 }

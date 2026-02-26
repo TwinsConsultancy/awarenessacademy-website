@@ -5756,4 +5756,33 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // Check if user is default admin to show Developer tab
+    const currentUser = JSON.parse(localStorage.getItem('user'));
+    if (currentUser && currentUser.isDefaultAdmin) {
+        const developerTabBtn = document.getElementById('developerTabBtn');
+        if (developerTabBtn) {
+            developerTabBtn.style.display = 'block';
+        }
+    }
 });
+
+function handleDeveloperClick() {
+    if (typeof UI !== 'undefined' && UI.createPopup) {
+        UI.createPopup({
+            title: 'ONLY DEVELOPERS ARE ALLOWED INSIDE THIS',
+            message: 'This was a highly restricted area, are you sure you want to enter into this page?',
+            type: 'warning',
+            icon: 'exclamation-triangle',
+            confirmText: 'Confirm',
+            cancelText: 'Cancel',
+            onConfirm: () => {
+                window.location.href = 'developer.html';
+            }
+        });
+    } else {
+        if (confirm('ONLY DEVELOPERS ARE ALLOWED INSIDE THIS\\n\\nThis was a highly restricted area, are you sure you want to enter into this page?')) {
+            window.location.href = 'developer.html';
+        }
+    }
+}

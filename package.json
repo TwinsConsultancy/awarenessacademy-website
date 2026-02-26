@@ -23,10 +23,12 @@
     "@editorjs/list": "^2.0.9",
     "@editorjs/paragraph": "^2.11.7",
     "@editorjs/quote": "^2.7.6",
+    "axios": "^1.13.5",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.2.1",
     "json2csv": "^6.0.0-alpha.2",
     "jsonwebtoken": "^9.0.3",
     "jspdf": "^4.0.0",
@@ -35,6 +37,7 @@
     "nodemailer": "^7.0.13",
     "pdfkit": "^0.17.2",
     "razorpay": "^2.9.6",
-    "resend": "^6.9.1"
+    "resend": "^6.9.1",
+    "ws": "^8.19.0"
   }
 }
