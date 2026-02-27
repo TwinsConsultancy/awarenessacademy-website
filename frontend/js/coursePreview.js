@@ -451,7 +451,7 @@ async function renderModuleContent(module) {
         if (module.fileUrl && module.fileMetadata) {
             container.innerHTML = `
                 <div style="background: #000; border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
-                    <div id="videoPlayerContainer" style="position: relative;">
+                    <div id="videoPlayerContainer" style="position: relative; min-height: 200px; display: flex; align-items: center; justify-content: center;">
                         <div style="padding: 40px; text-align: center; color: white;">
                             <i class="fas fa-spinner fa-spin" style="font-size: 2rem;"></i>
                             <p>Loading video...</p>
@@ -464,20 +464,14 @@ async function renderModuleContent(module) {
                 </div>
             `;
 
-            // Fetch and display video
             try {
-                const response = await fetch(`${Auth.apiBase}/secure-files/${module._id}`, {
-                    headers: Auth.getHeaders()
-                });
-
-                if (!response.ok) throw new Error('Failed to load video');
-
-                const blob = await response.blob();
-                const blobUrl = URL.createObjectURL(blob);
+                // Use the same secure fetch as the student viewer
+                const { blobUrl } = await DRMProtection.fetchSecureFile(module._id);
 
                 const videoContainer = document.getElementById('videoPlayerContainer');
                 videoContainer.innerHTML = `
-                    <video controls controlsList="nodownload" style="width: 100%; max-height: 500px; display: block;">
+                    <video controls controlsList="nodownload" disablePictureInPicture
+                        style="width: 100%; max-height: 500px; display: block;">
                         <source src="${blobUrl}" type="${module.fileMetadata.mimeType}">
                         Your browser does not support the video tag.
                     </video>
@@ -496,10 +490,10 @@ async function renderModuleContent(module) {
             container.innerHTML = '<p style="color: #dc3545;">Video file not found.</p>';
         }
     } else if (contentType === 'pdf') {
-        // Display PDF viewer for admin/staff preview
+        // Display PDF viewer for admin/staff preview using PDF.js (same as student viewer)
         if (module.fileUrl && module.fileMetadata) {
             container.innerHTML = `
-                <div id="pdfViewerContainer" style="background: #f0f0f0; border-radius: 8px; padding: 20px; min-height: 400px;">
+                <div id="pdfViewerContainer" style="background: #f0f0f0; border-radius: 8px; overflow: hidden; min-height: 400px;">
                     <div style="text-align: center; padding: 40px;">
                         <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: #6c757d;"></i>
                         <p style="color: #6c757d;">Loading PDF...</p>
@@ -511,21 +505,78 @@ async function renderModuleContent(module) {
                 </div>
             `;
 
-            // Fetch and display PDF using iframe
             try {
-                const response = await fetch(`${Auth.apiBase}/secure-files/${module._id}`, {
-                    headers: Auth.getHeaders()
-                });
+                // Use the same secure fetch as the student viewer
+                const { blobUrl } = await DRMProtection.fetchSecureFile(module._id);
 
-                if (!response.ok) throw new Error('Failed to load PDF');
+                // Check if PDF.js is available
+                if (typeof pdfjsLib !== 'undefined') {
+                    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-                const blob = await response.blob();
-                const blobUrl = URL.createObjectURL(blob);
+                    const pdfDoc = await pdfjsLib.getDocument(blobUrl).promise;
+                    const totalPages = pdfDoc.numPages;
 
-                const pdfContainer = document.getElementById('pdfViewerContainer');
-                pdfContainer.innerHTML = `
-                    <iframe src="${blobUrl}" style="width: 100%; height: 600px; border: none; border-radius: 8px;"></iframe>
-                `;
+                    const pdfContainer = document.getElementById('pdfViewerContainer');
+                    pdfContainer.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: #f8f9fa; border-bottom: 1px solid #dee2e6;">
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <button id="prevPage" onclick="changePDFPage(-1)" disabled
+                                    style="padding: 6px 14px; border: 1px solid #dee2e6; background: white; border-radius: 6px; cursor: pointer;">
+                                    <i class="fas fa-chevron-left"></i> Prev
+                                </button>
+                                <button id="nextPage" onclick="changePDFPage(1)" ${totalPages <= 1 ? 'disabled' : ''}
+                                    style="padding: 6px 14px; border: 1px solid #dee2e6; background: white; border-radius: 6px; cursor: pointer;">
+                                    Next <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                            <span style="font-size: 0.9rem; color: #555;">
+                                Page <span id="pageNum">1</span> of <span id="pageCount">${totalPages}</span>
+                            </span>
+                            <div style="display: flex; gap: 8px;">
+                                <button onclick="zoomPDF(-0.2)"
+                                    style="padding: 6px 10px; border: 1px solid #dee2e6; background: white; border-radius: 6px; cursor: pointer;">
+                                    <i class="fas fa-search-minus"></i>
+                                </button>
+                                <button onclick="zoomPDF(0.2)"
+                                    style="padding: 6px 10px; border: 1px solid #dee2e6; background: white; border-radius: 6px; cursor: pointer;">
+                                    <i class="fas fa-search-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div style="padding: 20px; text-align: center; background: #f0f0f0; max-height: 650px; overflow-y: auto;">
+                            <canvas id="pdfCanvas" style="max-width: 100%; box-shadow: 0 4px 12px rgba(0,0,0,0.1);"></canvas>
+                        </div>
+                    `;
+
+                    // Store PDF context on window for the button handlers
+                    window._previewPDF = { doc: pdfDoc, currentPage: 1, scale: 1.5, totalPages };
+
+                    window.changePDFPage = function (delta) {
+                        const ctx = window._previewPDF;
+                        const newPage = ctx.currentPage + delta;
+                        if (newPage < 1 || newPage > ctx.totalPages) return;
+                        ctx.currentPage = newPage;
+                        renderPreviewPDFPage(ctx.doc, newPage, ctx.scale);
+                        document.getElementById('pageNum').textContent = newPage;
+                        document.getElementById('prevPage').disabled = (newPage === 1);
+                        document.getElementById('nextPage').disabled = (newPage === ctx.totalPages);
+                    };
+
+                    window.zoomPDF = function (delta) {
+                        const ctx = window._previewPDF;
+                        ctx.scale = Math.max(0.5, Math.min(3, ctx.scale + delta));
+                        renderPreviewPDFPage(ctx.doc, ctx.currentPage, ctx.scale);
+                    };
+
+                    await renderPreviewPDFPage(pdfDoc, 1, 1.5);
+
+                } else {
+                    // Fallback to iframe if PDF.js not loaded
+                    const pdfContainer = document.getElementById('pdfViewerContainer');
+                    pdfContainer.innerHTML = `
+                        <iframe src="${blobUrl}" style="width: 100%; height: 600px; border: none; border-radius: 8px;"></iframe>
+                    `;
+                }
             } catch (error) {
                 console.error('Error loading PDF:', error);
                 const pdfContainer = document.getElementById('pdfViewerContainer');
@@ -540,6 +591,20 @@ async function renderModuleContent(module) {
             container.innerHTML = '<p style="color: #dc3545;">PDF file not found.</p>';
         }
     }
+}
+
+/**
+ * Render a specific PDF page using PDF.js
+ */
+async function renderPreviewPDFPage(doc, pageNumber, scale) {
+    const canvas = document.getElementById('pdfCanvas');
+    if (!canvas) return;
+    const page = await doc.getPage(pageNumber);
+    const context = canvas.getContext('2d');
+    const viewport = page.getViewport({ scale });
+    canvas.height = viewport.height;
+    canvas.width = viewport.width;
+    await page.render({ canvasContext: context, viewport }).promise;
 }
 
 /**

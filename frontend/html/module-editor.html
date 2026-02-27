@@ -11,210 +11,381 @@
     <!-- Quill Editor -->
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <style>
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 40px 20px;
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
         }
 
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-        }
-
-        .header h1 {
-            font-size: 2rem;
-            color: #212529;
+        body {
+            background: #f0ece4;
+            font-family: 'Poppins', sans-serif;
             margin: 0;
+            padding: 0;
+            min-height: 100vh;
         }
 
-        .btn {
-            padding: 12px 24px;
-            border: none;
+        /* ── Top Hero Bar ── */
+        .page-hero {
+            background: white;
+            padding: 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .hero-inner {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .back-btn {
+            color: #6c757d;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            padding: 6px 12px;
             border-radius: 8px;
+            border: 1px solid #e9ecef;
+            background: #f8f9fa;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .back-btn:hover {
+            background: #e9ecef;
+            color: #212529;
+            border-color: #dee2e6;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .hero-title {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .hero-title h1 {
+            margin: 0;
+            font-size: clamp(1.2rem, 2.5vw, 1.8rem);
+            font-weight: 700;
+            color: #212529;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .hero-title p {
+            margin: 2px 0 0;
+            font-size: clamp(0.75rem, 1.5vw, 0.9rem);
+            color: #6c757d;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        /* ── Buttons ── */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.25s;
             display: inline-flex;
             align-items: center;
             gap: 8px;
             text-decoration: none;
+            font-family: inherit;
+            font-size: 0.9rem;
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, var(--color-golden) 0%, #d4a53a 100%);
-            color: white;
+            background: linear-gradient(135deg, var(--color-golden, #d4af37) 0%, #e6c347 100%);
+            color: #1a1a1a;
+            box-shadow: 0 2px 10px rgba(212, 175, 55, 0.35);
         }
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.4);
-        }
-
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
+            box-shadow: 0 6px 18px rgba(212, 175, 55, 0.5);
         }
 
         .btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        /* ── Container & Forms ── */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px 80px;
         }
 
         .form-section {
             background: white;
             padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-            margin-bottom: 20px;
+            border-radius: 14px;
+            box-shadow: 0 2px 14px rgba(0, 0, 0, 0.06);
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            margin: 0 0 20px 0;
+            font-size: 1.15rem;
+            color: #212529;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title i {
+            color: var(--color-golden);
         }
 
         .form-group {
-            margin-bottom: 25px;
+            margin-bottom: 22px;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
         }
 
         .form-group label {
             display: block;
             font-weight: 600;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             color: #333;
-            font-size: 1.1rem;
+            font-size: 0.95rem;
         }
 
-        .form-group input,
+        .form-group input:not([type="file"]),
         .form-group textarea {
             width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 1rem;
+            padding: 12px 16px;
+            border: 1.5px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 0.95rem;
             font-family: inherit;
+            background: #fafafa;
+            transition: all 0.2s;
         }
 
-        #editor-container {
-            height: 600px;
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--color-golden);
             background: white;
-            border: 1px solid #ddd;
-            border-radius: 8px;
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
         }
 
-        /* Full page quirk specific styles */
-        body {
-            background-color: var(--color-background);
-            font-family: 'Poppins', sans-serif;
-        }
-
-        /* Content Type Selector */
+        /* ── Content Type Selector ── */
         .content-type-selector {
             display: flex;
             gap: 16px;
-            margin-bottom: 30px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
         }
 
         .content-type-option {
             flex: 1;
-            padding: 24px;
-            border: 2px solid #dee2e6;
+            min-width: 180px;
+            padding: 24px 20px;
+            border: 2px solid #ebebeb;
             border-radius: 12px;
             text-align: center;
             cursor: pointer;
-            transition: all 0.3s;
-            background: white;
+            transition: all 0.25s;
+            background: #fafafa;
         }
 
         .content-type-option:hover {
             border-color: var(--color-golden);
-            transform: translateY(-4px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-3px);
+            background: white;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
         }
 
         .content-type-option.active {
             border-color: var(--color-golden);
-            background: linear-gradient(135deg, #fffbf0 0%, #fff9e6 100%);
-            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
+            background: #fffcf0;
+            box-shadow: 0 4px 16px rgba(212, 175, 55, 0.15);
         }
 
         .content-type-option.disabled {
-            opacity: 0.5;
+            opacity: 0.4;
             cursor: not-allowed;
             pointer-events: none;
+            filter: grayscale(1);
         }
 
         .content-type-icon {
-            font-size: 3rem;
-            margin-bottom: 12px;
+            font-size: 2.6rem;
+            margin-bottom: 14px;
             color: var(--color-golden);
         }
 
         .content-type-title {
-            font-size: 1.2rem;
+            font-size: 1.05rem;
             font-weight: 600;
             color: #212529;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .content-type-desc {
-            font-size: 0.9rem;
+            font-size: 0.82rem;
             color: #6c757d;
+            line-height: 1.4;
         }
 
+        /* ── File Upload & Other ── */
         .content-section {
             display: none;
         }
 
         .content-section.active {
             display: block;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: none;
+            }
+        }
+
+        #editor-container {
+            height: 500px;
+            background: white;
+            border: 1px solid #ddd;
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
+            font-family: inherit;
+        }
+
+        .ql-toolbar {
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+            background: #fafafa;
         }
 
         .file-info-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 16px;
             margin-top: 16px;
         }
 
         .file-info-item {
-            padding: 12px;
+            padding: 14px;
             background: #f8f9fa;
-            border-radius: 8px;
+            border-radius: 10px;
+            border: 1px solid #ebebeb;
         }
 
         .file-info-label {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: #6c757d;
             margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .file-info-value {
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: 600;
             color: #212529;
+            word-break: break-all;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            .hero-inner {
+                padding: 14px 16px;
+                gap: 10px;
+            }
+
+            .hero-title h1 {
+                font-size: 1.2rem;
+            }
+
+            .hero-actions .btn span {
+                display: none;
+            }
+
+            .hero-actions .btn {
+                padding: 8px 12px;
+            }
+
+            .container {
+                padding: 20px 12px;
+            }
+
+            .form-section {
+                padding: 20px;
+            }
+
+            .content-type-selector {
+                flex-direction: column;
+            }
+
+            #editor-container {
+                height: 400px;
+            }
         }
     </style>
 </head>
 
 <body>
-    <div class="container">
-        <div class="header">
-            <div>
-                <a href="#" id="backLink"
-                    style="color: var(--color-golden); text-decoration: none; margin-bottom: 10px; display: inline-block;">
-                    <i class="fas fa-arrow-left"></i> Back to Modules
-                </a>
-                <h1 id="pageTitle">Add New Module</h1>
+    <!-- Sticky Hero Header -->
+    <div class="page-hero">
+        <div class="hero-inner">
+            <a href="module-manager.html" id="backLink" class="back-btn">
+                <i class="fas fa-arrow-left"></i> Modules
+            </a>
+            <div class="hero-title">
+                <h1 id="pageTitle"><i class="fas fa-edit" style="color:var(--color-golden); margin-right:8px;"></i>Add
+                    New Module</h1>
+                <p>Configure module contents, settings and materials</p>
             </div>
-            <div class="header-actions">
+            <div class="hero-actions">
                 <button id="saveBtn" class="btn btn-primary">
-                    <i class="fas fa-save"></i> Save Module
+                    <i class="fas fa-save"></i>
+                    <span>Save Module</span>
                 </button>
             </div>
         </div>
+    </div>
+
+    <div class="container">
 
         <!-- Content Type Selector -->
         <div class="form-section" id="contentTypeSelectorSection">
-            <h3 style="margin-top: 0; margin-bottom: 20px;">Choose Content Type</h3>
+            <h3 class="section-title"><i class="fas fa-layer-group"></i> Content Type</h3>
             <div class="content-type-selector">
                 <div class="content-type-option active" data-type="rich-content">
                     <div class="content-type-icon">
@@ -242,10 +413,11 @@
 
         <!-- Basic Info Section -->
         <div class="form-section">
+            <h3 class="section-title"><i class="fas fa-info-circle"></i> Basic Details</h3>
             <div class="form-group">
                 <label for="moduleTitle">Module Title</label>
                 <input type="text" id="moduleTitle" required
-                    placeholder="Enter module title (e.g. Introduction to Yoga)">
+                    placeholder="Enter module title (e.g. Introduction to Core Concepts)">
             </div>
             <div class="form-group">
                 <label for="moduleDescription">Description (Optional)</label>
@@ -253,11 +425,12 @@
                     placeholder="Brief summary of what this module covers..."></textarea>
             </div>
             <div class="form-group">
-                <label for="moduleDuration">Minimum Duration (Minutes)</label>
+                <label for="moduleDuration">Minimum Time Requirement (Minutes)</label>
                 <input type="number" id="moduleDuration" min="1" value="10" required
-                    placeholder="Enter minimum time in minutes (default: 10)">
-                <small style="color: #666; display: block; margin-top: 5px;">
-                    Students must spend at least this amount of time on the module to mark it as complete.
+                    placeholder="Enter minimum time in minutes">
+                <small style="color: #666; display: block; margin-top: 6px;">
+                    <i class="fas fa-lock" style="font-size:0.8rem; margin-right:4px;"></i> Students must spend at least
+                    this amount of time reviewing the module before marking it complete.
                 </small>
             </div>
         </div>
@@ -273,16 +446,20 @@
 
         <!-- Video Upload Section -->
         <div class="form-section content-section" id="videoSection">
+            <h3 class="section-title"><i class="fas fa-video"></i> Video File Upload</h3>
             <div class="form-group">
-                <label>Video File</label>
                 <input type="file" id="videoFileInput" accept="video/mp4,video/webm,video/quicktime,video/x-msvideo"
                     style="display: none;">
-                <div class="file-upload-zone" id="videoUploadZone">
-                    <div class="file-upload-icon">
+                <div class="file-upload-zone" id="videoUploadZone"
+                    style="border: 2px dashed #ccc; padding: 40px; text-align: center; border-radius: 12px; cursor: pointer; background: #fafafa; transition: all 0.2s;">
+                    <div class="file-upload-icon" style="font-size: 2.5rem; color: #999; margin-bottom: 15px;">
                         <i class="fas fa-cloud-upload-alt"></i>
                     </div>
-                    <div class="file-upload-text">Click or drag video file here</div>
-                    <div class="file-upload-hint">Supported: MP4, WebM, MOV, AVI (Max: 500MB)</div>
+                    <div class="file-upload-text"
+                        style="font-weight: 600; font-size: 1.1rem; color: #333; margin-bottom: 8px;">Click or drag
+                        video file here</div>
+                    <div class="file-upload-hint" style="color: #777; font-size: 0.85rem;">Supported: MP4, WebM, MOV,
+                        AVI (Max: 500MB)</div>
                 </div>
             </div>
             <div id="videoProgressContainer"></div>
@@ -291,15 +468,19 @@
 
         <!-- PDF Upload Section -->
         <div class="form-section content-section" id="pdfSection">
+            <h3 class="section-title"><i class="fas fa-file-pdf"></i> Document Upload</h3>
             <div class="form-group">
-                <label>PDF File</label>
                 <input type="file" id="pdfFileInput" accept="application/pdf" style="display: none;">
-                <div class="file-upload-zone" id="pdfUploadZone">
-                    <div class="file-upload-icon">
+                <div class="file-upload-zone" id="pdfUploadZone"
+                    style="border: 2px dashed #ccc; padding: 40px; text-align: center; border-radius: 12px; cursor: pointer; background: #fafafa; transition: all 0.2s;">
+                    <div class="file-upload-icon" style="font-size: 2.5rem; color: #999; margin-bottom: 15px;">
                         <i class="fas fa-cloud-upload-alt"></i>
                     </div>
-                    <div class="file-upload-text">Click or drag PDF file here</div>
-                    <div class="file-upload-hint">Supported: PDF only (Max: 50MB)</div>
+                    <div class="file-upload-text"
+                        style="font-weight: 600; font-size: 1.1rem; color: #333; margin-bottom: 8px;">Click or drag PDF
+                        file here</div>
+                    <div class="file-upload-hint" style="color: #777; font-size: 0.85rem;">Supported: PDF only (Max:
+                        50MB)</div>
                 </div>
             </div>
             <div id="pdfProgressContainer"></div>

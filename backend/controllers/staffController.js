@@ -1,4 +1,4 @@
-const { Course, Content, User, Exam, Result, Certificate } = require('../models/index');
+const { Course, Content, User, Exam, Result, Certificate, Notification } = require('../models/index');
 
 // Create Course
 exports.createCourse = async (req, res) => {
@@ -148,11 +148,11 @@ exports.startExamAttempt = async (req, res) => {
         }
 
         // FIRST: Check for certificate regardless of pass status (priority check)
-        const certificate = await Certificate.findOne({ 
-            studentID, 
-            courseID: exam.courseID 
+        const certificate = await Certificate.findOne({
+            studentID,
+            courseID: exam.courseID
         });
-        
+
         if (certificate) {
             console.log(`Certificate found for student ${studentID}, course ${exam.courseID}`);
             // Delete any incomplete attempts if they exist
@@ -161,7 +161,7 @@ exports.startExamAttempt = async (req, res) => {
                 examID,
                 completed: false
             });
-            
+
             return res.status(403).json({
                 hasCertificate: true,
                 message: 'You have already received a certificate for this course. The assessment cannot be attempted again.',
@@ -254,21 +254,21 @@ exports.submitExam = async (req, res) => {
 
         if (!attempt) {
             console.error(`Attempt not found for ID: ${attemptID}, Student: ${studentID}`);
-            
+
             // Check if student has certificate for any course (attempt might have been cleaned up)
             const { Certificate } = require('../models/index');
             const hasCertificate = await Certificate.findOne({ studentID });
-            
+
             if (hasCertificate) {
-                return res.status(403).json({ 
+                return res.status(403).json({
                     hasCertificate: true,
                     message: 'This exam attempt is no longer valid. You have already received a certificate for this course.',
                     certificateID: hasCertificate._id
                 });
             }
-            
-            return res.status(404).json({ 
-                message: 'Exam attempt not found or has expired. Please start a new assessment.' 
+
+            return res.status(404).json({
+                message: 'Exam attempt not found or has expired. Please start a new assessment.'
             });
         }
 
@@ -424,10 +424,10 @@ exports.checkEligibility = async (req, res) => {
 
         // Check if already has certificate (priority check)
         const certificate = await Certificate.findOne({ studentID, courseID });
-        
+
         if (certificate) {
             console.log(`Certificate exists for student ${studentID}, course ${courseID}`);
-            
+
             // Clean up any incomplete attempts
             const { ExamAttempt } = require('../models/index');
             const deletedCount = await ExamAttempt.deleteMany({
@@ -435,11 +435,11 @@ exports.checkEligibility = async (req, res) => {
                 courseID,
                 completed: false
             });
-            
+
             if (deletedCount.deletedCount > 0) {
                 console.log(`Cleaned up ${deletedCount.deletedCount} incomplete attempts`);
             }
-            
+
             return res.status(200).json({
                 eligible: false,
                 alreadyPassed: true,
@@ -722,5 +722,53 @@ exports.changePassword = async (req, res) => {
         res.status(200).json({ message: 'Password changed successfully' });
     } catch (err) {
         res.status(500).json({ message: 'Failed to change password', error: err.message });
+    }
+};
+
+// --- Notifications ---
+
+exports.getNotifications = async (req, res) => {
+    try {
+        const notifications = await Notification.find({ recipient: req.user.id })
+            .sort({ createdAt: -1 }).limit(50);
+        res.status(200).json(notifications);
+    } catch (err) {
+        res.status(500).json({ message: 'Failed to fetch notifications', error: err.message });
+    }
+};
+
+exports.toggleNotificationRead = async (req, res) => {
+    try {
+        const notification = await Notification.findOneAndUpdate(
+            { _id: req.params.id, recipient: req.user.id },
+            { read: req.body.read },
+            { new: true }
+        );
+        if (!notification) return res.status(404).json({ message: 'Notification not found' });
+        res.status(200).json({ message: 'Notification updated', notification });
+    } catch (err) {
+        res.status(500).json({ message: 'Failed to update notification', error: err.message });
+    }
+};
+
+exports.markAllNotificationsRead = async (req, res) => {
+    try {
+        await Notification.updateMany({ recipient: req.user.id, read: false }, { read: true });
+        res.status(200).json({ message: 'All notifications marked as read' });
+    } catch (err) {
+        res.status(500).json({ message: 'Failed to update notifications', error: err.message });
+    }
+};
+
+exports.deleteNotification = async (req, res) => {
+    try {
+        const notification = await Notification.findOneAndDelete({
+            _id: req.params.id,
+            recipient: req.user.id
+        });
+        if (!notification) return res.status(404).json({ message: 'Notification not found' });
+        res.status(200).json({ message: 'Notification deleted' });
+    } catch (err) {
+        res.status(500).json({ message: 'Failed to delete notification', error: err.message });
     }
 };

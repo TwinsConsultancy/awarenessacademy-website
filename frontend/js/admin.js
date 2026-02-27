@@ -298,7 +298,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function switchSection(section) {
     try {
         // Hide all sections
-        ['overview', 'analytics', 'users', 'courses', 'content', 'finance', 'tickets', 'messages', 'subscribers', 'gallery', 'bannerManagement', 'settings', 'certificates'].forEach(s => {
+        ['overview', 'analytics', 'users', 'courses', 'content', 'finance', 'tickets', 'messages', 'subscribers', 'gallery', 'bannerManagement', 'settings', 'certificates', 'approvals'].forEach(s => {
             const el = document.getElementById(s + 'Section');
             if (el) el.style.display = 'none';
 
@@ -374,6 +374,9 @@ function switchSection(section) {
         }
         if (section === 'certificates') {
             loadCertificates();
+        }
+        if (section === 'approvals') {
+            loadApprovals();
         }
 
         // Auto-close sidebar after clicking a tab (both desktop and mobile)

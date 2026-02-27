@@ -1,4 +1,4 @@
-const { Module, Course, User } = require('../models/index');
+const { Module, Course, User, Notification } = require('../models/index');
 const AppError = require('../utils/AppError');
 const catchAsync = require('../utils/catchAsync');
 
@@ -171,6 +171,8 @@ exports.updateModule = catchAsync(async (req, res, next) => {
     }
 
     // Approval/Status Logic
+    const oldStatus = module.status;
+
     if (isAdmin) {
         // Admin can set status directly if provided
         if (req.body.status) {
@@ -197,6 +199,17 @@ exports.updateModule = catchAsync(async (req, res, next) => {
         if ((title || description || content || fileUrl) && (module.status === 'Approved' || module.status === 'Published')) {
             module.status = 'Pending'; // Re-submit for approval
         }
+    }
+
+    // Notify module creator if status changed
+    if (module.status !== oldStatus && module.createdBy) {
+        await new Notification({
+            recipient: module.createdBy,
+            type: 'Module',
+            title: 'Module Status Updated',
+            message: `Your module "${module.title}" status changed from ${oldStatus} to ${module.status}.`,
+            relatedId: module._id
+        }).save().catch(err => console.error('Notification save error:', err));
     }
 
     await module.save();

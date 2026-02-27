@@ -117,7 +117,8 @@ const scheduleSchema = new Schema({
     startTime: { type: Date, required: true },
     endTime: { type: Date, required: true },
     meetingLink: { type: String },
-    type: { type: String, enum: ['Live', 'Recorded Release'], required: true }
+    type: { type: String, enum: ['Live', 'Recorded Release'], required: true },
+    approvalStatus: { type: String, enum: ['Pending', 'Approved', 'Rejected'], default: 'Pending' }
 });
 
 // 4. Attendance Collection
@@ -288,6 +289,18 @@ const feedbackSchema = new Schema({
 
 feedbackSchema.index({ moduleId: 1, studentId: 1 });
 
+// 16. Staff Notifications Collection
+const notificationSchema = new Schema({
+    recipient: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    type: { type: String, enum: ['Course', 'Module', 'System'], required: true },
+    title: { type: String, required: true },
+    message: { type: String, required: true },
+    relatedId: { type: Schema.Types.ObjectId },
+    read: { type: Boolean, default: false },
+    createdAt: { type: Date, default: Date.now }
+});
+notificationSchema.index({ recipient: 1, read: 1, createdAt: -1 });
+
 // Import new modular content models
 const Module = require('./Module');
 
@@ -311,6 +324,7 @@ module.exports = {
         status: { type: String, enum: ['Pass', 'Fail'], required: true },
         date: { type: Date, default: Date.now }
     })),
+    Notification: mongoose.model('Notification', notificationSchema),
     Enrollment: mongoose.model('Enrollment', new Schema({
         studentID: { type: Schema.Types.ObjectId, ref: 'User', required: true },
         courseID: { type: Schema.Types.ObjectId, ref: 'Course', required: true },
