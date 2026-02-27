@@ -11,7 +11,9 @@ const {
     getBackupStatus,
     getHistoricalMetrics,
     getRateLimits,
-    getActiveUsers
+    getActiveUsers,
+    getAtlasClusterMetrics,
+    exportMetricsPDF
 } = require('../controllers/developerController');
 const authorize = require('../middleware/auth');
 
@@ -47,10 +49,14 @@ router.get('/mongodb/stats', getMongoDBStats);
 router.get('/mongodb/connections', getConnectionPoolMetrics);
 router.get('/mongodb/performance', getQueryPerformance);
 router.get('/mongodb/backups', getBackupStatus);
+router.get('/mongodb/atlas-metrics', getAtlasClusterMetrics);
 
 // Extended Dashboard Routes
 router.get('/metrics/history', getHistoricalMetrics);
 router.get('/rate-limits', getRateLimits);
 router.get('/users/active', getActiveUsers);
+
+// Export Routes
+router.get('/export/pdf', exportMetricsPDF);
 
 module.exports = router;

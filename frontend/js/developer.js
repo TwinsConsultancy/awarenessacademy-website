@@ -6,6 +6,7 @@ let isDevReconnecting = false;
 // Settings data
 let devSettings = {};
 let currentRevenue = 0;
+let totalRevenue = 0;
 
 document.addEventListener('DOMContentLoaded', async () => {
     // Check Auth
@@ -267,14 +268,17 @@ async function loadSettingsAndCostMap() {
             const json = await res.json();
             devSettings = json.data.settings;
             currentRevenue = json.data.calculated.currentRevenueMonth;
+            totalRevenue = json.data.calculated.totalRevenue;
 
             // Populate forms
             document.getElementById('vpsPlan').value = devSettings.vpsPlan || '';
             document.getElementById('vpsCost').value = devSettings.vpsCost || 0;
             document.getElementById('vpsInstances').value = devSettings.vpsInstances || 1;
 
-            document.getElementById('mongoPlan').value = devSettings.mongoPlan || '';
             document.getElementById('mongoCost').value = devSettings.mongoCost || 0;
+            document.getElementById('mongoStoragePrice').value = devSettings.mongoStoragePricePerGb || 0.25;
+            document.getElementById('mongoDataTransferPrice').value = devSettings.mongoDataTransferPricePerGb || 0.12;
+            document.getElementById('mongoBackupCost').value = devSettings.mongoBackupCost || 0;
 
             document.getElementById('rzpPercent').value = devSettings.razorpayCommissionPercent || 2.0;
 
@@ -283,11 +287,29 @@ async function loadSettingsAndCostMap() {
             document.getElementById('scaleThreshold').value = devSettings.scalingThresholdPercent || 80;
             document.getElementById('maxInstances').value = devSettings.maxInstancesAllowed || 3;
 
+            // Add event listeners for real-time calculation
+            attachCostInputListeners();
+
             calculateCostSummaries();
+            
+            // Load Atlas metrics after settings are loaded
+            await refreshAtlasMetrics();
         }
     } catch (e) {
         console.error('Error loading dev settings', e);
     }
+}
+
+// Attach event listeners to cost input fields for real-time calculation
+function attachCostInputListeners() {
+    const costInputIds = ['vpsCost', 'vpsInstances', 'mongoCost', 'mongoStoragePrice', 
+                          'mongoDataTransferPrice', 'mongoBackupCost', 'rzpPercent'];
+    costInputIds.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.addEventListener('input', calculateCostSummaries);
+        }
+    });
 }
 
 function calculateCostSummaries() {
@@ -310,8 +332,9 @@ function calculateCostSummaries() {
 
     // Update Summary Panel
     document.getElementById('sumInfraCost').textContent = '$' + totalInfra.toFixed(2);
-    document.getElementById('sumRevenue').textContent = '₹' + currentRevenue.toFixed(2); // assuming revenue is INR typically, but UI mixes $ and generic
-    document.getElementById('sumCommission').textContent = '$' + estCommission.toFixed(2);
+    document.getElementById('sumTotalRevenue').textContent = '₹' + totalRevenue.toFixed(2);
+    document.getElementById('sumRevenue').textContent = '₹' + currentRevenue.toFixed(2);
+    document.getElementById('sumCommission').textContent = '₹' + estCommission.toFixed(2);
 
     const profitEl = document.getElementById('sumProfit');
     profitEl.textContent = '₹' + netProfit.toFixed(2);
@@ -322,14 +345,16 @@ async function saveSettings() {
     try {
         const payload = {
             vpsPlan: document.getElementById('vpsPlan').value,
-            vpsCost: document.getElementById('vpsCost').value,
-            vpsInstances: document.getElementById('vpsInstances').value,
-            mongoPlan: document.getElementById('mongoPlan').value,
-            mongoCost: document.getElementById('mongoCost').value,
-            razorpayCommissionPercent: document.getElementById('rzpPercent').value,
+            vpsCost: parseFloat(document.getElementById('vpsCost').value) || 0,
+            vpsInstances: parseInt(document.getElementById('vpsInstances').value) || 1,
+            mongoCost: parseFloat(document.getElementById('mongoCost').value) || 0,
+            mongoStoragePricePerGb: parseFloat(document.getElementById('mongoStoragePrice').value) || 0.25,
+            mongoDataTransferPricePerGb: parseFloat(document.getElementById('mongoDataTransferPrice').value) || 0.12,
+            mongoBackupCost: parseFloat(document.getElementById('mongoBackupCost').value) || 0,
+            razorpayCommissionPercent: parseFloat(document.getElementById('rzpPercent').value) || 2.0,
             autoScaleEnabled: document.getElementById('autoScaleToggle').checked,
-            scalingThresholdPercent: document.getElementById('scaleThreshold').value,
-            maxInstancesAllowed: document.getElementById('maxInstances').value
+            scalingThresholdPercent: parseInt(document.getElementById('scaleThreshold').value) || 80,
+            maxInstancesAllowed: parseInt(document.getElementById('maxInstances').value) || 3
         };
 
         const res = await fetch(`${Auth.apiBase}/developer/settings`, {
@@ -338,15 +363,17 @@ async function saveSettings() {
             body: JSON.stringify(payload)
         });
 
+        const data = await res.json();
+
         if (res.ok) {
-            alert('Settings saved successfully!');
+            alert('✅ Settings saved successfully! Your cost parameters have been stored.');
             await loadSettingsAndCostMap(); // reload latest
         } else {
-            alert('Failed to save settings');
+            alert(`❌ Failed to save settings: ${data.message || 'Unknown error'}`);
         }
     } catch (e) {
         console.error(e);
-        alert('Error saving settings');
+        alert('❌ Error saving settings. Please check your connection and try again.');
     }
 }
 
@@ -878,6 +905,84 @@ async function loadBackupStatus() {
     }
 }
 
+// Atlas Metrics Functions
+async function refreshAtlasMetrics() {
+    const btn = event?.target?.closest('button');
+    const icon = btn?.querySelector('i');
+    if (icon) icon.classList.add('fa-spin');
+
+    try {
+        const res = await fetch(`${Auth.apiBase}/developer/mongodb/atlas-metrics`, {
+            headers: Auth.getHeaders()
+        });
+
+        if (res.ok) {
+            const json = await res.json();
+            
+            if (!json.configured) {
+                console.log('Atlas API not configured');
+                return;
+            }
+
+            if (json.apiError) {
+                console.error('Atlas API Error:', json.message);
+                return;
+            }
+
+            const data = json.data;
+            
+            // Show Atlas metrics section
+            const metricsDisplay = document.getElementById('atlasMetrics');
+            if (metricsDisplay) {
+                metricsDisplay.style.display = 'block';
+            }
+
+            // Update cluster info
+            document.getElementById('atlasClusterTier').textContent = data.cluster.tier;
+            document.getElementById('atlasStorageUsage').textContent = 
+                `${data.usage.storageGB.toFixed(2)} GB / ${data.usage.maxStorage} GB (${data.usage.storagePercent.toFixed(1)}%)`;
+            document.getElementById('atlasConnections').textContent = 
+                `${data.usage.connections} / ${data.usage.maxConnections} (${data.usage.connectionsPercent.toFixed(1)}%)`;
+            document.getElementById('atlasNodeCount').textContent = data.cluster.nodeCount;
+
+            // Display warnings
+            const warningsContainer = document.getElementById('atlasWarnings');
+            if (data.warnings && data.warnings.length > 0) {
+                warningsContainer.innerHTML = data.warnings.map(w => 
+                    `<div class="atlas-warning ${w.type}">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        ${w.message}
+                    </div>`
+                ).join('');
+            } else {
+                warningsContainer.innerHTML = '';
+            }
+
+            // Show cost breakdown
+            const breakdownEl = document.getElementById('mongoBreakdown');
+            if (breakdownEl) {
+                breakdownEl.style.display = 'block';
+                document.getElementById('mongoBaseBreakdown').textContent = data.costs.breakdown.base;
+                document.getElementById('mongoStorageBreakdown').textContent = data.costs.breakdown.storage;
+                document.getElementById('mongoTransferBreakdown').textContent = data.costs.breakdown.transfer;
+                document.getElementById('mongoBackupBreakdown').textContent = data.costs.breakdown.backup;
+            }
+
+            // Update total cost
+            document.getElementById('calcMongoTotal').textContent = data.costs.totalMongoCost.toFixed(2);
+
+            // Recalculate overall cost summaries
+            calculateCostSummaries();
+        }
+    } catch (error) {
+        console.error('Error fetching Atlas metrics:', error);
+    } finally {
+        if (icon) {
+            setTimeout(() => icon.classList.remove('fa-spin'), 500);
+        }
+    }
+}
+
 function setMongoError(message) {
     ['mongoDbName', 'mongoCollections', 'mongoDocuments',
         'mongoDataSize', 'mongoIndexSize', 'mongoStorageSize'].forEach(id => {
@@ -935,4 +1040,56 @@ function exportMetricsCSV() {
     link.setAttribute("href", dataString);
     link.setAttribute("download", `dev-dashboard-metrics-${Date.now()}.csv`);
     link.click();
+}
+
+// Export comprehensive PDF report
+async function exportMetricsPDF(buttonElement) {
+    // Get button reference from event or parameter
+    const btn = buttonElement || event?.target;
+    const originalText = '📄 Export Metrics (PDF)';
+    
+    try {
+        // Show loading indicator
+        if (btn) {
+            btn.textContent = '⏳ Generating PDF...';
+            btn.disabled = true;
+        }
+
+        // Fetch PDF from backend
+        const response = await fetch(`${Auth.apiBase}/developer/export/pdf`, {
+            method: 'GET',
+            headers: Auth.getHeaders()
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to generate PDF report');
+        }
+
+        // Convert response to blob
+        const blob = await response.blob();
+
+        // Create download link
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `InnerSpark_Developer_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+
+        // Cleanup
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+
+        console.log('✅ PDF report downloaded successfully');
+        
+    } catch (error) {
+        console.error('❌ PDF Export Error:', error);
+        alert('Failed to generate PDF report. Please try again.');
+    } finally {
+        // Always reset button - using finally ensures it runs even if there's an error
+        if (btn) {
+            btn.textContent = originalText;
+            btn.disabled = false;
+        }
+    }
 }

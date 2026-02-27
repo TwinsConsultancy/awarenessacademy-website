@@ -59,7 +59,7 @@ exports.getPendingContent = async (req, res) => {
                 id: e._id,
                 title: e.title,
                 approvalStatus: e.approvalStatus,
-                hasApprovalStatus: e.hasOwnProperty('approvalStatus')
+                hasApprovalStatus: e.approvalStatus !== undefined
             })));
         }
 

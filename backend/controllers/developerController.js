@@ -1,8 +1,10 @@
 const os = require('os');
 const mongoose = require('mongoose');
 const axios = require('axios');
+const PDFDocument = require('pdfkit');
+const path = require('path');
 const DeveloperSettings = require('../models/DeveloperSettings');
-const { User, Course, Enrollment, Payment } = require('../models/index');
+const { User, Course, Enrollment, Payment, Module } = require('../models/index');
 
 // Helper to calculate percentages
 const calcPercent = (used, total) => {
@@ -176,19 +178,29 @@ exports.getSettings = async (req, res) => {
         startOfMonth.setDate(1);
         startOfMonth.setHours(0, 0, 0, 0);
 
-        const payments = await Payment.find({
-            createdAt: { $gte: startOfMonth },
-            status: 'Success'
+        // Monthly revenue - matching admin dashboard logic
+        const monthlyPayments = await Payment.find({
+            date: { $gte: startOfMonth },
+            status: { $in: ['Success', 'completed'] }
         });
 
-        const currentRevenue = payments.reduce((acc, curr) => acc + (curr.amount || 0), 0);
+        const currentMonthRevenue = monthlyPayments.reduce((acc, curr) => acc + (curr.amount || 0), 0);
+
+        // Total revenue (all time) - matching admin dashboard logic exactly
+        const totalRevenueResult = await Payment.aggregate([
+            { $match: { status: { $in: ['Success', 'completed'] } } },
+            { $group: { _id: null, total: { $sum: "$amount" } } }
+        ]);
+
+        const totalRevenue = totalRevenueResult.length > 0 ? totalRevenueResult[0].total : 0;
 
         res.status(200).json({
             status: 'success',
             data: {
                 settings,
                 calculated: {
-                    currentRevenueMonth: currentRevenue
+                    currentRevenueMonth: currentMonthRevenue,
+                    totalRevenue: totalRevenue
                 }
             }
         });
@@ -212,7 +224,7 @@ exports.updateSettings = async (req, res) => {
         // Update fields
         const {
             vpsPlan, vpsCost, vpsInstances,
-            mongoPlan, mongoCost,
+            mongoPlan, mongoCost, mongoStoragePricePerGb, mongoDataTransferPricePerGb, mongoBackupCost,
             razorpayCommissionPercent,
             autoScaleEnabled, maxInstancesAllowed, scalingThresholdPercent
         } = req.body;
@@ -223,6 +235,9 @@ exports.updateSettings = async (req, res) => {
 
         if (mongoPlan !== undefined) settings.mongoPlan = mongoPlan;
         if (mongoCost !== undefined) settings.mongoCost = Number(mongoCost);
+        if (mongoStoragePricePerGb !== undefined) settings.mongoStoragePricePerGb = Number(mongoStoragePricePerGb);
+        if (mongoDataTransferPricePerGb !== undefined) settings.mongoDataTransferPricePerGb = Number(mongoDataTransferPricePerGb);
+        if (mongoBackupCost !== undefined) settings.mongoBackupCost = Number(mongoBackupCost);
 
         if (razorpayCommissionPercent !== undefined) settings.razorpayCommissionPercent = Number(razorpayCommissionPercent);
 
@@ -250,39 +265,37 @@ exports.updateSettings = async (req, res) => {
 // @access  Private/Admin (Default Admin Only)
 exports.getVideoStats = async (req, res) => {
     try {
-        // Attempt to gather module video data
-        const courses = await Course.find().populate('curriculum.modules');
+        // Query video modules directly
+        const videoModules = await Module.find({ contentType: 'video' });
 
-        let totalVideos = 0;
-        let totalStorageBytes = 0; // if we tracked file sizes, otherwise N/A
+        let totalVideos = videoModules.length;
+        let totalStorageBytes = 0;
 
-        courses.forEach(course => {
-            if (course.curriculum && Array.isArray(course.curriculum)) {
-                course.curriculum.forEach(section => {
-                    if (section.modules && Array.isArray(section.modules)) {
-                        section.modules.forEach(mod => {
-                            if (mod.type === 'Video') {
-                                totalVideos++;
-                                // We don't currently track video byte size in the Module model easily without statting the filesystem
-                                // In a real scenario we'd query the DB file size field
-                            }
-                        });
-                    }
-                });
+        // Calculate total storage if fileSize is tracked
+        videoModules.forEach(mod => {
+            if (mod.fileMetadata && mod.fileMetadata.fileSize) {
+                totalStorageBytes += mod.fileMetadata.fileSize;
             }
         });
+
+        // Format storage (convert bytes to GB)
+        const totalStorageGB = totalStorageBytes > 0
+            ? (totalStorageBytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB'
+            : 'N/A';
 
         res.status(200).json({
             status: 'success',
             data: {
                 totalVideos,
-                totalStorageUsed: 'N/A', // not tracked in DB
+                totalStorageUsed: totalStorageGB,
+                totalStorageBytes, // raw bytes for reference
                 totalVideoPlaysToday: 'N/A', // not tracked natively
                 avgStreamingTime: 'N/A',
                 failedStreamCount: 'N/A'
             }
         });
     } catch (error) {
+        console.error('[VIDEO-STATS ERROR]', error);
         res.status(500).json({ status: 'error', message: 'Server error retrieving video stats' });
     }
 };
@@ -395,6 +408,165 @@ exports.getConnectionPoolMetrics = async (req, res) => {
         res.status(500).json({
             status: 'error',
             message: 'Failed to retrieve connection pool metrics',
+            error: error.message
+        });
+    }
+};
+
+// @desc    Get MongoDB Atlas cluster metrics and calculate costs
+// @route   GET /api/developer/mongodb/atlas-metrics
+// @access  Private/Admin (Default Admin Only)
+exports.getAtlasClusterMetrics = async (req, res) => {
+    try {
+        const { projectId, clusterName } = getMongoConnectionDetails();
+        const auth = getMongoAtlasAuth();
+
+        // Check if Atlas API credentials are configured
+        if (!auth.username || !auth.password || !projectId || !clusterName) {
+            return res.status(200).json({
+                status: 'success',
+                configured: false,
+                message: 'MongoDB Atlas API credentials not configured. Set MONGODB_PUBLIC_API_KEY, MONGODB_PRIVATE_API_KEY, and MONGODB_PROJECT_ID in environment variables.',
+                data: null
+            });
+        }
+
+        // Fetch cluster configuration from Atlas API
+        const clusterUrl = `https://cloud.mongodb.com/api/atlas/v1.0/groups/${projectId}/clusters/${clusterName}`;
+
+        let clusterData, processData;
+
+        try {
+            const clusterResponse = await axios.get(clusterUrl, { auth });
+            clusterData = clusterResponse.data;
+
+            // Fetch process metrics (includes disk usage, connections)
+            const processUrl = `https://cloud.mongodb.com/api/atlas/v1.0/groups/${projectId}/processes`;
+            const processResponse = await axios.get(processUrl, { auth });
+            processData = processResponse.data.results?.[0]; // Get first process (primary)
+        } catch (apiError) {
+            console.error('Atlas API Error:', apiError.response?.data || apiError.message);
+            return res.status(200).json({
+                status: 'success',
+                configured: true,
+                apiError: true,
+                message: `Failed to fetch from Atlas API: ${apiError.response?.data?.detail || apiError.message}`,
+                data: null
+            });
+        }
+
+        // Extract cluster tier information
+        const tierName = clusterData.providerSettings?.instanceSizeName || 'Unknown';
+        const diskSizeGB = clusterData.diskSizeGB || 0;
+        const nodeCount = clusterData.replicationSpecs?.[0]?.regionConfigs?.[0]?.electableNodes || 0;
+
+        // Get storage pricing settings
+        const settings = await DeveloperSettings.findOne() || {};
+        const baseCost = settings.mongoCost || 0;
+        const storagePricePerGB = settings.mongoStoragePricePerGb || 0.25;
+        const dataTransferPricePerGB = settings.mongoDataTransferPricePerGb || 0.12;
+        const backupCost = settings.mongoBackupCost || 0;
+
+        // Get actual database stats for disk usage
+        const db = mongoose.connection.db;
+        const dbStats = await db.stats();
+        const actualStorageGB = (dbStats.storageSize || 0) / (1024 * 1024 * 1024);
+
+        // Calculate connection metrics
+        const serverStatus = await db.admin().serverStatus();
+        const currentConnections = serverStatus.connections?.current || 0;
+
+        // Define tier limits (MongoDB Atlas standard limits)
+        const tierLimits = {
+            'M0': { maxStorage: 0.5, maxConnections: 500, includedStorage: 0.5 },
+            'M2': { maxStorage: 2, maxConnections: 500, includedStorage: 2 },
+            'M5': { maxStorage: 5, maxConnections: 500, includedStorage: 5 },
+            'M10': { maxStorage: 10, maxConnections: 1500, includedStorage: 10 },
+            'M20': { maxStorage: 20, maxConnections: 3000, includedStorage: 20 },
+            'M30': { maxStorage: 40, maxConnections: 3000, includedStorage: 40 },
+            'M40': { maxStorage: 80, maxConnections: 4000, includedStorage: 80 },
+            'M50': { maxStorage: 160, maxConnections: 8000, includedStorage: 160 },
+            'M60': { maxStorage: 320, maxConnections: 16000, includedStorage: 320 },
+            'M80': { maxStorage: 750, maxConnections: 24000, includedStorage: 750 },
+            'M140': { maxStorage: 1000, maxConnections: 32000, includedStorage: 1000 },
+            'M200': { maxStorage: 1500, maxConnections: 64000, includedStorage: 1500 },
+            'M300': { maxStorage: 2000, maxConnections: 96000, includedStorage: 2000 },
+        };
+
+        const currentTier = tierLimits[tierName] || { maxStorage: diskSizeGB, maxConnections: 10000, includedStorage: diskSizeGB };
+
+        // Calculate warnings
+        const warnings = [];
+        const storageUsagePercent = (actualStorageGB / currentTier.maxStorage) * 100;
+        const connectionUsagePercent = (currentConnections / currentTier.maxConnections) * 100;
+
+        if (storageUsagePercent >= 90) {
+            warnings.push({ type: 'critical', message: `Storage usage at ${storageUsagePercent.toFixed(1)}% of tier limit!` });
+        } else if (storageUsagePercent >= 75) {
+            warnings.push({ type: 'warning', message: `Storage usage at ${storageUsagePercent.toFixed(1)}% - consider upgrading soon` });
+        }
+
+        if (connectionUsagePercent >= 90) {
+            warnings.push({ type: 'critical', message: `Connections at ${connectionUsagePercent.toFixed(1)}% of tier limit!` });
+        } else if (connectionUsagePercent >= 75) {
+            warnings.push({ type: 'warning', message: `Connections at ${connectionUsagePercent.toFixed(1)}% of tier limit` });
+        }
+
+        // Calculate total MongoDB cost
+        const extraStorageGB = Math.max(0, actualStorageGB - currentTier.includedStorage);
+        const extraStorageCost = extraStorageGB * storagePricePerGB;
+
+        // Estimate data transfer (this would need actual metrics from Atlas)
+        const estimatedDataTransferGB = 0; // Would need Atlas API metrics for accurate value
+        const dataTransferCost = estimatedDataTransferGB * dataTransferPricePerGB;
+
+        const totalMongoCost = baseCost + extraStorageCost + dataTransferCost + backupCost;
+
+        res.status(200).json({
+            status: 'success',
+            configured: true,
+            data: {
+                cluster: {
+                    name: clusterName,
+                    tier: tierName,
+                    nodeCount,
+                    diskSizeGB,
+                    provider: clusterData.providerSettings?.providerName || 'Unknown',
+                    region: clusterData.providerSettings?.regionName || 'Unknown'
+                },
+                usage: {
+                    storageGB: actualStorageGB,
+                    storagePercent: storageUsagePercent,
+                    connections: currentConnections,
+                    connectionsPercent: connectionUsagePercent,
+                    maxStorage: currentTier.maxStorage,
+                    maxConnections: currentTier.maxConnections
+                },
+                costs: {
+                    baseCost,
+                    extraStorageGB,
+                    extraStorageCost,
+                    dataTransferGB: estimatedDataTransferGB,
+                    dataTransferCost,
+                    backupCost,
+                    totalMongoCost,
+                    breakdown: {
+                        base: `$${baseCost.toFixed(2)}`,
+                        storage: `$${extraStorageCost.toFixed(2)} (${extraStorageGB.toFixed(2)} GB × $${storagePricePerGB}/GB)`,
+                        transfer: `$${dataTransferCost.toFixed(2)} (${estimatedDataTransferGB.toFixed(2)} GB × $${dataTransferPricePerGB}/GB)`,
+                        backup: `$${backupCost.toFixed(2)}`,
+                        total: `$${totalMongoCost.toFixed(2)}`
+                    }
+                },
+                warnings,
+                lastUpdated: new Date()
+            }
+        });
+    } catch (error) {
+        console.error('Atlas Cluster Metrics Error:', error);
+        res.status(500).json({
+            status: 'error',
+            message: 'Failed to retrieve Atlas cluster metrics',
             error: error.message
         });
     }
@@ -633,3 +805,233 @@ function formatBytes(bytes, decimals = 2) {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
+
+// Export comprehensive metrics as PDF
+exports.exportMetricsPDF = async (req, res) => {
+    try {
+        // Create new PDF document
+        const doc = new PDFDocument({ margin: 40, size: 'A4', bufferPages: true });
+
+        // Set response headers
+        const filename = `InnerSpark_Server_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+        doc.pipe(res);
+
+        // Helper: Format Bytes
+        const formatB = (bytes) => {
+            if (bytes === 0 || !bytes) return '0 Bytes';
+            const k = 1024, sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        };
+
+        // Fetch all required data
+        const settings = await DeveloperSettings.findOne();
+
+        // Revenue
+        const totalRevenueData = await Payment.aggregate([
+            { $match: { status: { $in: ['Success', 'completed'] } } },
+            { $group: { _id: null, total: { $sum: '$amount' } } }
+        ]);
+        const totalRevenue = totalRevenueData[0]?.total || 0;
+
+        const currentDate = new Date();
+        const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+        const monthRevenueData = await Payment.aggregate([
+            { $match: { status: { $in: ['Success', 'completed'] }, date: { $gte: startOfMonth } } },
+            { $group: { _id: null, total: { $sum: '$amount' } } }
+        ]);
+        const currentRevenueMonth = monthRevenueData[0]?.total || 0;
+
+        // KPIs
+        const totalStudents = await User.countDocuments({ role: 'student' });
+        const totalCourses = await Course.countDocuments();
+        const totalEnrollments = await Enrollment.countDocuments();
+        const totalVideos = await Module.countDocuments({ contentType: 'video' });
+
+        // Mongo Stats
+        let mongoStats = { dataSize: 0, storageSize: 0, indexes: 0, collections: 0 };
+        try {
+            const db = mongoose.connection.db;
+            const stats = await db.stats();
+            mongoStats = { dataSize: stats.dataSize, storageSize: stats.storageSize, indexes: stats.indexes, collections: stats.collections };
+        } catch (e) { }
+
+        // System Metrics
+        const totalMem = os.totalmem();
+        const freeMem = os.freemem();
+        const usedMem = totalMem - freeMem;
+        const memUsagePercent = Math.round((usedMem / totalMem) * 100);
+        const cpus = os.cpus();
+
+        // Costs
+        const r2Cost = ((settings?.r2StorageUsed || 0) * (settings?.r2StoragePricePerGb || 0.015)) +
+            ((settings?.r2DataTransfer || 0) * (settings?.r2DataTransferPricePerGb || 0.09));
+        const mongoStorageGB = mongoStats.storageSize / (1024 ** 3);
+        const mongoCost = (mongoStorageGB * (settings?.mongoStoragePricePerGb || 0.25)) +
+            ((settings?.mongoDataTransfer || 0) * (settings?.mongoDataTransferPricePerGb || 0.12)) + (settings?.mongoBackupCost || 0);
+        const paymentGatewayCost = (currentRevenueMonth * (settings?.razorpayCommission || 2)) / 100;
+        const totalMonthlyCost = r2Cost + mongoCost + paymentGatewayCost;
+
+        // --- PDF LAYOUT HELPERS ---
+        const drawPageBorder = () => {
+            doc.rect(20, 20, doc.page.width - 40, doc.page.height - 40)
+                .lineWidth(1)
+                .strokeColor('#bdc3c7')
+                .stroke();
+        };
+
+        const drawGridContainer = (y, height, title) => {
+            doc.rect(40, y, doc.page.width - 80, height)
+                .lineWidth(1)
+                .strokeColor('#ecf0f1')
+                .stroke();
+
+            doc.rect(40, y, doc.page.width - 80, 25)
+                .fillAndStroke('#f8f9fa', '#ecf0f1');
+
+            doc.fontSize(12).fillColor('#2c3e50').font('Helvetica-Bold')
+                .text(title, 50, y + 7);
+        };
+
+        const addGridRow = (x, y, label, value) => {
+            doc.fontSize(10).fillColor('#7f8c8d').font('Helvetica').text(label, x, y);
+            doc.fontSize(10).fillColor('#2c3e50').font('Helvetica-Bold').text(value, x + 120, y);
+            doc.moveTo(x, y + 14).lineTo(x + 230, y + 14).lineWidth(0.5).strokeColor('#f1f2f6').stroke();
+        };
+
+        // Generate Chart Images via QuickChart API
+        const getChartImage = async (chartConfig) => {
+            try {
+                const url = `https://quickchart.io/chart?c=${encodeURIComponent(JSON.stringify(chartConfig))}&w=300&h=200&f=png`;
+                const response = await axios.get(url, { responseType: 'arraybuffer' });
+                return response.data;
+            } catch (e) {
+                console.error("Failed to fetch chart image");
+                return null;
+            }
+        };
+
+        const costChartConfig = {
+            type: 'doughnut',
+            data: {
+                labels: ['R2 Storage', 'MongoDB', 'Gateway'],
+                datasets: [{ data: [r2Cost, mongoCost, paymentGatewayCost], backgroundColor: ['#3498db', '#2ecc71', '#9b59b6'] }]
+            },
+            options: { plugins: { legend: { position: 'right' }, datalabels: { display: false } } }
+        };
+
+        const resChartConfig = {
+            type: 'bar',
+            data: {
+                labels: ['Memory Usage'],
+                datasets: [{ label: 'Used %', data: [memUsagePercent], backgroundColor: memUsagePercent > 80 ? '#e74c3c' : '#3498db' }]
+            },
+            options: { scales: { y: { min: 0, max: 100 } }, plugins: { legend: { display: false } } }
+        };
+
+        const [costChartImg, resChartImg] = await Promise.all([
+            getChartImage(costChartConfig),
+            getChartImage(resChartConfig)
+        ]);
+
+        // --- SINGLE PAGE LAYOUT ---
+
+        // Add Background Image
+        try {
+            const bgImagePath = path.join(__dirname, '../../frontend/assets/reportbackground.png');
+            // Save graphics state
+            doc.save();
+            doc.fillOpacity(0.15).strokeOpacity(0.15);
+            if (typeof doc.opacity === 'function') doc.opacity(0.15);
+
+            doc.image(bgImagePath, 0, 0, { width: doc.page.width, height: doc.page.height });
+
+            // Restore graphics state
+            doc.restore();
+            if (typeof doc.opacity === 'function') doc.opacity(1);
+            doc.fillOpacity(1).strokeOpacity(1);
+        } catch (imgError) {
+            console.warn('Could not load background image:', imgError.message);
+        }
+
+        drawPageBorder();
+
+        // Header
+        doc.fontSize(24).fillColor('#2c3e50').font('Helvetica-Bold').text('AWARENESS ACADEMY', 0, 40, { align: 'center' });
+        doc.fontSize(16).fillColor('#e74c3c').text('SERVER REPORT', 0, 68, { align: 'center' });
+        doc.fontSize(10).fillColor('#7f8c8d').font('Helvetica').text(`Generated on: ${currentDate.toLocaleString()}`, 0, 88, { align: 'center' });
+
+        // Container 1: Finance Overview
+        drawGridContainer(115, 170, 'Financial Overview & Infrastructure Costs');
+
+        addGridRow(50, 150, 'Total Revenue (All Time):', `Rs. ${totalRevenue.toFixed(2)}`);
+        addGridRow(50, 170, 'Revenue (This Month):', `Rs. ${currentRevenueMonth.toFixed(2)}`);
+        addGridRow(50, 190, 'Total Monthly Cost:', `Rs. ${totalMonthlyCost.toFixed(2)}`);
+        addGridRow(50, 210, 'Net Profit (Current):', `Rs. ${(currentRevenueMonth - totalMonthlyCost).toFixed(2)}`);
+        addGridRow(50, 230, 'R2 Storage Cost:', `Rs. ${r2Cost.toFixed(2)}`);
+        addGridRow(50, 250, 'MongoDB Atlas Cost:', `Rs. ${mongoCost.toFixed(2)}`);
+        addGridRow(50, 270, 'Payment Gateway Fee:', `Rs. ${paymentGatewayCost.toFixed(2)}`);
+
+        if (costChartImg) {
+            doc.image(costChartImg, 320, 125, { width: 200 });
+        } else {
+            doc.fontSize(10).text('Chart Unavailable', 350, 180);
+        }
+
+        // Container 2: Platform KPIs
+        drawGridContainer(305, 130, 'Platform Engagement KPIs');
+        addGridRow(50, 340, 'Total Registered Students:', `${totalStudents}`);
+        addGridRow(50, 360, 'Active Courses:', `${totalCourses}`);
+        addGridRow(50, 380, 'Total Enrollments:', `${totalEnrollments}`);
+        addGridRow(50, 400, 'Total Video Assets:', `${totalVideos}`);
+        addGridRow(50, 420, 'Platform Health:', `Optimal`);
+
+        // Container 3: Server Resources
+        drawGridContainer(455, 150, 'Live Server Resources & Load');
+        addGridRow(50, 490, 'CPU Model:', cpus[0]?.model?.substring(0, 30) || 'Unknown');
+        addGridRow(50, 510, 'CPU Cores:', `${cpus.length} vCPUs`);
+        addGridRow(50, 530, 'Total Memory (RAM):', formatB(totalMem));
+        addGridRow(50, 550, 'Used Memory:', `${formatB(usedMem)} (${memUsagePercent}%)`);
+        addGridRow(50, 570, 'Free Memory:', formatB(freeMem));
+        addGridRow(50, 590, 'Host OS:', `${os.platform()} ${os.release()}`);
+
+        if (resChartImg) {
+            doc.image(resChartImg, 350, 465, { width: 140 });
+        }
+
+        // Container 4: Database Health
+        drawGridContainer(625, 130, 'MongoDB Atlas Storage Status');
+        addGridRow(50, 660, 'Storage Used (Disk):', formatB(mongoStats.storageSize));
+        addGridRow(50, 680, 'Logical Data Size:', formatB(mongoStats.dataSize));
+        addGridRow(50, 700, 'Total Collections:', `${mongoStats.collections}`);
+        addGridRow(50, 720, 'Total Indexes:', `${mongoStats.indexes}`);
+        addGridRow(50, 740, 'Connection State:', mongoose.connection.readyState === 1 ? 'Healthy (Connected)' : 'Disconnected');
+
+        // --- FOOTERS & PAGE NUMBERS ---
+        const range = doc.bufferedPageRange();
+        for (let i = range.start; i < range.start + range.count; i++) {
+            doc.switchToPage(i);
+
+            // Footer Text
+            doc.fontSize(8).fillColor('#7f8c8d').font('Helvetica')
+                .text('If any support required please contact the maintenance team immediately. +91 7200754566',
+                    40, doc.page.height - 50, { align: 'center' });
+
+            // Page Number
+            doc.text(`Page ${i + 1} of ${range.count}`, 40, doc.page.height - 35, { align: 'center' });
+        }
+
+        // Finalize PDF
+        doc.end();
+
+    } catch (error) {
+        console.error('PDF Export Error:', error);
+        if (!res.headersSent) {
+            res.status(500).json({ status: 'error', message: 'Failed to generate PDF report' });
+        }
+    }
+};
+

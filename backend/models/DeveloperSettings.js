@@ -9,6 +9,9 @@ const developerSettingsSchema = new Schema({
 
     mongoPlan: { type: String, default: 'M0 Sandbox' },
     mongoCost: { type: Number, default: 0 },
+    mongoStoragePricePerGb: { type: Number, default: 0.25 }, // MongoDB Atlas storage overage pricing
+    mongoDataTransferPricePerGb: { type: Number, default: 0.12 }, // Data transfer out pricing
+    mongoBackupCost: { type: Number, default: 0 }, // Monthly backup cost
 
     razorpayCommissionPercent: { type: Number, default: 2.0 },
 
