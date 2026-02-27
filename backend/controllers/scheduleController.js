@@ -12,7 +12,8 @@ exports.createSchedule = async (req, res) => {
             startTime,
             endTime,
             meetingLink,
-            type
+            type,
+            approvalStatus: req.user.role === 'Admin' ? 'Approved' : 'Pending'
         });
 
         await newSchedule.save();
@@ -56,5 +57,31 @@ exports.getMyTimetable = async (req, res) => {
         res.status(200).json(schedules);
     } catch (err) {
         res.status(500).json({ message: 'Failed to fetch timetable', error: err.message });
+    }
+};
+
+// Update Schedule Status (Admin Only)
+exports.updateScheduleStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status } = req.body; // 'Approved', 'Rejected', etc.
+
+        if (!['Pending', 'Approved', 'Rejected'].includes(status)) {
+            return res.status(400).json({ message: 'Invalid status' });
+        }
+
+        const schedule = await Schedule.findByIdAndUpdate(
+            id,
+            { approvalStatus: status },
+            { new: true }
+        );
+
+        if (!schedule) {
+            return res.status(404).json({ message: 'Schedule not found' });
+        }
+
+        res.status(200).json({ message: `Schedule marked as ${status}`, schedule });
+    } catch (err) {
+        res.status(500).json({ message: 'Failed to update schedule status', error: err.message });
     }
 };

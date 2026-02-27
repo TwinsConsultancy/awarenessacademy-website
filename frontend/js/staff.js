@@ -5,7 +5,7 @@
 // Navigation function to switch between sections
 function switchSection(sectionName) {
     // Hide all sections
-    const sections = ['overviewSection', 'coursesSection', 'materialsSection', 'modulesSection', 'studentsSection', 'notificationsSection', 'liveSection', 'assessmentsSection', 'ticketsSection', 'profileSection'];
+    const sections = ['overviewSection', 'coursesSection', 'studentsSection', 'notificationsSection', 'liveSection', 'assessmentsSection', 'ticketsSection', 'profileSection'];
     sections.forEach(id => {
         const section = document.getElementById(id);
         if (section) section.style.display = 'none';
@@ -26,10 +26,6 @@ function switchSection(sectionName) {
     // Load data for the selected section
     if (sectionName === 'overview') {
         loadOverview();
-    } else if (sectionName === 'materials') {
-        loadMyMaterials();
-    } else if (sectionName === 'modules') {
-        loadModulesSection();
     } else if (sectionName === 'students') {
         loadEnrolledStudents();
     } else if (sectionName === 'notifications') {
@@ -763,6 +759,21 @@ async function loadEnrolledStudents() {
                 ).join('');
         }
 
+        // Extract and populate unique students for the new filter
+        const uniqueStudents = [...new Map(
+            enrollments
+                .filter(e => e.studentID && e.studentID._id)
+                .map(e => [e.studentID._id, e.studentID])
+        ).values()];
+
+        const studentNameFilter = document.getElementById('studentNameFilter');
+        if (studentNameFilter) {
+            studentNameFilter.innerHTML = '<option value="">All Students</option>' +
+                uniqueStudents.map(student =>
+                    `<option value="${student._id}">${student.name} (${student.email})</option>`
+                ).join('');
+        }
+
         list.innerHTML = enrollments.map((e, index) => {
             // Handle missing data gracefully
             const studentName = e.studentID?.name || 'Unknown Student';
@@ -773,7 +784,7 @@ async function loadEnrolledStudents() {
             const progress = e.percentComplete || 0;
 
             return `
-                <tr style="border-bottom: 1px solid #eee; background-color: ${index % 2 === 0 ? '#f9f9f9' : 'white'};" data-course-id="${e.courseID?._id || ''}">
+                <tr style="border-bottom: 1px solid #eee; background-color: ${index % 2 === 0 ? '#f9f9f9' : 'white'};" data-course-id="${e.courseID?._id || ''}" data-student-id="${e.studentID?._id || ''}">
                     <td style="padding: 15px; text-align: center; color: #666;">${index + 1}</td>
                     <td style="padding: 15px;">
                         <div style="display: flex; align-items: center; gap: 10px;">
@@ -827,19 +838,36 @@ async function loadSchedules() {
             list.innerHTML = '<p>No live flows scheduled.</p>';
             return;
         }
-        list.innerHTML = schedules.map(s => `
-            <div class="course-list-item">
+        list.innerHTML = schedules.map(s => {
+            const status = s.approvalStatus || 'Pending';
+            let statusColor = '#ffc107'; // Pending
+            if (status === 'Approved') statusColor = '#28a745';
+            else if (status === 'Rejected') statusColor = '#dc3545';
+
+            const disableBtn = status !== 'Approved' ? 'disabled style="background: #ccc; cursor: not-allowed;"' : 'style="background: var(--color-saffron);"';
+            const btnText = status !== 'Approved' ? `Requires Approval` : `Start Class`;
+
+            return `
+            <div class="course-list-item" style="border-left: 4px solid ${statusColor};">
                 <div>
-                    <strong>${s.title}</strong>
-                    <p style="font-size: 0.8rem; color: var(--color-text-secondary);">
-                        ${new Date(s.startTime).toLocaleString()} | Course: ${s.courseID?.title || 'Unknown'}
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <strong>${s.title}</strong>
+                        <span style="font-size: 0.7rem; padding: 2px 8px; border-radius: 12px; background: ${statusColor}22; color: ${statusColor}; border: 1px solid ${statusColor}; font-weight: 600;">
+                            ${status}
+                        </span>
+                    </div>
+                    <p style="font-size: 0.8rem; color: var(--color-text-secondary); margin-top: 5px;">
+                        <i class="far fa-calendar-alt"></i> ${new Date(s.startTime).toLocaleString()} | <i class="fas fa-book"></i> Course: ${s.courseID?.title || 'Unknown'}
                     </p>
                 </div>
                 <div>
-                    <button class="btn-primary" onclick="startLiveSession('${s.meetingLink || s._id}')" style="background: var(--color-saffron); padding: 5px 15px; font-size: 0.8rem;">Start Class</button>
+                    <button class="btn-primary" onclick="startLiveSession('${s.meetingLink || s._id}')" ${disableBtn} style="padding: 6px 16px; font-size: 0.85rem; border: none; border-radius: 8px;">
+                        ${status === 'Approved' ? '<i class="fas fa-video"></i> ' : ''}${btnText}
+                    </button>
                 </div>
             </div>
-        `).join('');
+            `;
+        }).join('');
     } catch (err) {
         UI.handleError(err, 'Live Schedules', 'Failed to load your schedules.');
         list.innerHTML = '<p style="color: var(--color-error);">Error loading schedules.</p>';
@@ -993,48 +1021,151 @@ function renumberQuestions() {
     });
 }
 
+// --- Staff Course Card Helpers ---
+const _staffStatusColors = {
+    'Published': { bg: '#e6f4ea', text: '#1e7e34' },
+    'Approved': { bg: '#e6f4ea', text: '#1e7e34' },
+    'Draft': { bg: '#fff3cd', text: '#856404' },
+    'Pending': { bg: '#fff3cd', text: '#856404' },
+    'Rejected': { bg: '#f8d7da', text: '#721c24' },
+};
+function _staffStatusColor(s) { return _staffStatusColors[s] || _staffStatusColors['Draft']; }
+
+function _getStaffThumbnail(thumb) {
+    if (!thumb) return 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=600&q=80';
+    if (thumb.startsWith('http')) return thumb;
+    return `${Auth.apiBase.replace('/api', '')}/${thumb}`;
+}
+
+// Debounce helper for search
+let _staffCourseSearchTimer;
+function _debounceStaffCourses() {
+    clearTimeout(_staffCourseSearchTimer);
+    _staffCourseSearchTimer = setTimeout(loadCourses, 280);
+}
+
 async function loadCourses() {
+    const list = document.getElementById('courseList');
+    const search = (document.getElementById('courseSearchInput')?.value || '').toLowerCase().trim();
+    const statusFilter = document.getElementById('courseStatusFilter')?.value || '';
+
+    list.innerHTML = `
+        <div style="text-align:center; padding:40px; color:#999;">
+            <i class="fas fa-spinner fa-spin" style="font-size:2rem; margin-bottom:12px;"></i>
+            <p>Loading your courses...</p>
+        </div>`;
+
     try {
         const res = await fetch(`${Auth.apiBase}/staff/courses`, { headers: Auth.getHeaders() });
         if (!res.ok) {
             const errData = await res.json().catch(() => ({}));
             throw new Error(errData.message || 'Failed to fetch courses');
         }
-        const courses = await res.json();
+        let courses = await res.json();
         localStorage.setItem('staffCourses', JSON.stringify(courses));
-        const list = document.getElementById('courseList');
+
+        // Client-side filter
+        if (search) {
+            courses = courses.filter(c =>
+                (c.title || '').toLowerCase().includes(search) ||
+                (c.category || '').toLowerCase().includes(search)
+            );
+        }
+        if (statusFilter) {
+            courses = courses.filter(c => {
+                const ds = c.approvalStatus && c.approvalStatus !== 'Approved' ? c.approvalStatus : c.status;
+                return ds === statusFilter;
+            });
+        }
+
         if (courses.length === 0) {
-            list.innerHTML = '<p>You haven\'t started any sanctuary projects yet.</p>';
+            list.innerHTML = `
+                <div style="text-align:center; padding:60px 20px; color:#999;">
+                    <i class="fas fa-swatchbook" style="font-size:3rem; opacity:0.3; margin-bottom:16px;"></i>
+                    <p style="font-size:1rem; margin-bottom:8px;">No courses found.</p>
+                    <p style="font-size:0.85rem;">Try a different filter or create your first course.</p>
+                </div>`;
             return;
         }
-        list.innerHTML = courses.map(c => {
-            let displayStatus = c.status;
+
+        // Ensure responsive style is present (inject once)
+        if (!document.getElementById('_staffCoursesStyle')) {
+            const s = document.createElement('style');
+            s.id = '_staffCoursesStyle';
+            s.textContent = `
+                #staffCourseGrid { display:grid; gap:22px; grid-template-columns: repeat(4, 1fr); }
+                @media (max-width: 1200px) { #staffCourseGrid { grid-template-columns: repeat(3, 1fr); } }
+                @media (max-width: 860px)  { #staffCourseGrid { grid-template-columns: repeat(2, 1fr); } }
+                @media (max-width: 540px)  { #staffCourseGrid { grid-template-columns: 1fr; } }
+            `;
+            document.head.appendChild(s);
+        }
+
+        list.innerHTML = `<div id="staffCourseGrid">
+                ${courses.map(c => {
+            let displayStatus = c.status || 'Draft';
             if (c.approvalStatus && c.approvalStatus !== 'Approved') {
                 displayStatus = c.approvalStatus;
             } else if (c.approvalStatus === 'Approved' && c.status === 'Draft') {
-                displayStatus = 'Approved (Unpublished)';
+                displayStatus = 'Approved';
             }
-            const colorMap = { 'Published': '#28a745', 'Approved': '#28a745', 'Draft': '#666', 'Pending': '#fd7e14', 'Rejected': '#dc3545' };
-            const statusColor = colorMap[displayStatus.split(' ')[0]] || '#666';
+            const sc = _staffStatusColor(displayStatus);
+            const thumb = _getStaffThumbnail(c.thumbnail);
+            const mentorNames = (c.mentors && c.mentors.length > 0)
+                ? c.mentors.map(m => m.name || m).join(', ')
+                : 'No Mentors';
+
             return `
-                <div class="course-list-item" data-course-id="${c._id}">
-                    <div>
-                        <strong>${c.title}</strong>
-                        <p style="font-size: 0.8rem; color: var(--color-text-secondary); margin-top:5px;">
-                            ${c.category} | <span style="color:white; background:${statusColor}; padding:2px 8px; border-radius:4px; font-weight:bold; font-size:0.75rem;">${displayStatus}</span>
-                        </p>
-                    </div>
-                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                        <a href="course-preview.html?id=${c._id}" class="btn-primary" style="background: #17a2b8; padding: 5px 15px; font-size: 0.8rem; text-decoration: none; display: inline-flex; align-items: center; gap: 5px;">
-                            <i class="fas fa-eye"></i> Preview
-                        </a>
-                        <a href="module-manager.html?courseId=${c._id}" class="btn-primary" style="background: var(--color-golden); padding: 5px 15px; font-size: 0.8rem; text-decoration: none; display: inline-flex; align-items: center; gap: 5px;">
-                            <i class="fas fa-book"></i> Manage Modules
-                        </a>
-                    </div>
-                </div>
-            `;
-        }).join('');
+                    <div class="glass-card" style="padding:0; border-radius:14px; overflow:hidden; display:flex; flex-direction:column; transition:transform 0.2s, box-shadow 0.2s;"
+                        onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 10px 24px rgba(0,0,0,0.10)';"
+                        onmouseout="this.style.transform='none'; this.style.boxShadow='none';">
+
+                        <!-- Thumbnail Banner -->
+                        <div style="height:150px; background:url('${thumb}') center/cover no-repeat; position:relative; background-color:#f0ece4;">
+                            <div style="position:absolute; inset:0; background:linear-gradient(to bottom, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.45) 100%);"></div>
+                            <!-- Status badge on thumbnail -->
+                            <span style="position:absolute; top:12px; right:12px; background-color:${sc.bg}; color:${sc.text}; padding:5px 12px; border-radius:20px; font-size:0.72rem; font-weight:700; letter-spacing:0.4px;">
+                                ${displayStatus}
+                            </span>
+                            <!-- Price badge -->
+                            <span style="position:absolute; bottom:12px; left:12px; background:rgba(0,0,0,0.7); color:#ffd700; padding:4px 10px; border-radius:8px; font-weight:700; font-size:0.85rem;">
+                                ₹${c.price ?? 'Free'}
+                            </span>
+                        </div>
+
+                        <!-- Card Body -->
+                        <div style="padding:18px 18px 14px; flex:1; display:flex; flex-direction:column; gap:10px;">
+                            <div style="font-weight:700; font-size:1.05rem; color:var(--color-text-primary); line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
+                                ${c.title}
+                            </div>
+                            <div style="display:flex; flex-direction:column; gap:6px; font-size:0.82rem; color:#666;">
+                                <span><i class="fas fa-folder-open" style="color:#bbb; margin-right:7px; width:14px;"></i>${c.category || 'General'}</span>
+                                <span><i class="fas fa-clock" style="color:#bbb; margin-right:7px; width:14px;"></i>${c.duration || 'N/A'}</span>
+                                <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                    <i class="fas fa-user-tie" style="color:#bbb; margin-right:7px; width:14px;"></i>${mentorNames}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Card Actions -->
+                        <div style="padding:12px 18px; border-top:1px solid #f0f0f0; display:flex; gap:8px; flex-wrap:wrap;">
+                            <a href="course-preview.html?id=${c._id}"
+                                style="flex:1; text-align:center; text-decoration:none; padding:7px 0; font-size:0.82rem; font-weight:600; border-radius:20px; border:1px solid var(--color-saffron); color:var(--color-saffron); background:#fffaf0; display:inline-flex; align-items:center; justify-content:center; gap:6px; transition:all 0.2s;"
+                                onmouseover="this.style.background='var(--color-saffron)'; this.style.color='white';"
+                                onmouseout="this.style.background='#fffaf0'; this.style.color='var(--color-saffron)';">
+                                <i class="fas fa-play-circle"></i> Preview
+                            </a>
+                            <a href="module-manager.html?courseId=${c._id}"
+                                style="flex:1.4; text-align:center; text-decoration:none; padding:7px 0; font-size:0.82rem; font-weight:600; border-radius:20px; border:1px solid var(--color-golden); color:var(--color-golden); background:#fffef5; display:inline-flex; align-items:center; justify-content:center; gap:6px; transition:all 0.2s;"
+                                onmouseover="this.style.background='var(--color-golden)'; this.style.color='white';"
+                                onmouseout="this.style.background='#fffef5'; this.style.color='var(--color-golden)';">
+                                <i class="fas fa-layer-group"></i> Manage Modules
+                            </a>
+                        </div>
+                    </div>`;
+        }).join('')}
+            </div>`;
+
     } catch (err) {
         UI.handleError(err, 'Course List', 'Failed to load your projects.');
     }
@@ -1708,16 +1839,19 @@ function searchMaterials() {
 function searchStudents() {
     const searchTerm = document.getElementById('studentSearchInput')?.value.toLowerCase();
     const filterCourse = document.getElementById('studentCourseFilter')?.value;
+    const filterStudent = document.getElementById('studentNameFilter')?.value;
     const studentRows = document.querySelectorAll('#studentInsightList tr');
 
     studentRows.forEach(row => {
         const text = row.textContent.toLowerCase();
         const courseId = row.getAttribute('data-course-id');
+        const studentId = row.getAttribute('data-student-id');
 
         const matchesSearch = !searchTerm || text.includes(searchTerm);
         const matchesCourse = !filterCourse || filterCourse === '' || courseId === filterCourse;
+        const matchesStudent = !filterStudent || filterStudent === '' || studentId === filterStudent;
 
-        row.style.display = matchesSearch && matchesCourse ? '' : 'none';
+        row.style.display = matchesSearch && matchesCourse && matchesStudent ? '' : 'none';
     });
 }
 
@@ -1989,6 +2123,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('materialCourseFilter')?.addEventListener('change', searchMaterials);
     document.getElementById('studentSearchInput')?.addEventListener('input', searchStudents);
     document.getElementById('studentCourseFilter')?.addEventListener('change', searchStudents);
+    document.getElementById('studentNameFilter')?.addEventListener('change', searchStudents);
 
     // Setup create ticket form
     document.getElementById('createTicketForm')?.addEventListener('submit', handleCreateTicket);

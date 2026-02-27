@@ -12,4 +12,7 @@ router.get('/course/:courseID', authorize(['Student', 'Staff', 'Admin']), schedu
 // Get my timetable (Student or Staff)
 router.get('/my-timetable', authorize(['Student', 'Staff', 'Admin']), scheduleController.getMyTimetable);
 
+// Update schedule status (Admin only)
+router.put('/:id/status', authorize(['Admin']), scheduleController.updateScheduleStatus);
+
 module.exports = router;

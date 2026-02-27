@@ -117,7 +117,8 @@ const scheduleSchema = new Schema({
     startTime: { type: Date, required: true },
     endTime: { type: Date, required: true },
     meetingLink: { type: String },
-    type: { type: String, enum: ['Live', 'Recorded Release'], required: true }
+    type: { type: String, enum: ['Live', 'Recorded Release'], required: true },
+    approvalStatus: { type: String, enum: ['Pending', 'Approved', 'Rejected'], default: 'Pending' }
 });
 
 // 4. Attendance Collection
