@@ -9,15 +9,15 @@ require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
 
 // Initialize Razorpay instance
 const razorpay = new Razorpay({
-    key_id: process.env.key_id,
-    key_secret: process.env.key_secret,
+    key_id: process.env.KEY_ID,
+    key_secret: process.env.KEY_SECRET,
 });
 
 // Log Razorpay configuration status
 console.log('💳 Razorpay Configuration:');
-console.log('   Key ID:', process.env.key_id ? '✅ Configured' : '❌ NOT SET');
-console.log('   Key Secret:', process.env.key_secret ? '✅ Configured' : '❌ NOT SET');
-console.log('   Environment:', process.env.key_id?.includes('test') ? 'TEST' : 'LIVE');
+console.log('   Key ID:', process.env.KEY_ID ? '✅ Configured' : '❌ NOT SET');
+console.log('   Key Secret:', process.env.KEY_SECRET ? '✅ Configured' : '❌ NOT SET');
+console.log('   Environment:', process.env.KEY_ID?.includes('test') ? 'TEST' : 'LIVE');
 
 /**
  * Create Razorpay Order
@@ -39,7 +39,7 @@ exports.createOrder = async (amount, currency = 'INR', receipt) => {
 
         // Ensure amount is properly formatted (round to 2 decimal places)
         const roundedAmount = Math.round(amount * 100) / 100;
-        
+
         const orderOptions = {
             amount: Math.round(roundedAmount * 100), // Razorpay expects amount in paise (integer)
             currency: currency,
@@ -54,11 +54,11 @@ exports.createOrder = async (amount, currency = 'INR', receipt) => {
 
         const order = await razorpay.orders.create(orderOptions);
         console.log('✅ Razorpay order created:', order.id);
-        
+
         return {
             success: true,
             order: order,
-            key_id: process.env.key_id
+            key_id: process.env.KEY_ID
         };
     } catch (error) {
         console.error('❌ Error creating Razorpay order:', error);
@@ -76,12 +76,12 @@ exports.verifyPayment = (orderId, paymentId, signature) => {
     try {
         const body = orderId + '|' + paymentId;
         const expectedSignature = crypto
-            .createHmac('sha256', process.env.key_secret)
+            .createHmac('sha256', process.env.KEY_SECRET)
             .update(body.toString())
             .digest('hex');
 
         const isSignatureValid = expectedSignature === signature;
-        
+
         if (isSignatureValid) {
             console.log('✅ Payment signature verified successfully');
             return { success: true, verified: true };
@@ -102,7 +102,7 @@ exports.getPaymentDetails = async (paymentId) => {
     try {
         const payment = await razorpay.payments.fetch(paymentId);
         console.log('✅ Payment details fetched:', paymentId);
-        
+
         return {
             success: true,
             payment: payment
@@ -128,7 +128,7 @@ exports.refundPayment = async (paymentId, amount = null) => {
 
         const refund = await razorpay.payments.refund(paymentId, refundOptions);
         console.log('✅ Refund processed:', refund.id);
-        
+
         return {
             success: true,
             refund: refund
@@ -149,7 +149,7 @@ exports.getOrderDetails = async (orderId) => {
     try {
         const order = await razorpay.orders.fetch(orderId);
         console.log('✅ Order details fetched:', orderId);
-        
+
         return {
             success: true,
             order: order
