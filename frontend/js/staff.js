@@ -839,13 +839,20 @@ async function loadSchedules() {
             return;
         }
         list.innerHTML = schedules.map(s => {
-            const status = s.approvalStatus || 'Pending';
-            let statusColor = '#ffc107'; // Pending
-            if (status === 'Approved') statusColor = '#28a745';
-            else if (status === 'Rejected') statusColor = '#dc3545';
-
-            const disableBtn = status !== 'Approved' ? 'disabled style="background: #ccc; cursor: not-allowed;"' : 'style="background: var(--color-saffron);"';
-            const btnText = status !== 'Approved' ? `Requires Approval` : `Start Class`;
+            const now = new Date();
+            const startTime = new Date(s.startTime);
+            const endTime = new Date(s.endTime);
+            
+            let statusColor = '#3B82F6'; // Default blue for upcoming
+            let statusLabel = 'Upcoming';
+            
+            if (now >= startTime && now <= endTime) {
+                statusColor = '#10B981'; // Green for live
+                statusLabel = 'Live Now';
+            } else if (now > endTime) {
+                statusColor = '#6B7280'; // Gray for completed
+                statusLabel = 'Completed';
+            }
 
             return `
             <div class="course-list-item" style="border-left: 4px solid ${statusColor};">
@@ -853,7 +860,7 @@ async function loadSchedules() {
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <strong>${s.title}</strong>
                         <span style="font-size: 0.7rem; padding: 2px 8px; border-radius: 12px; background: ${statusColor}22; color: ${statusColor}; border: 1px solid ${statusColor}; font-weight: 600;">
-                            ${status}
+                            ${statusLabel}
                         </span>
                     </div>
                     <p style="font-size: 0.8rem; color: var(--color-text-secondary); margin-top: 5px;">
@@ -861,8 +868,8 @@ async function loadSchedules() {
                     </p>
                 </div>
                 <div>
-                    <button class="btn-primary" onclick="startLiveSession('${s.meetingLink || s._id}')" ${disableBtn} style="padding: 6px 16px; font-size: 0.85rem; border: none; border-radius: 8px;">
-                        ${status === 'Approved' ? '<i class="fas fa-video"></i> ' : ''}${btnText}
+                    <button class="btn-primary" onclick="startLiveSession('${s.meetingLink || s._id}')" style="background: var(--color-saffron); padding: 6px 16px; font-size: 0.85rem; border: none; border-radius: 8px;">
+                        <i class="fas fa-video"></i> Start Class
                     </button>
                 </div>
             </div>

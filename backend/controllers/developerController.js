@@ -878,7 +878,13 @@ exports.exportMetricsPDF = async (req, res) => {
         // --- PDF LAYOUT HELPERS ---
         const drawPageBorder = () => {
             doc.rect(20, 20, doc.page.width - 40, doc.page.height - 40)
-                .lineWidth(1)
+                .lineWidth(2)
+                .strokeColor('#2980b9')
+                .stroke();
+
+            // Inner border for a more premium look
+            doc.rect(24, 24, doc.page.width - 48, doc.page.height - 48)
+                .lineWidth(0.5)
                 .strokeColor('#bdc3c7')
                 .stroke();
         };
@@ -886,18 +892,18 @@ exports.exportMetricsPDF = async (req, res) => {
         const drawGridContainer = (y, height, title) => {
             doc.rect(40, y, doc.page.width - 80, height)
                 .lineWidth(1)
-                .strokeColor('#ecf0f1')
+                .strokeColor('#dcdde1')
                 .stroke();
 
-            doc.rect(40, y, doc.page.width - 80, 25)
-                .fillAndStroke('#f8f9fa', '#ecf0f1');
+            doc.rect(40, y, doc.page.width - 80, 26)
+                .fillAndStroke('#ecf0f1', '#dcdde1');
 
-            doc.fontSize(12).fillColor('#2c3e50').font('Helvetica-Bold')
-                .text(title, 50, y + 7);
+            doc.fontSize(11).fillColor('#2c3e50').font('Helvetica-Bold')
+                .text(title, 50, y + 8);
         };
 
         const addGridRow = (x, y, label, value) => {
-            doc.fontSize(10).fillColor('#7f8c8d').font('Helvetica').text(label, x, y);
+            doc.fontSize(10).fillColor('#34495e').font('Helvetica').text(label, x, y);
             doc.fontSize(10).fillColor('#2c3e50').font('Helvetica-Bold').text(value, x + 120, y);
             doc.moveTo(x, y + 14).lineTo(x + 230, y + 14).lineWidth(0.5).strokeColor('#f1f2f6').stroke();
         };
@@ -932,22 +938,52 @@ exports.exportMetricsPDF = async (req, res) => {
             options: { scales: { y: { min: 0, max: 100 } }, plugins: { legend: { display: false } } }
         };
 
-        const [costChartImg, resChartImg] = await Promise.all([
+        const kpiChartConfig = {
+            type: 'bar',
+            data: {
+                labels: ['Students', 'Courses', 'Enrolls', 'Videos'],
+                datasets: [{ label: 'Count', data: [totalStudents, totalCourses, totalEnrollments, totalVideos], backgroundColor: ['#f1c40f', '#e67e22', '#e74c3c', '#9b59b6'] }]
+            },
+            options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+        };
+
+        // MongoDB size in MB for the chart
+        const mongoDataMB = mongoStats.dataSize / (1024 * 1024);
+        const mongoStorageMB = mongoStats.storageSize / (1024 * 1024);
+
+        const mongoChartConfig = {
+            type: 'pie',
+            data: {
+                labels: ['Data (MB)', 'Storage (MB)'],
+                datasets: [{ data: [mongoDataMB, mongoStorageMB], backgroundColor: ['#1abc9c', '#34495e'] }]
+            },
+            options: { plugins: { legend: { position: 'right' } } }
+        };
+
+        const [costChartImg, resChartImg, kpiChartImg, mongoChartImg] = await Promise.all([
             getChartImage(costChartConfig),
-            getChartImage(resChartConfig)
+            getChartImage(resChartConfig),
+            getChartImage(kpiChartConfig),
+            getChartImage(mongoChartConfig)
         ]);
 
         // --- SINGLE PAGE LAYOUT ---
 
-        // Add Background Image
+        // Add Background Image - Centered and Smaller
         try {
             const bgImagePath = path.join(__dirname, '../../frontend/assets/reportbackground.png');
             // Save graphics state
             doc.save();
-            doc.fillOpacity(0.15).strokeOpacity(0.15);
-            if (typeof doc.opacity === 'function') doc.opacity(0.15);
+            doc.fillOpacity(0.08).strokeOpacity(0.08);
+            if (typeof doc.opacity === 'function') doc.opacity(0.08);
 
-            doc.image(bgImagePath, 0, 0, { width: doc.page.width, height: doc.page.height });
+            // Make image centered and half size
+            const imgWidth = 350;
+            const imgHeight = 350;
+            const imgX = (doc.page.width - imgWidth) / 2;
+            const imgY = (doc.page.height - imgHeight) / 2;
+
+            doc.image(bgImagePath, imgX, imgY, { width: imgWidth, height: imgHeight });
 
             // Restore graphics state
             doc.restore();
@@ -960,55 +996,63 @@ exports.exportMetricsPDF = async (req, res) => {
         drawPageBorder();
 
         // Header
-        doc.fontSize(24).fillColor('#2c3e50').font('Helvetica-Bold').text('AWARENESS ACADEMY', 0, 40, { align: 'center' });
-        doc.fontSize(16).fillColor('#e74c3c').text('SERVER REPORT', 0, 68, { align: 'center' });
-        doc.fontSize(10).fillColor('#7f8c8d').font('Helvetica').text(`Generated on: ${currentDate.toLocaleString()}`, 0, 88, { align: 'center' });
+        doc.fontSize(26).fillColor('#2980b9').font('Helvetica-Bold').text('AWARENESS ACADEMY', 0, 45, { align: 'center' });
+        doc.fontSize(14).fillColor('#34495e').font('Helvetica').text('SERVER REPORT', 0, 75, { align: 'center', characterSpacing: 2 });
+        doc.fontSize(9).fillColor('#95a5a6').font('Helvetica').text(`Generated on: ${currentDate.toLocaleString()}`, 0, 95, { align: 'center' });
 
         // Container 1: Finance Overview
-        drawGridContainer(115, 170, 'Financial Overview & Infrastructure Costs');
+        drawGridContainer(125, 170, 'Financial Overview & Infrastructure Costs');
 
-        addGridRow(50, 150, 'Total Revenue (All Time):', `Rs. ${totalRevenue.toFixed(2)}`);
-        addGridRow(50, 170, 'Revenue (This Month):', `Rs. ${currentRevenueMonth.toFixed(2)}`);
-        addGridRow(50, 190, 'Total Monthly Cost:', `Rs. ${totalMonthlyCost.toFixed(2)}`);
-        addGridRow(50, 210, 'Net Profit (Current):', `Rs. ${(currentRevenueMonth - totalMonthlyCost).toFixed(2)}`);
-        addGridRow(50, 230, 'R2 Storage Cost:', `Rs. ${r2Cost.toFixed(2)}`);
-        addGridRow(50, 250, 'MongoDB Atlas Cost:', `Rs. ${mongoCost.toFixed(2)}`);
-        addGridRow(50, 270, 'Payment Gateway Fee:', `Rs. ${paymentGatewayCost.toFixed(2)}`);
+        addGridRow(50, 160, 'Total Revenue (All Time):', `Rs. ${totalRevenue.toFixed(2)}`);
+        addGridRow(50, 180, 'Revenue (This Month):', `Rs. ${currentRevenueMonth.toFixed(2)}`);
+        addGridRow(50, 200, 'Total Monthly Cost:', `Rs. ${totalMonthlyCost.toFixed(2)}`);
+        addGridRow(50, 220, 'Net Profit (Current):', `Rs. ${(currentRevenueMonth - totalMonthlyCost).toFixed(2)}`);
+        addGridRow(50, 240, 'R2 Storage Cost:', `Rs. ${r2Cost.toFixed(2)}`);
+        addGridRow(50, 260, 'MongoDB Atlas Cost:', `Rs. ${mongoCost.toFixed(2)}`);
+        addGridRow(50, 280, 'Payment Gateway Fee:', `Rs. ${paymentGatewayCost.toFixed(2)}`);
 
         if (costChartImg) {
-            doc.image(costChartImg, 320, 125, { width: 200 });
+            doc.image(costChartImg, 320, 135, { width: 190 });
         } else {
             doc.fontSize(10).text('Chart Unavailable', 350, 180);
         }
 
         // Container 2: Platform KPIs
-        drawGridContainer(305, 130, 'Platform Engagement KPIs');
-        addGridRow(50, 340, 'Total Registered Students:', `${totalStudents}`);
-        addGridRow(50, 360, 'Active Courses:', `${totalCourses}`);
-        addGridRow(50, 380, 'Total Enrollments:', `${totalEnrollments}`);
-        addGridRow(50, 400, 'Total Video Assets:', `${totalVideos}`);
-        addGridRow(50, 420, 'Platform Health:', `Optimal`);
+        drawGridContainer(310, 140, 'Platform Engagement KPIs');
+        addGridRow(50, 345, 'Total Registered Students:', `${totalStudents}`);
+        addGridRow(50, 365, 'Active Courses:', `${totalCourses}`);
+        addGridRow(50, 385, 'Total Enrollments:', `${totalEnrollments}`);
+        addGridRow(50, 405, 'Total Video Assets:', `${totalVideos}`);
+        addGridRow(50, 425, 'Platform Health:', `Optimal`);
+
+        if (kpiChartImg) {
+            doc.image(kpiChartImg, 340, 325, { width: 170 });
+        }
 
         // Container 3: Server Resources
-        drawGridContainer(455, 150, 'Live Server Resources & Load');
-        addGridRow(50, 490, 'CPU Model:', cpus[0]?.model?.substring(0, 30) || 'Unknown');
-        addGridRow(50, 510, 'CPU Cores:', `${cpus.length} vCPUs`);
-        addGridRow(50, 530, 'Total Memory (RAM):', formatB(totalMem));
-        addGridRow(50, 550, 'Used Memory:', `${formatB(usedMem)} (${memUsagePercent}%)`);
-        addGridRow(50, 570, 'Free Memory:', formatB(freeMem));
-        addGridRow(50, 590, 'Host OS:', `${os.platform()} ${os.release()}`);
+        drawGridContainer(465, 150, 'Live Server Resources & Load');
+        addGridRow(50, 500, 'CPU Model:', cpus[0]?.model?.substring(0, 30) || 'Unknown');
+        addGridRow(50, 520, 'CPU Cores:', `${cpus.length} vCPUs`);
+        addGridRow(50, 540, 'Total Memory (RAM):', formatB(totalMem));
+        addGridRow(50, 560, 'Used Memory:', `${formatB(usedMem)} (${memUsagePercent}%)`);
+        addGridRow(50, 580, 'Free Memory:', formatB(freeMem));
+        addGridRow(50, 600, 'Host OS:', `${os.platform()} ${os.release()}`);
 
         if (resChartImg) {
-            doc.image(resChartImg, 350, 465, { width: 140 });
+            doc.image(resChartImg, 340, 475, { width: 150 });
         }
 
         // Container 4: Database Health
-        drawGridContainer(625, 130, 'MongoDB Atlas Storage Status');
-        addGridRow(50, 660, 'Storage Used (Disk):', formatB(mongoStats.storageSize));
-        addGridRow(50, 680, 'Logical Data Size:', formatB(mongoStats.dataSize));
-        addGridRow(50, 700, 'Total Collections:', `${mongoStats.collections}`);
-        addGridRow(50, 720, 'Total Indexes:', `${mongoStats.indexes}`);
-        addGridRow(50, 740, 'Connection State:', mongoose.connection.readyState === 1 ? 'Healthy (Connected)' : 'Disconnected');
+        drawGridContainer(630, 140, 'MongoDB Atlas Storage Status');
+        addGridRow(50, 665, 'Storage Used (Disk):', formatB(mongoStats.storageSize));
+        addGridRow(50, 685, 'Logical Data Size:', formatB(mongoStats.dataSize));
+        addGridRow(50, 705, 'Total Collections:', `${mongoStats.collections}`);
+        addGridRow(50, 725, 'Total Indexes:', `${mongoStats.indexes}`);
+        addGridRow(50, 745, 'Connection State:', mongoose.connection.readyState === 1 ? 'Healthy (Connected)' : 'Disconnected');
+
+        if (mongoChartImg) {
+            doc.image(mongoChartImg, 320, 640, { width: 190 });
+        }
 
         // --- FOOTERS & PAGE NUMBERS ---
         const range = doc.bufferedPageRange();

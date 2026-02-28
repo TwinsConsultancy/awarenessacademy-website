@@ -27,7 +27,7 @@
 
         .sidebar {
             background: white;
-            padding: 20px;
+            padding: 20px 15px;
             border-right: 1px solid rgba(0, 0, 0, 0.05);
             overflow-y: auto;
             overflow-x: hidden;
@@ -40,13 +40,15 @@
 
         .sidebar:hover {
             width: 280px;
-            padding: 30px;
+            padding: 25px 20px;
         }
 
         /* Hide text elements when sidebar is collapsed */
         .sidebar .sidebar-text {
             display: none;
             margin-left: 10px;
+            font-size: 0.875rem;
+            font-weight: 400;
         }
 
         .sidebar:hover .sidebar-text {
@@ -55,6 +57,8 @@
 
         .sidebar .sidebar-subtitle {
             display: none;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
         }
 
         .sidebar:hover .sidebar-subtitle {
@@ -73,35 +77,39 @@
         .nav-link {
             display: flex;
             align-items: center;
-            padding: 12px 15px;
+            padding: 10px 15px;
             text-decoration: none;
             color: var(--color-text-secondary);
-            border-radius: 10px;
+            border-radius: 8px;
             transition: var(--transition-smooth);
-            font-weight: 500;
+            font-weight: 400;
+            font-size: 0.875rem;
+            letter-spacing: 0.3px;
         }
 
         .nav-link i {
-            margin-right: 15px;
-            width: 20px;
+            margin-right: 12px;
+            width: 18px;
             text-align: center;
+            font-size: 1rem;
         }
 
         .nav-link:hover,
         .nav-link.active {
-            background: rgba(255, 153, 51, 0.1);
+            background: rgba(255, 153, 51, 0.08);
             color: var(--color-saffron);
+            transform: translateX(2px);
         }
 
         /* Adjust nav-link for collapsed state */
         .sidebar .nav-link {
             justify-content: center;
-            padding: 12px;
+            padding: 10px;
         }
 
         .sidebar:hover .nav-link {
             justify-content: flex-start;
-            padding: 12px 15px;
+            padding: 10px 15px;
         }
 
         .sidebar .nav-link i {
@@ -109,7 +117,7 @@
         }
 
         .sidebar:hover .nav-link i {
-            margin-right: 10px;
+            margin-right: 12px;
         }
 
         /* Top Header Bar */
@@ -784,17 +792,17 @@
     <div id="staffSidebarOverlay" class="sidebar-overlay" onclick="toggleMobileSidebar()"></div>
     <div class="dashboard-container">
         <aside class="sidebar" id="staffSidebar">
-            <div class="sidebar-header" style="text-align: center; margin-bottom: 40px; white-space: nowrap;">
+            <div class="sidebar-header" style="text-align: center; margin-bottom: 30px; white-space: nowrap;">
                 <a href="index.html"
                     style="text-decoration: none; display: flex; align-items: center; gap: 10px; justify-content: center;">
                     <img src="../assets/logo.png" alt="AWARENESS ACADEMY" class="sidebar-logo-full"
-                        style="height: 40px;">
+                        style="height: 35px;">
                 </a>
                 <p class="sidebar-subtitle"
-                    style="font-size: 0.8rem; font-weight: 600; color: var(--color-saffron); display: none;">MENTOR
+                    style="font-size: 0.75rem; font-weight: 600; color: var(--color-saffron); display: none; letter-spacing: 1px; margin-top: 5px;">MENTOR
                     SUITE</p>
             </div>
-            <ul style="list-style: none;">
+            <ul style="list-style: none; padding: 0; margin: 0;">
                 <li><a href="#" class="nav-link active" onclick="switchSection('overview')" title="Overview"><i
                             class="fas fa-home"></i> <span class="sidebar-text">Overview</span></a></li>
                 <li><a href="#" class="nav-link" onclick="switchSection('courses')" title="My Courses"><i
@@ -820,7 +828,7 @@
                             class="fas fa-ticket-alt"></i> <span class="sidebar-text">Support Tickets</span></a></li>
                 <li><a href="#" class="nav-link" onclick="switchSection('profile')" title="My Profile"><i
                             class="fas fa-user-circle"></i> <span class="sidebar-text">My Profile</span></a></li>
-                <li><a href="#" id="logoutBtn" class="nav-link" style="color: var(--color-error); margin-top: 50px;"
+                <li><a href="#" id="logoutBtn" class="nav-link" style="color: var(--color-error); margin-top: 40px; font-size: 0.875rem;"
                         title="Logout"><i class="fas fa-sign-out-alt"></i> <span class="sidebar-text">Logout</span></a>
                 </li>
             </ul>

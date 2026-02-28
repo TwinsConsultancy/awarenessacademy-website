@@ -116,6 +116,7 @@ const scheduleSchema = new Schema({
     title: { type: String, required: true },
     startTime: { type: Date, required: true },
     endTime: { type: Date, required: true },
+    expectedDuration: { type: Number }, // in minutes
     meetingLink: { type: String },
     type: { type: String, enum: ['Live', 'Recorded Release'], required: true },
     approvalStatus: { type: String, enum: ['Pending', 'Approved', 'Rejected'], default: 'Pending' }

@@ -830,11 +830,45 @@ exports.getUsers = async (req, res) => {
         for (let u of users) {
             if (u.role === 'Student') {
                 u.registeredCoursesCount = Array.isArray(u.enrolledCourses) ? u.enrolledCourses.length : 0;
+                
+                // Match multiple successful payment status variations (case-insensitive)
                 const userPayments = await Payment.aggregate([
-                    { $match: { studentID: u._id, status: 'Success' } },
+                    { 
+                        $match: { 
+                            studentID: u._id, 
+                            status: { $in: ['Success', 'success', 'completed', 'Completed', 'captured', 'Captured'] } 
+                        } 
+                    },
                     { $group: { _id: null, total: { $sum: "$amount" } } }
                 ]);
                 u.totalPayments = userPayments.length > 0 ? userPayments[0].total : 0;
+                
+                // Get course-wise payment breakdown for hover tooltip
+                const courseWisePayments = await Payment.aggregate([
+                    { 
+                        $match: { 
+                            studentID: u._id, 
+                            status: { $in: ['Success', 'success', 'completed', 'Completed', 'captured', 'Captured'] } 
+                        } 
+                    },
+                    {
+                        $lookup: {
+                            from: 'courses',
+                            localField: 'courseID',
+                            foreignField: '_id',
+                            as: 'courseInfo'
+                        }
+                    },
+                    { $unwind: { path: '$courseInfo', preserveNullAndEmptyArrays: true } },
+                    {
+                        $group: {
+                            _id: '$courseID',
+                            courseName: { $first: '$courseInfo.title' },
+                            totalPaid: { $sum: '$amount' }
+                        }
+                    }
+                ]);
+                u.paymentBreakdown = courseWisePayments;
             } else if (u.role === 'Staff') {
                 const mappedCourses = await Course.find({ mentors: u._id }).select('title _id').lean();
                 u.mappedCoursesCount = mappedCourses.length;

@@ -1408,105 +1408,26 @@
             color: var(--color-golden);
         }
 
-        .analytics-grid {
-            display: grid;
-            gap: 20px;
-        }
-
-        .analytics-grid.grid-5 {
-            grid-template-columns: repeat(5, 1fr);
-        }
-
-        .analytics-grid.grid-4 {
-            grid-template-columns: repeat(4, 1fr);
-        }
-
-        .analytics-grid.grid-3 {
-            grid-template-columns: repeat(3, 1fr);
-        }
-
-        .analytics-grid.grid-2 {
-            grid-template-columns: repeat(2, 1fr);
-        }
-
-        .analytics-grid.grid-1 {
-            grid-template-columns: 1fr;
-        }
-
-        .analytics-grid.grid-2-1 {
-            grid-template-columns: 2fr 1fr;
-        }
-
-        .analytics-grid.grid-1-2 {
-            grid-template-columns: 1fr 2fr;
-        }
-
-        .chart-card {
-            background: var(--glass-sidebar);
-            backdrop-filter: blur(20px);
-            border-radius: var(--border-radius);
-            padding: 25px;
-            border: 1px solid var(--glass-border);
-            box-shadow: var(--shadow-card);
-            transition: var(--transition-smooth);
-        }
-
-        .chart-card:hover {
-            box-shadow: 0 12px 48px rgba(255, 153, 51, 0.15);
-            transform: translateY(-5px);
-            border-color: rgba(255, 153, 51, 0.3);
-        }
-
-        .chart-card-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .chart-card-header h4 {
-            margin: 0;
-            font-size: 1rem;
-            color: #333;
-            font-weight: 600;
-        }
-
-        .chart-card-header i {
-            color: var(--color-saffron);
-            font-size: 1.2rem;
-        }
-
         /* Uniform Analytics Grid */
         .analytics-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            grid-template-columns: repeat(3, 1fr);
             gap: 20px;
         }
-
-        /* Specific overrides can remain if needed, but we default to uniform */
-        .analytics-grid.grid-2-1 {
-            display: grid;
-        }
-
-        /* Fallback to auto-fit unless strictly needed, but let's keep simple */
 
         /* Enforce uniformity on cards */
         .chart-card {
             background: var(--glass-sidebar);
             backdrop-filter: blur(20px);
             border-radius: 16px;
-            /* Stylish rounded corners */
             padding: 20px;
-            /* Compact padding */
             border: 1px solid var(--glass-border);
             box-shadow: var(--shadow-card);
             transition: var(--transition-smooth);
-            height: 380px;
-            /* Fixed height for uniformity */
+            height: 400px;
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            /* Prevent overflow */
         }
 
         .chart-card:hover {
@@ -1520,14 +1441,12 @@
             align-items: center;
             gap: 10px;
             margin-bottom: 15px;
-            /* Compact margin */
             flex-shrink: 0;
         }
 
         .chart-card-header h4 {
             margin: 0;
             font-size: 0.95rem;
-            /* Compact font */
             color: #333;
             font-weight: 600;
         }
@@ -1537,29 +1456,28 @@
             font-size: 1.1rem;
         }
 
-        /* KPI Card Override - Small and compact */
+        /* KPI Card Override - Same height as regular charts for uniformity */
         .chart-card.kpi-card {
             text-align: center;
-            padding: 15px;
+            padding: 20px;
             justify-content: center;
-            height: 160px;
-            /* Much smaller than charts */
+            height: 400px;
             min-height: auto;
         }
 
         .kpi-card .kpi-icon {
-            font-size: 1.8rem;
-            margin-bottom: 8px;
+            font-size: 3.5rem;
+            margin-bottom: 20px;
         }
 
         .kpi-card .kpi-value {
-            font-size: 1.6rem;
+            font-size: 2.5rem;
             font-weight: 700;
-            margin: 4px 0;
+            margin: 15px 0;
         }
 
         .kpi-card .kpi-label {
-            font-size: 0.85rem;
+            font-size: 1rem;
             color: #666;
             margin: 0;
         }
@@ -1574,15 +1492,19 @@
         }
 
         /* Responsive Adjustments */
-        @media (max-width: 768px) {
+        @media (max-width: 1400px) {
+            .analytics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 900px) {
             .analytics-grid {
                 grid-template-columns: 1fr;
-                /* Single column on mobile */
             }
 
             .chart-card {
                 height: 350px;
-                /* Slightly smaller on mobile if needed */
             }
         }
 
@@ -2229,8 +2151,6 @@
         <div class="sidebar-overlay" onclick="toggleMobileSidebar()"></div>
         <aside class="sidebar" id="sidebar">
             <div class="brand" style="display: flex; align-items: center; gap: 10px;">
-                <img src="../assets/logo.png" alt="AWARENESS ACADEMY" class="brand-text" style="height: 40px;"> <span
-                    class="brand-text">AWARENESS ACADEMY</span>
             </div>
 
             <ul class="nav-menu">
@@ -2252,6 +2172,11 @@
                 <li class="nav-item">
                     <a href="#" class="nav-link" onclick="switchSection('courses')" title="Course Management">
                         <i class="fas fa-book"></i> <span class="link-text">Courses</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="switchSection('live')" title="Live Classes Management">
+                        <i class="fas fa-video"></i> <span class="link-text">Live</span>
                     </a>
                 </li>
                 <li class="nav-item">
@@ -2285,10 +2210,9 @@
                         <i class="fas fa-certificate"></i> <span class="link-text">Certificates</span>
                     </a>
                 </li>
-
                 <li class="nav-item">
-                    <a href="#" class="nav-link" onclick="switchSection('approvals')" title="Approvals">
-                        <i class="fas fa-check-circle"></i> <span class="link-text">Approvals</span>
+                    <a href="#" class="nav-link" onclick="switchSection('settings')" title="System Settings">
+                        <i class="fas fa-cog"></i> <span class="link-text">Settings</span>
                     </a>
                 </li>
             </ul>
@@ -2528,7 +2452,7 @@
                                         <i class="fas fa-balance-scale"></i>
                                         <h4>Paid vs Free Courses</h4>
                                     </div>
-                                    <div class="chart-canvas-wrapper" style="max-width: 300px; margin: 0 auto;">
+                                    <div class="chart-canvas-wrapper">
                                         <canvas id="paidFreeChart"></canvas>
                                     </div>
                                 </div>
@@ -2554,7 +2478,7 @@
                                     <p class="kpi-label">Total Revenue Generated</p>
                                 </div>
 
-                                <div class="chart-card" style="grid-column: span 2;">
+                                <div class="chart-card">
                                     <div class="chart-card-header">
                                         <i class="fas fa-chart-area"></i>
                                         <h4>Monthly Revenue Trend</h4>
@@ -2572,7 +2496,7 @@
                                         <canvas id="paymentStatusChart"></canvas>
                                     </div>
                                 </div>
-                                <div class="chart-card" style="grid-column: span 2;">
+                                <div class="chart-card">
                                     <div class="chart-card-header">
                                         <i class="fas fa-trophy"></i>
                                         <h4>Revenue by Course (Top 10 Performers)</h4>
@@ -2783,7 +2707,6 @@
                             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-shrink: 0;">
                             <div>
                                 <h1>Course Management</h1>
-                                <p>Curriculum & Content</p>
                             </div>
                         </div>
 
@@ -2822,6 +2745,264 @@
                             <button id="addCourseFab" class="floating-add-btn" onclick="openCourseModal()">
                                 <i class="fas fa-plus"></i> <span>Add New Course</span>
                             </button>
+                        </div>
+                    </section>
+
+                    <!-- LIVE CLASSES SECTION -->
+                    <section id="liveSection" class="dashboard-content-section" style="display: none;">
+                        <div class="user-header-compact"
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-shrink: 0;">
+                            
+                        </div>
+
+                        <!-- Statistics Cards -->
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 25px;">
+                            <div class="glass-card stat-card" style="border-left: 4px solid #10B981; padding: 25px;">
+                                <div style="display: flex; align-items: center; gap: 15px;">
+                                    <div style="width: 55px; height: 55px; border-radius: 12px; background: rgba(16, 185, 129, 0.1); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; color: #10B981;">
+                                        <i class="fas fa-calendar-check"></i>
+                                    </div>
+                                    <div>
+                                        <h3 id="statTotalLive" style="font-size: 2rem; margin: 0; color: #333;">0</h3>
+                                        <p style="margin: 5px 0 0 0; color: #666; font-size: 0.95rem; font-weight: 500;">Total Scheduled</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="glass-card stat-card" style="border-left: 4px solid #EF4444; padding: 25px;">
+                                <div style="display: flex; align-items: center; gap: 15px;">
+                                    <div style="width: 55px; height: 55px; border-radius: 12px; background: rgba(239, 68, 68, 0.1); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; color: #EF4444;">
+                                        <i class="fas fa-play-circle"></i>
+                                    </div>
+                                    <div>
+                                        <h3 id="statUpcomingLive" style="font-size: 2rem; margin: 0; color: #333;">0</h3>
+                                        <p style="margin: 5px 0 0 0; color: #666; font-size: 0.95rem; font-weight: 500;">Upcoming (24h)</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Search & Filter Controls -->
+                        <div class="glass-card"
+                            style="padding: 20px; margin-bottom: 20px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                            <div style="flex: 1; min-width: 250px; position: relative;">
+                                <i class="fas fa-search"
+                                    style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #999; font-size: 0.9rem;"></i>
+                                <input type="text" id="liveSearchInput" class="form-control"
+                                    placeholder="Search by title, course, or instructor..."
+                                    style="padding-left: 40px; width: 100%; box-sizing: border-box; border-radius: 8px;"
+                                    onkeyup="debounceLoadLiveClasses()">
+                            </div>
+                            <div style="min-width: 200px;">
+                                <select id="liveCourseFilter" class="form-control" onchange="loadLiveClasses()"
+                                    style="border-radius: 8px;">
+                                    <option value="">All Courses</option>
+                                </select>
+                            </div>
+                            <div style="min-width: 180px;">
+                                <select id="liveDateFilter" class="form-control" onchange="loadLiveClasses()"
+                                    style="border-radius: 8px;">
+                                    <option value="all">All Time</option>
+                                    <option value="upcoming">Upcoming</option>
+                                    <option value="today">Today</option>
+                                    <option value="week">This Week</option>
+                                    <option value="month">This Month</option>
+                                    <option value="past">Past Sessions</option>
+                                </select>
+                            </div>
+                            <button onclick="openCreateLiveClassModal()"
+                                style="background: var(--color-saffron); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 8px rgba(199, 151, 47, 0.3); transition: all 0.3s; white-space: nowrap;"
+                                onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(199, 151, 47, 0.4)'"
+                                onmouseout="this.style.transform='none'; this.style.boxShadow='0 2px 8px rgba(199, 151, 47, 0.3)'">
+                                <i class="fas fa-plus"></i>
+                                Schedule Class
+                            </button>
+                        </div>
+
+                        <!-- Live Classes List -->
+                        <div id="liveClassesContainer" style="overflow-y: auto;">
+                            <!-- Classes load here -->
+                        </div>
+
+                        <!-- Create Live Class Modal -->
+                        <div id="createLiveClassModal" class="modal"
+                            style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; align-items: center; justify-content: center;">
+                            <div class="glass-card"
+                                style="background: white; border-radius: 20px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; position: relative; animation: slideUp 0.3s ease;">
+                                <!-- Close Button -->
+                                <button onclick="closeCreateLiveClassModal()"
+                                    style="position: absolute; top: 20px; right: 25px; background: none; border: none; font-size: 1.8rem; cursor: pointer; color: #999; z-index: 10; transition: color 0.3s;"
+                                    onmouseover="this.style.color='#333'" onmouseout="this.style.color='#999'">
+                                    &times;
+                                </button>
+
+                                <!-- Modal Header -->
+                                <div style="padding: 30px 30px 20px; border-bottom: 2px solid #f0f0f0;">
+                                    <h3 style="margin: 0; color: #333; font-size: 1.6rem; display: flex; align-items: center; gap: 12px;">
+                                        <i class="fas fa-plus-circle" style="color: var(--color-golden);"></i>
+                                        Create Live Class
+                                    </h3>
+                                </div>
+
+                                <!-- Modal Body -->
+                                <div style="padding: 30px;">
+                                    <form id="createLiveClassForm">
+                                        <div class="form-group" style="margin-bottom: 20px;">
+                                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
+                                                Select Course <span style="color: #e74c3c;">*</span>
+                                            </label>
+                                            <select id="createLiveCourse" class="form-control"
+                                                required
+                                                style="padding: 12px; border-radius: 8px; width: 100%; border: 2px solid #e0e0e0;">
+                                                <option value="">-- Select a Course --</option>
+                                            </select>
+                                            <small style="color: #666; margin-top: 5px; display: block;">
+                                                <a href="#" onclick="event.preventDefault(); showTab('coursesSection'); closeCreateLiveClassModal();" style="color: var(--color-saffron); text-decoration: none;">
+                                                    <i class="fas fa-plus"></i> Create a new course
+                                                </a>
+                                            </small>
+                                        </div>
+
+                                        <div class="form-group" style="margin-bottom: 20px;">
+                                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
+                                                Title <span style="color: #e74c3c;">*</span>
+                                            </label>
+                                            <input type="text" id="createLiveTitle" class="form-control"
+                                                placeholder="Enter class title..."
+                                                required
+                                                style="padding: 12px; border-radius: 8px; width: 100%; border: 2px solid #e0e0e0;" />
+                                        </div>
+
+                                        <div class="form-group" style="margin-bottom: 20px;">
+                                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
+                                                Start Date & Time <span style="color: #e74c3c;">*</span>
+                                            </label>
+                                            <input type="datetime-local" id="createLiveStartTime" class="form-control"
+                                                required
+                                                style="padding: 12px; border-radius: 8px; width: 100%; border: 2px solid #e0e0e0;" />
+                                            <small style="color: #666; margin-top: 5px; display: block;">
+                                                <i class="fas fa-info-circle"></i> Class must be scheduled at least 10 minutes from now
+                                            </small>
+                                        </div>
+
+                                        <div class="form-group" style="margin-bottom: 20px;">
+                                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
+                                                Duration (minutes) <span style="color: #e74c3c;">*</span>
+                                            </label>
+                                            <input type="number" id="createLiveDuration" class="form-control"
+                                                placeholder="Enter duration in minutes..."
+                                                min="15" max="600" value="60"
+                                                required
+                                                style="padding: 12px; border-radius: 8px; width: 100%; border: 2px solid #e0e0e0;" />
+                                        </div>
+
+                                        <div class="form-group" style="margin-bottom: 25px;">
+                                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
+                                                Meeting Link <span style="color: #e74c3c;">*</span>
+                                            </label>
+                                            <input type="url" id="createLiveMeetingLink" class="form-control"
+                                                placeholder="Enter meeting link (e.g., https://meet.google.com/...)..."
+                                                required
+                                                style="padding: 12px; border-radius: 8px; width: 100%; border: 2px solid #e0e0e0;" />
+                                        </div>
+
+                                        <!-- Action Buttons -->
+                                        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                                            <button type="button" onclick="closeCreateLiveClassModal()" class="btn-secondary"
+                                                style="padding: 12px 25px; border-radius: 10px;">
+                                                Cancel
+                                            </button>
+                                            <button type="submit" class="btn-primary"
+                                                style="padding: 12px 30px; border-radius: 10px;">
+                                                <i class="fas fa-plus"></i> Create Class
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Edit Live Class Modal -->
+                        <div id="editLiveClassModal" class="modal"
+                            style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; align-items: center; justify-content: center;">
+                            <div class="glass-card"
+                                style="background: white; border-radius: 20px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; position: relative; animation: slideUp 0.3s ease;">
+                                <!-- Close Button -->
+                                <button onclick="closeEditLiveClassModal()"
+                                    style="position: absolute; top: 20px; right: 25px; background: none; border: none; font-size: 1.8rem; cursor: pointer; color: #999; z-index: 10; transition: color 0.3s;"
+                                    onmouseover="this.style.color='#333'" onmouseout="this.style.color='#999'">
+                                    &times;
+                                </button>
+
+                                <!-- Modal Header -->
+                                <div style="padding: 30px 30px 20px; border-bottom: 2px solid #f0f0f0;">
+                                    <h3 style="margin: 0; color: #333; font-size: 1.6rem; display: flex; align-items: center; gap: 12px;">
+                                        <i class="fas fa-edit" style="color: var(--color-golden);"></i>
+                                        Edit Live Class
+                                    </h3>
+                                </div>
+
+                                <!-- Modal Body -->
+                                <div style="padding: 30px;">
+                                    <form id="editLiveClassForm">
+                                        <input type="hidden" id="editScheduleId" />
+                                        
+                                        <div class="form-group" style="margin-bottom: 20px;">
+                                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
+                                                Title <span style="color: #e74c3c;">*</span>
+                                            </label>
+                                            <input type="text" id="editLiveTitle" class="form-control"
+                                                placeholder="Enter class title..."
+                                                required
+                                                style="padding: 12px; border-radius: 8px; width: 100%; border: 2px solid #e0e0e0;" />
+                                        </div>
+
+                                        <div class="form-group" style="margin-bottom: 20px;">
+                                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
+                                                Start Date & Time <span style="color: #e74c3c;">*</span>
+                                            </label>
+                                            <input type="datetime-local" id="editLiveStartTime" class="form-control"
+                                                required
+                                                style="padding: 12px; border-radius: 8px; width: 100%; border: 2px solid #e0e0e0;" />
+                                            <small style="color: #666; margin-top: 5px; display: block;">
+                                                <i class="fas fa-info-circle"></i> Class must be scheduled at least 10 minutes from now
+                                            </small>
+                                        </div>
+
+                                        <div class="form-group" style="margin-bottom: 20px;">
+                                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
+                                                Duration (minutes) <span style="color: #e74c3c;">*</span>
+                                            </label>
+                                            <input type="number" id="editLiveDuration" class="form-control"
+                                                placeholder="Enter duration in minutes..."
+                                                min="15" max="600"
+                                                required
+                                                style="padding: 12px; border-radius: 8px; width: 100%; border: 2px solid #e0e0e0;" />
+                                        </div>
+
+                                        <div class="form-group" style="margin-bottom: 25px;">
+                                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
+                                                Meeting Link <span style="color: #e74c3c;">*</span>
+                                            </label>
+                                            <input type="url" id="editLiveMeetingLink" class="form-control"
+                                                placeholder="Enter meeting link (e.g., https://meet.google.com/...)..."
+                                                required
+                                                style="padding: 12px; border-radius: 8px; width: 100%; border: 2px solid #e0e0e0;" />
+                                        </div>
+
+                                        <!-- Action Buttons -->
+                                        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                                            <button type="button" onclick="closeEditLiveClassModal()" class="btn-secondary"
+                                                style="padding: 12px 25px; border-radius: 10px;">
+                                                Cancel
+                                            </button>
+                                            <button type="submit" class="btn-primary"
+                                                style="padding: 12px 30px; border-radius: 10px;">
+                                                <i class="fas fa-save"></i> Save Changes
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
                         </div>
                     </section>
 
@@ -2933,7 +3114,14 @@
                         </div>
 
                         <div class="glass-card"
-                            style="padding: 15px; margin-bottom: 20px; display: flex; gap: 15px; align-items: center;">
+                            style="padding: 15px; margin-bottom: 20px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                            <div class="timeframe-filters"
+                                style="display: flex; background: rgba(255, 255, 255, 0.7); padding: 5px; border-radius: 12px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); border: 1px solid rgba(255, 255, 255, 0.8);">
+                                <button class="finance-tf-btn active" data-period="all" onclick="setFinanceTimeframe('all', this)"
+                                    style="border: none; background: var(--primary-gradient); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; color: white; box-shadow: 0 4px 10px rgba(255, 153, 51, 0.2); transition: var(--transition-smooth);">All Time</button>
+                                <button class="finance-tf-btn" data-period="month" onclick="setFinanceTimeframe('month', this)"
+                                    style="border: none; background: transparent; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 500; color: var(--text-secondary); transition: var(--transition-smooth);">This Month</button>
+                            </div>
                             <div style="flex: 1; position: relative;">
                                 <i class="fas fa-search"
                                     style="position: absolute; left: 10px; top: 12px; color: #999;"></i>
@@ -3083,16 +3271,7 @@
                     </section>
 
 
-                    <div id="messagesSection" class="dashboard-content-section" style="display: none;">
-                        <div class="content-header" style="margin-bottom: 40px;">
-                            <h2
-                                style="font-size: 2rem; background: linear-gradient(to right, #333, #666); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">
-                                Messages</h2>
-                            <p style="color: #666; font-size: 1.1rem;">Manage inquiries and support requests
-                                efficiently.
-                            </p>
-                        </div>
-
+                    <div id="messagesSection" class="dashboard-content-section" style="display: none;">0
                         <!-- Glass Toolbar -->
                         <div class="glass-ultra"
                             style="padding: 15px 25px; border-radius: 15px; margin-bottom: 30px; display: flex; flex-wrap: wrap; gap: 20px; align-items: center; justify-content: space-between;">
@@ -3783,7 +3962,9 @@
                     <!-- Left Side: Profile & Info -->
                     <div style="flex: 1; min-width: 250px;">
                         <div style="text-align: center; margin-bottom: 25px;">
-                            <img id="udmProfilePic" src="https://via.placeholder.com/80" alt="User Profile"
+                            <img id="udmProfilePic" src="/assets/default-avatar.png"
+                                onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%23ccc\'><path d=\'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z\'/></svg>'"
+                                alt="User Profile"
                                 style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin-bottom: 15px; border: 4px solid white; box-shadow: 0 5px 15px rgba(0,0,0,0.2); background: #eee;">
                             <h3 id="udmName" style="margin: 0; margin-bottom: 5px; color: #333; font-size: 1.4rem;">User
                                 Name</h3>

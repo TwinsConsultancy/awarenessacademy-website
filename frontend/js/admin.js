@@ -298,7 +298,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function switchSection(section) {
     try {
         // Hide all sections
-        ['overview', 'analytics', 'users', 'courses', 'content', 'finance', 'tickets', 'messages', 'subscribers', 'gallery', 'bannerManagement', 'settings', 'certificates', 'approvals'].forEach(s => {
+        ['overview', 'analytics', 'users', 'courses', 'live', 'content', 'finance', 'tickets', 'messages', 'subscribers', 'gallery', 'bannerManagement', 'settings', 'certificates', 'approvals'].forEach(s => {
             const el = document.getElementById(s + 'Section');
             if (el) el.style.display = 'none';
 
@@ -351,6 +351,7 @@ function switchSection(section) {
             const manageSub = document.getElementById('courseManageSub');
             if (manageSub) manageSub.style.display = 'flex';
         }
+        if (section === 'live') loadLiveClasses();
         if (section === 'content') {
             showContentSubSection('banners');
         }
@@ -391,6 +392,13 @@ function switchSection(section) {
         console.error('Error switching section:', err);
         if (section !== 'overview') switchSection('overview');
     }
+}
+
+// Ensure loadApprovals exists to prevent crashes if 'approvals' section is loaded
+async function loadApprovals() {
+    console.log('loadApprovals triggered, but is currently a scaffold stub.');
+    // Functionality for loading approvals can be built out here later.
+    // For now, this safely prevents the ReferenceError.
 }
 
 async function loadSettings() {
@@ -870,7 +878,39 @@ async function loadUserManagement(role) {
                             </td>
                             <td style="padding: 15px; font-family: monospace;">${u.studentID || '-'}</td>
                             <td style="padding: 15px;">${u.email}</td>
-                            ${u.role === 'Student' ? `<td style="padding: 15px; text-align: center; font-weight: bold; font-size: 0.95rem;">${u.registeredCoursesCount || 0}</td><td style="padding: 15px; text-align: center; color: var(--color-saffron); font-weight: bold; font-size: 0.95rem;">₹${u.totalPayments || 0}</td>` : ''}
+                            ${u.role === 'Student' ? `
+                            <td style="padding: 15px; text-align: center; font-weight: bold; font-size: 0.95rem;">${u.registeredCoursesCount || 0}</td>
+                            <td style="padding: 15px; text-align: center; position: relative;">
+                                <div class="payment-cell-wrapper" style="display: inline-block; position: relative; cursor: pointer;">
+                                    <span style="color: var(--color-saffron); font-weight: bold; font-size: 0.95rem;">₹${(u.totalPayments || 0).toLocaleString()}</span>
+                                    ${u.paymentBreakdown && u.paymentBreakdown.length > 0 ? `
+                                    <div class="payment-breakdown-tooltip" style="display: none; position: absolute; left: 50%; transform: translateX(-50%); border: 3px solid #d0d0d0; border-radius: 10px; padding: 0; box-shadow: 0 10px 40px rgba(0,0,0,0.4); min-width: 240px; z-index: 99999; white-space: nowrap; overflow: hidden;">
+                                        <!-- Solid white background layer -->
+                                        <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: white; z-index: 1;"></div>
+                                        
+                                        <!-- Content layers -->
+                                        <div style="position: relative; z-index: 2; background: white;">
+                                            <div style="font-weight: 600; font-size: 0.9rem; color: #000000; border-bottom: 2px solid #d0d0d0; padding: 12px 16px; background: rgb(248, 249, 250);">Course-wise Payment</div>
+                                            <div style="padding: 12px 16px; background: white;">
+                                                ${u.paymentBreakdown.map(pb => `
+                                                    <div style="display: flex; justify-content: space-between; padding: 6px 0; font-size: 0.85rem; border-bottom: 1px solid #f0f0f0;">
+                                                        <span style="color: #000000; max-width: 150px; overflow: hidden; text-overflow: ellipsis; font-weight: 500;">${pb.courseName || 'Unknown Course'}</span>
+                                                        <span style="color: #ff6600; font-weight: 700; margin-left: 15px;">₹${(pb.totalPaid || 0).toLocaleString()}</span>
+                                                    </div>
+                                                `).join('')}
+                                            </div>
+                                            <div style="border-top: 2px solid #d0d0d0; display: flex; justify-content: space-between; font-weight: 700; font-size: 0.95rem; background: rgb(255, 250, 240); padding: 12px 16px;">
+                                                <span style="color: #000000;">Total:</span>
+                                                <span style="color: #ff6600;">₹${(u.totalPayments || 0).toLocaleString()}</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="tooltip-arrow-up" style="display: none; position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 10px solid transparent; border-right: 10px solid transparent; border-top: 10px solid white; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.2)); z-index: 3;"></div>
+                                        <div class="tooltip-arrow-down" style="display: none; position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 10px solid transparent; border-right: 10px solid transparent; border-bottom: 10px solid rgb(248, 249, 250); filter: drop-shadow(0 -4px 4px rgba(0,0,0,0.2)); z-index: 3;"></div>
+                                    </div>
+                                    ` : ''}
+                                </div>
+                            </td>` : ''}
                             ${u.role === 'Staff' ? `<td style="padding: 15px; text-align: center; font-weight: bold; font-size: 0.95rem;">${u.mappedCoursesCount || 0}</td>` : ''}
                             <td style="padding: 15px;">
                                 <span class="badge ${u.active ? 'badge-active' : 'badge-inactive'}">
@@ -918,6 +958,53 @@ async function loadUserManagement(role) {
                 </tbody>
             </table>
         `;
+        
+        // Add hover event listeners for payment breakdown tooltips with smart positioning
+        setTimeout(() => {
+            const paymentWrappers = document.querySelectorAll('.payment-cell-wrapper');
+            paymentWrappers.forEach(wrapper => {
+                const tooltip = wrapper.querySelector('.payment-breakdown-tooltip');
+                if (tooltip) {
+                    const arrowUp = tooltip.querySelector('.tooltip-arrow-up');
+                    const arrowDown = tooltip.querySelector('.tooltip-arrow-down');
+                    
+                    wrapper.addEventListener('mouseenter', function() {
+                        // Show tooltip temporarily to measure its height
+                        tooltip.style.display = 'block';
+                        tooltip.style.visibility = 'hidden';
+                        
+                        // Get element and tooltip positions
+                        const rect = wrapper.getBoundingClientRect();
+                        const tooltipHeight = tooltip.offsetHeight;
+                        const spaceAbove = rect.top;
+                        const spaceBelow = window.innerHeight - rect.bottom;
+                        const requiredSpace = tooltipHeight + 15; // tooltip height + arrow + margin
+                        
+                        // Determine position based on available space
+                        if (spaceAbove >= requiredSpace || spaceAbove > spaceBelow) {
+                            // Show above
+                            tooltip.style.bottom = '120%';
+                            tooltip.style.top = 'auto';
+                            if (arrowUp) arrowUp.style.display = 'block';
+                            if (arrowDown) arrowDown.style.display = 'none';
+                        } else {
+                            // Show below
+                            tooltip.style.top = '120%';
+                            tooltip.style.bottom = 'auto';
+                            if (arrowDown) arrowDown.style.display = 'block';
+                            if (arrowUp) arrowUp.style.display = 'none';
+                        }
+                        
+                        // Make tooltip visible
+                        tooltip.style.visibility = 'visible';
+                    });
+                    
+                    wrapper.addEventListener('mouseleave', function() {
+                        tooltip.style.display = 'none';
+                    });
+                }
+            });
+        }, 100);
     } catch (err) {
         console.error('User load failed:', err);
         container.innerHTML = `<p style="color: red;">Failed to load users: ${err.message}</p>`;
@@ -1514,7 +1601,7 @@ function openUserDetailsModal(user) {
     const modal = document.getElementById('userDetailsModal');
     if (!modal) return;
 
-    document.getElementById('udmProfilePic').src = user.profilePic || 'https://via.placeholder.com/80?text=User';
+    document.getElementById('udmProfilePic').src = user.profilePic || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23ccc"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>';
     document.getElementById('udmName').textContent = user.name || 'N/A';
     document.getElementById('udmSystemID').textContent = user.studentID || 'N/A';
     document.getElementById('udmEmail').textContent = user.email || 'N/A';
@@ -1534,8 +1621,19 @@ function openUserDetailsModal(user) {
                 <div style="font-size: 1.5rem; font-weight: 700; color: #333;">${user.registeredCoursesCount || 0}</div>
             </div>
             <div style="background: #f8f9fa; padding: 15px; border-radius: 12px; text-align: center; border: 1px solid #ebebeb;">
-                <div style="font-size: 0.85rem; color: #666; font-weight: 500; margin-bottom: 5px;"><i class="fas fa-rupee-sign" style="color: var(--color-saffron); margin-right: 5px;"></i>Payments</div>
-                <div style="font-size: 1.5rem; font-weight: 700; color: #333;">₹${user.totalPayments || 0}</div>
+                <div style="font-size: 0.85rem; color: #666; font-weight: 500; margin-bottom: 5px;"><i class="fas fa-rupee-sign" style="color: var(--color-saffron); margin-right: 5px;"></i>Total Payments</div>
+                <div style="font-size: 1.5rem; font-weight: 700; color: #333;">₹${(user.totalPayments || 0).toLocaleString()}</div>
+                ${user.paymentBreakdown && user.paymentBreakdown.length > 0 ? `
+                    <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #ddd; text-align: left;">
+                        <div style="font-size: 0.75rem; font-weight: 600; color: #666; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Course-wise Breakdown:</div>
+                        ${user.paymentBreakdown.map(pb => `
+                            <div style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 0.8rem; border-bottom: 1px solid #f0f0f0;">
+                                <span style="color: #555; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${pb.courseName || 'Unknown Course'}">${pb.courseName || 'Unknown Course'}</span>
+                                <span style="color: var(--color-saffron); font-weight: 600;">₹${(pb.totalPaid || 0).toLocaleString()}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : ''}
             </div>
         `;
     } else if (user.role === 'Staff') {
@@ -1888,6 +1986,7 @@ document.getElementById('bannerForm')?.addEventListener('submit', async (e) => {
 
 /* --- FINANCE --- */
 window.allLedger = [];
+window.financeTimePeriod = 'all'; // Track current time period filter
 
 async function loadLedger() {
     const list = document.getElementById('ledgerList');
@@ -1901,10 +2000,40 @@ async function loadLedger() {
     finally { UI.hideLoader(); }
 }
 
+function setFinanceTimeframe(period, btn) {
+    window.financeTimePeriod = period;
+    
+    // Update button styles
+    document.querySelectorAll('.finance-tf-btn').forEach(b => {
+        b.style.background = 'transparent';
+        b.style.color = 'var(--text-secondary)';
+        b.style.boxShadow = 'none';
+        b.style.fontWeight = '500';
+        b.classList.remove('active');
+    });
+    
+    btn.style.background = 'var(--primary-gradient)';
+    btn.style.color = 'white';
+    btn.style.boxShadow = '0 4px 10px rgba(255, 153, 51, 0.2)';
+    btn.style.fontWeight = '600';
+    btn.classList.add('active');
+    
+    // Re-filter and render
+    filterFinanceLedger();
+}
+
 function filterFinanceLedger() {
     if (!window.allLedger) return;
     const search = document.getElementById('financeSearchInput')?.value.toLowerCase() || '';
     const statusFilter = document.getElementById('financeStatusFilter')?.value || '';
+    const timePeriod = window.financeTimePeriod || 'all';
+
+    // Calculate date threshold for "This Month"
+    let dateThreshold = null;
+    if (timePeriod === 'month') {
+        const now = new Date();
+        dateThreshold = new Date(now.getFullYear(), now.getMonth(), 1);
+    }
 
     const filtered = window.allLedger.filter(p => {
         const tId = (p.transactionID || '').toLowerCase();
@@ -1923,19 +2052,43 @@ function filterFinanceLedger() {
             }
         }
 
-        return matchesSearch && matchesStatus;
+        // Date filter
+        let matchesDate = true;
+        if (dateThreshold) {
+            const transactionDate = new Date(p.date || p.createdAt || p.initiatedAt);
+            matchesDate = transactionDate >= dateThreshold;
+        }
+
+        return matchesSearch && matchesStatus && matchesDate;
     });
 
     renderLedger(filtered);
 }
 
 function renderLedger(ledger) {
-    // Update Stats KPIs
+    // Update Stats KPIs based on time period
     if (window.allLedger && document.getElementById('financeTotalRevenue')) {
+        const timePeriod = window.financeTimePeriod || 'all';
+        let dateThreshold = null;
+        
+        if (timePeriod === 'month') {
+            const now = new Date();
+            dateThreshold = new Date(now.getFullYear(), now.getMonth(), 1);
+        }
+
         let revenue = 0;
         let students = {};
         let courses = {};
-        window.allLedger.forEach(p => {
+        
+        // Filter by time period for KPI calculations
+        const dataForKPI = dateThreshold 
+            ? window.allLedger.filter(p => {
+                const transactionDate = new Date(p.date || p.createdAt || p.initiatedAt);
+                return transactionDate >= dateThreshold;
+            })
+            : window.allLedger;
+
+        dataForKPI.forEach(p => {
             const statLower = (p.status || '').toLowerCase();
             if (statLower === 'success' || statLower === 'completed') {
                 revenue += p.amount || 0;
@@ -3042,6 +3195,478 @@ async function changeCourseStatus(id, newStatus) {
 
 
 }
+
+// ============================
+// LIVE CLASSES MANAGEMENT
+// ============================
+
+let liveSearchTimeout;
+function debounceLoadLiveClasses() {
+    clearTimeout(liveSearchTimeout);
+    liveSearchTimeout = setTimeout(loadLiveClasses, 300);
+}
+
+async function loadLiveClasses() {
+    const container = document.getElementById('liveClassesContainer');
+    const search = document.getElementById('liveSearchInput') ? document.getElementById('liveSearchInput').value.toLowerCase() : '';
+    const courseFilter = document.getElementById('liveCourseFilter') ? document.getElementById('liveCourseFilter').value : '';
+    const dateFilter = document.getElementById('liveDateFilter') ? document.getElementById('liveDateFilter').value : 'all';
+
+    container.innerHTML = '<div style="text-align:center; padding:40px; color:#666;"><i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 10px;"></i><br>Loading live classes...</div>';
+    
+    try {
+        // Fetch all schedules
+        const res = await fetch(`${Auth.apiBase}/schedules/my-timetable`, { headers: Auth.getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch schedules');
+        let schedules = await res.json();
+        console.log('Fetched schedules:', schedules.length, schedules.map(s => ({ id: s._id, title: s.title })));
+
+        // Also fetch all courses for the filter dropdown
+        const coursesRes = await fetch(`${Auth.apiBase}/courses/admin/all`, { headers: Auth.getHeaders() });
+        if (coursesRes.ok) {
+            const courses = await coursesRes.json();
+            const courseFilterEl = document.getElementById('liveCourseFilter');
+            if (courseFilterEl && courses.length > 0) {
+                const currentValue = courseFilterEl.value;
+                courseFilterEl.innerHTML = '<option value="">All Courses</option>' + 
+                    courses.map(c => `<option value="${c._id}">${c.title}</option>`).join('');
+                courseFilterEl.value = currentValue;
+            }
+        }
+
+        // Apply filters
+        if (search) {
+            schedules = schedules.filter(s => 
+                s.title.toLowerCase().includes(search) ||
+                (s.courseID?.title || '').toLowerCase().includes(search) ||
+                (s.staffID?.name || '').toLowerCase().includes(search)
+            );
+        }
+        if (courseFilter) {
+            schedules = schedules.filter(s => s.courseID?._id === courseFilter);
+        }
+
+        // Date filter
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const weekEnd = new Date(today);
+        weekEnd.setDate(weekEnd.getDate() + 7);
+        const monthEnd = new Date(today);
+        monthEnd.setMonth(monthEnd.getMonth() + 1);
+
+        if (dateFilter === 'upcoming') {
+            schedules = schedules.filter(s => new Date(s.startTime) > now);
+        } else if (dateFilter === 'today') {
+            schedules = schedules.filter(s => {
+                const start = new Date(s.startTime);
+                return start >= today && start < tomorrow;
+            });
+        } else if (dateFilter === 'week') {
+            schedules = schedules.filter(s => {
+                const start = new Date(s.startTime);
+                return start >= today && start < weekEnd;
+            });
+        } else if (dateFilter === 'month') {
+            schedules = schedules.filter(s => {
+                const start = new Date(s.startTime);
+                return start >= today && start < monthEnd;
+            });
+        } else if (dateFilter === 'past') {
+            schedules = schedules.filter(s => new Date(s.endTime) < now);
+        }
+
+        // Update statistics
+        updateLiveStatistics(schedules);
+
+        // Render schedules
+        renderLiveClasses(schedules);
+    } catch (err) {
+        console.error(err);
+        container.innerHTML = '<div style="text-align:center; padding:40px; color:#e74c3c;"><i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 10px;"></i><br>Failed to load live classes. Ensure Backend is running.</div>';
+    }
+}
+
+function updateLiveStatistics(schedules) {
+    const total = schedules.length;
+    
+    const now = new Date();
+    const next24h = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    const upcoming = schedules.filter(s => {
+        const start = new Date(s.startTime);
+        return start > now && start < next24h;
+    }).length;
+
+    document.getElementById('statTotalLive').innerText = total;
+    document.getElementById('statUpcomingLive').innerText = upcoming;
+}
+
+function renderLiveClasses(schedules) {
+    const container = document.getElementById('liveClassesContainer');
+    
+    if (!schedules || schedules.length === 0) {
+        container.innerHTML = '<div style="text-align:center; padding:60px; color:#999;"><i class="fas fa-calendar-times" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.3;"></i><h3 style="color: #999;">No live classes found</h3><p>No classes match your current filters.</p></div>';
+        return;
+    }
+
+    const getTimeStatus = (startTime, endTime) => {
+        const now = new Date();
+        const start = new Date(startTime);
+        const end = new Date(endTime);
+        
+        if (now > end) return { label: 'Completed', color: '#6B7280', icon: 'check' };
+        if (now >= start && now <= end) return { label: 'Live Now', color: '#EF4444', icon: 'broadcast-tower', pulse: true };
+        if (start - now < 3600000) return { label: 'Starting Soon', color: '#F59E0B', icon: 'clock' };
+        return { label: 'Upcoming', color: '#3B82F6', icon: 'calendar' };
+    };
+
+    container.innerHTML = `
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 20px;">
+            ${schedules.map(s => {
+                const timeStatus = getTimeStatus(s.startTime, s.endTime);
+                const startDate = new Date(s.startTime);
+                const endDate = new Date(s.endTime);
+                const duration = s.expectedDuration || Math.round((endDate - startDate) / 60000);
+                const now = new Date();
+                const isCompleted = now > endDate;
+                const isUpcoming = now < new Date(s.startTime);
+
+                return `
+                <div class="glass-card" style="padding: 18px; border-radius: 12px; border-left: 4px solid ${timeStatus.color}; transition: all 0.3s; position: relative; display: flex; flex-direction: column; height: 100%;"
+                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 25px rgba(0,0,0,0.08)';"
+                    onmouseout="this.style.transform='none'; this.style.boxShadow='none';">
+                    
+                    <!-- Header -->
+                    <div style="margin-bottom: 12px;">
+                        <div style="display: flex; align-items: start; justify-content: space-between; gap: 8px; margin-bottom: 8px;">
+                            <h3 style="margin: 0; font-size: 1.1rem; color: #1F2937; font-weight: 700; flex: 1; line-height: 1.4;">${s.title}</h3>
+                            ${timeStatus.pulse ? `<span class="pulse-badge" style="animation: pulse 2s infinite; background: ${timeStatus.color}; color: white; padding: 3px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: 600; white-space: nowrap;"><i class="fas fa-${timeStatus.icon}"></i> ${timeStatus.label}</span>` : `<span style="background: ${timeStatus.color}22; color: ${timeStatus.color}; padding: 3px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: 600; border: 1px solid ${timeStatus.color}44; white-space: nowrap;"><i class="fas fa-${timeStatus.icon}"></i> ${timeStatus.label}</span>`}
+                        </div>
+                        
+                        <div style="display: flex; flex-direction: column; gap: 4px; color: #6B7280; font-size: 0.85rem;">
+                            <span><i class="fas fa-book" style="color: var(--color-saffron); margin-right: 6px; width: 14px;"></i>${s.courseID?.title || 'N/A'}</span>
+                            <span><i class="fas fa-user-tie" style="color: var(--color-saffron); margin-right: 6px; width: 14px;"></i>${s.staffID?.name || 'N/A'}</span>
+                        </div>
+                    </div>
+
+                    <!-- Details -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 12px; background: #F9FAFB; border-radius: 8px; margin-bottom: 12px; font-size: 0.85rem;">
+                        <div>
+                            <div style="color: #9CA3AF; font-size: 0.75rem; margin-bottom: 3px; font-weight: 600;">📅 Date</div>
+                            <div style="color: #1F2937; font-weight: 600; font-size: 0.85rem;">${startDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</div>
+                        </div>
+                        <div>
+                            <div style="color: #9CA3AF; font-size: 0.75rem; margin-bottom: 3px; font-weight: 600;">⏱️ Duration</div>
+                            <div style="color: #1F2937; font-weight: 600; font-size: 0.85rem;">${duration} min</div>
+                        </div>
+                        <div style="grid-column: 1 / -1;">
+                            <div style="color: #9CA3AF; font-size: 0.75rem; margin-bottom: 3px; font-weight: 600;">🕐 Time</div>
+                            <div style="color: #1F2937; font-weight: 600; font-size: 0.85rem;">${startDate.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })} - ${endDate.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</div>
+                        </div>
+                        ${s.meetingLink ? `
+                        <div style="grid-column: 1 / -1;">
+                            <div style="color: #9CA3AF; font-size: 0.75rem; margin-bottom: 3px; font-weight: 600;">🔗 Meeting Link</div>
+                            <div style="color: #3B82F6; font-weight: 500; font-size: 0.8rem; word-break: break-all;">
+                                <a href="${s.meetingLink}" target="_blank" style="color: #3B82F6; text-decoration: none;" 
+                                    onmouseover="this.style.textDecoration='underline'" 
+                                    onmouseout="this.style.textDecoration='none'">${s.meetingLink}</a>
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div style="display: flex; justify-content: flex-end; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: auto;">
+                        ${!isCompleted && s.meetingLink ? `
+                            <a href="${s.meetingLink}" target="_blank" 
+                                class="btn-primary" 
+                                style="background: #3B82F6; color: white; padding: 6px 12px; border: none; border-radius: 6px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; font-size: 0.85rem;"
+                                onmouseover="this.style.background='#2563EB'"
+                                onmouseout="this.style.background='#3B82F6'">
+                                <i class="fas fa-external-link-alt"></i> Open Link
+                            </a>
+                        ` : ''}
+                        ${isUpcoming ? `
+                            <button onclick="editLiveClass('${s._id}')" 
+                                class="btn-primary" 
+                                style="background: white; color: #10B981; padding: 6px 12px; border: 2px solid #10B981; border-radius: 6px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; font-size: 0.85rem;"
+                                onmouseover="this.style.background='#10B981'; this.style.color='white'"
+                                onmouseout="this.style.background='white'; this.style.color='#10B981'">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                        ` : ''}
+                        <button onclick="deleteLiveClass('${s._id}')" 
+                            class="btn-primary" 
+                            style="background: white; color: #EF4444; padding: 6px 12px; border: 2px solid #EF4444; border-radius: 6px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; font-size: 0.85rem;"
+                            onmouseover="this.style.background='#EF4444'; this.style.color='white'"
+                            onmouseout="this.style.background='white'; this.style.color='#EF4444'">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </div>
+                </div>
+                `;
+            }).join('')}
+        </div>
+
+        <style>
+            @keyframes pulse {
+                0%, 100% { opacity: 1; }
+                50% { opacity: 0.6; }
+            }
+        </style>
+    `;
+}
+
+async function deleteLiveClass(scheduleId) {
+    console.log('Attempting to delete schedule with ID:', scheduleId);
+    
+    if (!confirm('Are you sure you want to delete this live class? This action cannot be undone.')) {
+        return;
+    }
+
+    try {
+        UI.showLoader();
+        const res = await fetch(`${Auth.apiBase}/schedules/${scheduleId}`, {
+            method: 'DELETE',
+            headers: Auth.getHeaders()
+        });
+
+        console.log('Delete response status:', res.status);
+        
+        if (res.ok) {
+            UI.success('Live class deleted successfully!');
+            loadLiveClasses();
+        } else {
+            const data = await res.json();
+            console.error('Delete error:', data);
+            UI.error(data.message || 'Failed to delete live class');
+        }
+    } catch (err) {
+        console.error('Delete exception:', err);
+        UI.error('Failed to delete live class');
+    } finally {
+        UI.hideLoader();
+    }
+}
+
+async function editLiveClass(scheduleId) {
+    try {
+        UI.showLoader();
+        // Fetch the schedule details
+        const res = await fetch(`${Auth.apiBase}/schedules/my-timetable`, { headers: Auth.getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch schedule');
+        
+        const schedules = await res.json();
+        const schedule = schedules.find(s => s._id === scheduleId);
+        
+        if (!schedule) {
+            UI.error('Schedule not found');
+            return;
+        }
+
+        // Populate the form
+        document.getElementById('editScheduleId').value = schedule._id;
+        document.getElementById('editLiveTitle').value = schedule.title;
+        
+        // Format datetime for input
+        const startTime = new Date(schedule.startTime);
+        const formattedStart = startTime.toISOString().slice(0, 16);
+        document.getElementById('editLiveStartTime').value = formattedStart;
+        
+        // Set minimum datetime to 10 minutes from now
+        const startTimeInput = document.getElementById('editLiveStartTime');
+        startTimeInput.min = getMinimumScheduleTime();
+        
+        document.getElementById('editLiveDuration').value = schedule.expectedDuration || 60;
+        document.getElementById('editLiveMeetingLink').value = schedule.meetingLink || '';
+
+        // Show the modal
+        const modal = document.getElementById('editLiveClassModal');
+        modal.style.display = 'flex';
+    } catch (err) {
+        console.error(err);
+        UI.error('Failed to load schedule details');
+    } finally {
+        UI.hideLoader();
+    }
+}
+
+function closeEditLiveClassModal() {
+    const modal = document.getElementById('editLiveClassModal');
+    modal.style.display = 'none';
+    document.getElementById('editLiveClassForm').reset();
+}
+
+// Helper function to get minimum datetime (10 minutes from now)
+function getMinimumScheduleTime() {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() + 10);
+    return now.toISOString().slice(0, 16);
+}
+
+// Validate if selected datetime is at least 10 minutes in the future
+function validateScheduleTime(selectedTime) {
+    const selected = new Date(selectedTime);
+    const minTime = new Date();
+    minTime.setMinutes(minTime.getMinutes() + 10);
+    return selected >= minTime;
+}
+
+// Validate if the meeting link is a valid URL
+function validateMeetingLink(url) {
+    if (!url || url.trim() === '') {
+        return { valid: false, message: 'Meeting link is required' };
+    }
+    
+    try {
+        const urlObj = new URL(url);
+        // Check if it's http or https protocol
+        if (urlObj.protocol !== 'http:' && urlObj.protocol !== 'https:') {
+            return { valid: false, message: 'Meeting link must be a valid HTTP/HTTPS URL' };
+        }
+        return { valid: true };
+    } catch (err) {
+        return { valid: false, message: 'Please enter a valid URL (e.g., https://meet.google.com/...)' };
+    }
+}
+
+async function openCreateLiveClassModal() {
+    try {
+        // Fetch all courses to populate dropdown
+        const res = await fetch(`${Auth.apiBase}/courses/admin/all`, { headers: Auth.getHeaders() });
+        if (res.ok) {
+            const courses = await res.json();
+            const courseSelect = document.getElementById('createLiveCourse');
+            courseSelect.innerHTML = '<option value="">-- Select a Course --</option>' + 
+                courses.map(c => `<option value="${c._id}">${c.title}</option>`).join('');
+        }
+
+        // Set minimum datetime to 10 minutes from now
+        const startTimeInput = document.getElementById('createLiveStartTime');
+        startTimeInput.min = getMinimumScheduleTime();
+
+        // Show the modal
+        const modal = document.getElementById('createLiveClassModal');
+        modal.style.display = 'flex';
+    } catch (err) {
+        console.error(err);
+        UI.error('Failed to load courses');
+    }
+}
+
+function closeCreateLiveClassModal() {
+    const modal = document.getElementById('createLiveClassModal');
+    modal.style.display = 'none';
+    document.getElementById('createLiveClassForm').reset();
+}
+
+// Handle edit form submission
+document.addEventListener('DOMContentLoaded', () => {
+    const editForm = document.getElementById('editLiveClassForm');
+    if (editForm) {
+        editForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const scheduleId = document.getElementById('editScheduleId').value;
+            const title = document.getElementById('editLiveTitle').value;
+            const startTime = document.getElementById('editLiveStartTime').value;
+            const duration = parseInt(document.getElementById('editLiveDuration').value);
+            const meetingLink = document.getElementById('editLiveMeetingLink').value;
+
+            // Validate schedule time is at least 10 minutes in the future
+            if (!validateScheduleTime(startTime)) {
+                UI.error('Class must be scheduled at least 10 minutes from now');
+                return;
+            }
+
+            // Validate meeting link
+            const linkValidation = validateMeetingLink(meetingLink);
+            if (!linkValidation.valid) {
+                UI.error(linkValidation.message);
+                return;
+            }
+
+            try {
+                UI.showLoader();
+                const res = await fetch(`${Auth.apiBase}/schedules/${scheduleId}`, {
+                    method: 'PUT',
+                    headers: Auth.getHeaders(),
+                    body: JSON.stringify({ title, startTime, duration, meetingLink })
+                });
+
+                if (res.ok) {
+                    UI.success('Live class updated successfully!');
+                    closeEditLiveClassModal();
+                    loadLiveClasses();
+                } else {
+                    const data = await res.json();
+                    UI.error(data.message || 'Failed to update live class');
+                }
+            } catch (err) {
+                console.error(err);
+                UI.error('Failed to update live class');
+            } finally {
+                UI.hideLoader();
+            }
+        });
+    }
+
+    // Handle create form submission
+    const createForm = document.getElementById('createLiveClassForm');
+    if (createForm) {
+        createForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const courseID = document.getElementById('createLiveCourse').value;
+            const title = document.getElementById('createLiveTitle').value;
+            const startTime = document.getElementById('createLiveStartTime').value;
+            const duration = parseInt(document.getElementById('createLiveDuration').value);
+            const meetingLink = document.getElementById('createLiveMeetingLink').value;
+
+            if (!courseID) {
+                UI.error('Please select a course');
+                return;
+            }
+
+            // Validate schedule time is at least 10 minutes in the future
+            if (!validateScheduleTime(startTime)) {
+                UI.error('Class must be scheduled at least 10 minutes from now');
+                return;
+            }
+
+            // Validate meeting link
+            const linkValidation = validateMeetingLink(meetingLink);
+            if (!linkValidation.valid) {
+                UI.error(linkValidation.message);
+                return;
+            }
+
+            try {
+                UI.showLoader();
+                const res = await fetch(`${Auth.apiBase}/schedules`, {
+                    method: 'POST',
+                    headers: Auth.getHeaders(),
+                    body: JSON.stringify({ courseID, title, startTime, duration, meetingLink })
+                });
+
+                if (res.ok) {
+                    UI.success('Live class created successfully!');
+                    closeCreateLiveClassModal();
+                    loadLiveClasses();
+                } else {
+                    const data = await res.json();
+                    UI.error(data.message || 'Failed to create live class');
+                }
+            } catch (err) {
+                console.error(err);
+                UI.error('Failed to create live class');
+            } finally {
+                UI.hideLoader();
+            }
+        });
+    }
+});
 
 /* --- STEPPER WIZARD LOGIC --- */
 let currentAdminStep = 1;

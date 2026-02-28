@@ -1,4 +1,4 @@
-const { Attendance, Course, User } = require('../models/index');
+const { Attendance, Course, User, Schedule } = require('../models/index');
 
 // Mark Attendance (Join Live)
 exports.markAttendance = async (req, res) => {
@@ -8,7 +8,15 @@ exports.markAttendance = async (req, res) => {
 
         // Check if already marked
         const existing = await Attendance.findOne({ studentID, scheduleID });
-        if (existing) return res.status(400).json({ message: 'Attendance already marked.' });
+        if (existing) {
+            // If already marked, still return the meeting link so they can rejoin
+            const schedule = await Schedule.findById(scheduleID);
+            return res.status(200).json({ 
+                message: 'You have already joined this session.', 
+                meetingLink: schedule?.meetingLink,
+                alreadyJoined: true 
+            });
+        }
 
         const newRecord = new Attendance({
             studentID,
@@ -18,7 +26,14 @@ exports.markAttendance = async (req, res) => {
         });
 
         await newRecord.save();
-        res.status(200).json({ message: 'Attendance recorded. Welcome to the live session!' });
+        
+        // Get the meeting link from the schedule
+        const schedule = await Schedule.findById(scheduleID);
+        
+        res.status(200).json({ 
+            message: 'Attendance recorded. Welcome to the live session!', 
+            meetingLink: schedule?.meetingLink 
+        });
 
     } catch (err) {
         res.status(500).json({ message: 'Attendance failed', error: err.message });

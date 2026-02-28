@@ -15,4 +15,10 @@ router.get('/my-timetable', authorize(['Student', 'Staff', 'Admin']), scheduleCo
 // Update schedule status (Admin only)
 router.put('/:id/status', authorize(['Admin']), scheduleController.updateScheduleStatus);
 
+// Update schedule (Admin only)
+router.put('/:id', authorize(['Admin']), scheduleController.updateSchedule);
+
+// Delete schedule (Admin only)
+router.delete('/:id', authorize(['Admin']), scheduleController.deleteSchedule);
+
 module.exports = router;

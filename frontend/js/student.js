@@ -1142,7 +1142,7 @@ async function loadTimetable() {
                     startTime: s.startTime,
                     endTime: s.endTime,
                     instructor: s.courseID.mentors && s.courseID.mentors.length > 0 ? s.courseID.mentors.map(m => m.name).join(', ') : 'Instructor',
-                    duration: s.duration || 60,
+                    duration: s.expectedDuration || 60,
                     joined: s.attended || false
                 });
             } else {
@@ -1166,7 +1166,7 @@ async function loadTimetable() {
                     if (s.attended) {
                         actionButton = '<span style="color: #10B981; font-weight: 600;"><i class="fas fa-check-circle"></i> Already Joined</span>';
                     } else {
-                        actionButton = `<button onclick="joinLive('${s.courseID._id}', '${s._id}', '${s.meetingLink}')" class="btn-primary" style="background: #10B981; padding: 10px 25px;"><i class="fas fa-video"></i> Join Now</button>`;
+                        actionButton = `<button onclick="joinLive('${s.courseID._id}', '${s._id}')" class="btn-primary" style="background: #10B981; padding: 10px 25px;"><i class="fas fa-video"></i> Join Now</button>`;
                     }
                 } else {
                     const timeUntil = Math.ceil((classStart - now) / (1000 * 60));
@@ -1190,7 +1190,7 @@ async function loadTimetable() {
                                     <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px; font-size: 0.9rem;">
                                         <div><i class="fas fa-calendar" style="color: var(--color-saffron); margin-right: 5px;"></i>${new Date(s.startTime).toLocaleDateString()}</div>
                                         <div><i class="fas fa-clock" style="color: var(--color-saffron); margin-right: 5px;"></i>${new Date(s.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-                                        <div><i class="fas fa-hourglass-half" style="color: var(--color-saffron); margin-right: 5px;"></i>${s.duration || 60} min</div>
+                                        <div><i class="fas fa-hourglass-half" style="color: var(--color-saffron); margin-right: 5px;"></i>${s.expectedDuration || 60} min</div>
                                     </div>
                                     <div style="display: flex; justify-content: space-between; align-items: center;">
                                         <div style="color: var(--color-text-secondary); font-size: 0.85rem;">
@@ -1214,7 +1214,7 @@ async function loadTimetable() {
     }
 }
 
-async function joinLive(courseID, scheduleID, meetingLink) {
+async function joinLive(courseID, scheduleID) {
     try {
         UI.showLoader();
         const res = await fetch(`${Auth.apiBase}/attendance/mark`, {
@@ -1224,7 +1224,9 @@ async function joinLive(courseID, scheduleID, meetingLink) {
         });
         const data = await res.json();
         UI.info(data.message);
-        if (meetingLink) setTimeout(() => window.open(meetingLink, '_blank'), 500);
+        if (data.meetingLink) {
+            setTimeout(() => window.open(data.meetingLink, '_blank'), 500);
+        }
         loadTimetable();
     } catch (err) {
         UI.error('Could not join session.');
