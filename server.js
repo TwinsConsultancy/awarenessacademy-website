@@ -3,14 +3,18 @@
  * Version: 1.0
  */
 
-require('dotenv').config({ path: './backend/.env' });
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
 
 const app = express();
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT;
+
+if (!PORT) {
+    throw new Error("PORT is not defined by hosting provider.");
+}
 
 // Middleware
 app.use(cors());
@@ -109,7 +113,7 @@ mongoose.connection.on('reconnected', () => {
     console.log('✅ MongoDB Reconnected');
 });
 
-connectDB();
+//connectDB();
 
 // Preload all models to ensure they're registered before routes use them
 require('./backend/models/index');
