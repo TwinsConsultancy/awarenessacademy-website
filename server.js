@@ -113,7 +113,7 @@ mongoose.connection.on('reconnected', () => {
     console.log('✅ MongoDB Reconnected');
 });
 
-//connectDB();
+connectDB();
 
 // Preload all models to ensure they're registered before routes use them
 require('./backend/models/index');
