@@ -1861,7 +1861,7 @@
                     submitBtn.textContent = 'Submitting...';
                 }
 
-                const apiBase = (typeof Auth !== 'undefined' && Auth.apiBase) ? Auth.apiBase : 'http://localhost:5001/api';
+                const apiBase = 'https://awarenessacademy.in/api';
                 const response = await fetch(`${apiBase}/feedback/submit`, {
                     method: 'POST',
                     headers: {
@@ -1896,7 +1896,7 @@
                 const token = localStorage.getItem('token') || localStorage.getItem('authToken');
                 if (!token) return false;
 
-                const apiBase = (typeof Auth !== 'undefined' && Auth.apiBase) ? Auth.apiBase : 'http://localhost:5001/api';
+                const apiBase = 'https://awarenessacademy.in/api';
                 const response = await fetch(`${apiBase}/feedback/check/${moduleId}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });

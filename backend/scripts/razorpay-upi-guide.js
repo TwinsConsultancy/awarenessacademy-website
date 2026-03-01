@@ -29,7 +29,7 @@ console.log(`
 
 📍 STEP 4: Webhook Configuration (Optional but recommended)
    → Navigate: Settings → Webhooks
-   → Add webhook URL: http://localhost:5001/api/payments/webhook
+   → Add webhook URL: https://awarenessacademy.in/api/payments/webhook
    → Select events:
      ✅ payment.authorized
      ✅ payment.failed

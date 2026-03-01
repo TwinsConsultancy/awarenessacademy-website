@@ -200,7 +200,7 @@
                     submitBtn.textContent = 'Submitting...';
                 }
 
-                const apiBase = (typeof Auth !== 'undefined' && Auth.apiBase) ? Auth.apiBase : 'http://localhost:5001/api';
+                const apiBase = 'https://awarenessacademy.in/api';
                 const submitUrl = `${apiBase}/feedback/submit`;
                 console.log('Submitting to:', submitUrl);
 
@@ -302,7 +302,7 @@
                     return false;
                 }
 
-                const apiBase = (typeof Auth !== 'undefined' && Auth.apiBase) ? Auth.apiBase : 'http://localhost:5001/api';
+                const apiBase = 'https://awarenessacademy.in/api';
                 const response = await fetch(`${apiBase}/feedback/check/${moduleId}`, {
                     method: 'GET',
                     headers: {
@@ -371,7 +371,7 @@
                 }
 
                 // Make direct API call with proper authentication
-                const apiBase = (typeof Auth !== 'undefined' && Auth.apiBase) ? Auth.apiBase : 'http://localhost:5001/api';
+                const apiBase = 'https://awarenessacademy.in/api';
                 const response = await fetch(`${apiBase}/payments/analytics`, {
                     method: 'GET',
                     headers: {

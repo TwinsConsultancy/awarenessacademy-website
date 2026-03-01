@@ -756,7 +756,7 @@ async function checkAndOpenFeedbackModal(moduleId, moduleName, courseId) {
             return;
         }
 
-        const apiBase = (typeof Auth !== 'undefined' && Auth.apiBase) ? Auth.apiBase : 'http://localhost:5001/api';
+        const apiBase = (typeof Auth !== 'undefined' && Auth.apiBase) ? Auth.apiBase : 'https://awarenessacademy.in/api';
         const response = await fetch(`${apiBase}/feedback/check/${moduleId}`, {
             method: 'GET',
             headers: {
@@ -1617,13 +1617,13 @@ async function loadMarketplace() {
 
         function renderMarketplaceCourses(coursesToRender) {
             container.innerHTML = coursesToRender.map(c => {
-            const isEnrolled = c.isEnrolled;
-            const mentorName = c.instructor;
-            const thumb = getThumbnail(c.thumbnail);
+                const isEnrolled = c.isEnrolled;
+                const mentorName = c.instructor;
+                const thumb = getThumbnail(c.thumbnail);
 
-            let ctaBtn = '';
-            if (isEnrolled) {
-                ctaBtn = `<button onclick="switchSection('course')" style="
+                let ctaBtn = '';
+                if (isEnrolled) {
+                    ctaBtn = `<button onclick="switchSection('course')" style="
                     width:100%; padding:11px; border:none; border-radius:10px;
                     background:linear-gradient(135deg,#22c55e,#16a34a); color:#fff;
                     font-weight:700; font-size:0.9rem; cursor:pointer;
@@ -1631,8 +1631,8 @@ async function loadMarketplace() {
                     font-family:inherit;">
                     <i class="fas fa-check-circle"></i> Continue Learning
                 </button>`;
-            } else if (c.status === 'Approved') {
-                ctaBtn = `<button onclick="openNotifyModal('${c._id}','${c.title.replace(/'/g, "\\'")}')" style="
+                } else if (c.status === 'Approved') {
+                    ctaBtn = `<button onclick="openNotifyModal('${c._id}','${c.title.replace(/'/g, "\\'")}')" style="
                     width:100%; padding:11px; border:none; border-radius:10px;
                     background:linear-gradient(135deg,#F59E0B,#D97706); color:#fff;
                     font-weight:700; font-size:0.9rem; cursor:pointer;
@@ -1640,8 +1640,8 @@ async function loadMarketplace() {
                     font-family:inherit;">
                     <i class="fas fa-bell"></i> Notify Me
                 </button>`;
-            } else {
-                ctaBtn = `<button onclick="purchaseCourse('${c._id}','${c.price}',event)" style="
+                } else {
+                    ctaBtn = `<button onclick="purchaseCourse('${c._id}','${c.price}',event)" style="
                     width:100%; padding:11px; border:none; border-radius:10px;
                     background:linear-gradient(135deg,#FF9933,#FFC300); color:#fff;
                     font-weight:700; font-size:0.9rem; cursor:pointer;
@@ -1652,9 +1652,9 @@ async function loadMarketplace() {
                     onmouseout="this.style.transform='';this.style.boxShadow='0 4px 12px rgba(255,153,51,0.35)';">
                     <i class="fas fa-bolt"></i> Enroll Now
                 </button>`;
-            }
+                }
 
-            return `
+                return `
             <div class="mkt-course-card" style="
                 background:#fff; border-radius:16px; overflow:hidden;
                 display:flex; flex-direction:column;
@@ -1773,7 +1773,7 @@ function setupMarketplaceEventListeners() {
                 filterMarketplace();
             }, 300);
         });
-        
+
         // Also filter on Enter key
         searchInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {

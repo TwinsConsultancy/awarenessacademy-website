@@ -2,7 +2,7 @@
  * InnerSpark - Parallax & Scroll Logic
  */
 
-const API_URL = (typeof CONFIG !== 'undefined' ? CONFIG.API_BASE_URL : 'http://localhost:5001/api');
+const API_URL = (typeof CONFIG !== 'undefined' ? CONFIG.API_BASE_URL : 'https://awarenessacademy.in/api');
 
 document.addEventListener('DOMContentLoaded', () => {
 

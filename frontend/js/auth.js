@@ -97,7 +97,7 @@ const Auth = {
     },
 
     // API Base URL
-    apiBase: (typeof CONFIG !== 'undefined' ? CONFIG.API_BASE_URL : 'http://localhost:5001/api'),
+    apiBase: (typeof CONFIG !== 'undefined' ? CONFIG.API_BASE_URL : 'https://awarenessacademy.in/api'),
 
     // Force logout with message
     forceLogout: (message) => {

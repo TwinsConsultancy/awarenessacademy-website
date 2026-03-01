@@ -214,7 +214,7 @@ if (require.main === module) {
         app.locals.wss = wss;
 
         server.listen(PORT, () => {
-            console.log(`🚀 InnerSpark Server running on http://localhost:${PORT}`);
+            console.log(`🚀 InnerSpark Server running on port ${PORT}`);
             console.log(`🔌 WebSocket Server initialized on /api/developer/metrics/ws`);
         });
     });

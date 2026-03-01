@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:5001/api';
+const API_BASE_URL = 'https://awarenessacademy.in/api';
 
 // Form validation and submission
 async function submitContactForm(event) {
@@ -77,10 +77,10 @@ async function submitContactForm(event) {
         if (response.ok) {
             // Show success message
             showSuccessMessage(data.message);
-            
+
             // Reset form
             document.getElementById('contactForm').reset();
-            
+
             // Update character counter
             updateCharCount();
         } else {
@@ -100,22 +100,22 @@ async function submitContactForm(event) {
 function showError(fieldId, message) {
     const field = document.getElementById(fieldId);
     const formGroup = field.closest('.form-group');
-    
+
     // Add error class
     field.classList.add('error');
-    
+
     // Create error message element
     const errorDiv = document.createElement('div');
     errorDiv.className = 'error-message';
     errorDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
-    
+
     formGroup.appendChild(errorDiv);
 }
 
 function clearErrors() {
     // Remove all error messages
     document.querySelectorAll('.error-message').forEach(el => el.remove());
-    
+
     // Remove error classes
     document.querySelectorAll('.error').forEach(el => el.classList.remove('error'));
 }
@@ -130,15 +130,15 @@ function showSuccessMessage(message) {
             <p>${message}</p>
         </div>
     `;
-    
+
     const formWrapper = document.querySelector('.contact-form-wrapper');
     formWrapper.insertBefore(alertDiv, formWrapper.firstChild);
-    
+
     // Remove after 5 seconds
     setTimeout(() => {
         alertDiv.remove();
     }, 5000);
-    
+
     // Scroll to top of form
     formWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -153,15 +153,15 @@ function showErrorMessage(message) {
             <p>${message}</p>
         </div>
     `;
-    
+
     const formWrapper = document.querySelector('.contact-form-wrapper');
     formWrapper.insertBefore(alertDiv, formWrapper.firstChild);
-    
+
     // Remove after 5 seconds
     setTimeout(() => {
         alertDiv.remove();
     }, 5000);
-    
+
     // Scroll to top of form
     formWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -170,13 +170,13 @@ function showErrorMessage(message) {
 function updateCharCount() {
     const messageField = document.getElementById('contactMessage');
     const charCount = document.getElementById('charCount');
-    
+
     if (messageField && charCount) {
         const length = messageField.value.length;
         const maxLength = 2000;
-        
+
         charCount.textContent = `${length}/${maxLength}`;
-        
+
         if (length > maxLength) {
             charCount.style.color = '#ef4444';
         } else if (length > maxLength * 0.9) {
@@ -193,16 +193,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (form) {
         form.addEventListener('submit', submitContactForm);
     }
-    
+
     const messageField = document.getElementById('contactMessage');
     if (messageField) {
         messageField.addEventListener('input', updateCharCount);
         updateCharCount(); // Initial count
     }
-    
+
     // Clear errors on input
     document.querySelectorAll('.form-control').forEach(field => {
-        field.addEventListener('input', function() {
+        field.addEventListener('input', function () {
             if (this.classList.contains('error')) {
                 this.classList.remove('error');
                 const errorMsg = this.closest('.form-group').querySelector('.error-message');

@@ -34,7 +34,7 @@ async function loadBannersList() {
         if (emptyState) emptyState.style.display = 'none';
 
         // Construct Base URL for images
-        // Assumes Auth.apiBase is something like "http://localhost:5001/api"
+        // Assumes Auth.apiBase is something like "https://awarenessacademy.in/api"
         const apiBaseUrl = Auth.apiBase.endsWith('/api')
             ? Auth.apiBase.slice(0, -4)
             : Auth.apiBase;

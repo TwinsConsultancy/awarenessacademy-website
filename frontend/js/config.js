@@ -16,13 +16,6 @@ const CONFIG = {
     CLIENT_URL: ''
 };
 
-// Auto-detect environment
-if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-    // Production - use relative paths (same server serves frontend + backend)
-    CONFIG.API_BASE_URL = '/api';
-    CONFIG.CLIENT_URL = window.location.origin;
-} else {
-    // Development - use localhost
-    CONFIG.API_BASE_URL = 'http://localhost:5001/api';
-    CONFIG.CLIENT_URL = 'http://localhost:5001';
-}
+// Production URLs
+CONFIG.API_BASE_URL = 'https://awarenessacademy.in/api';
+CONFIG.CLIENT_URL = 'https://awarenessacademy.in';

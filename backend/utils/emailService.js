@@ -1,7 +1,7 @@
 const nodemailer = require('nodemailer');
 require('dotenv').config({ path: './backend/.env' });
 
-const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5000';
+const CLIENT_URL = process.env.CLIENT_URL || 'https://awarenessacademy.in';
 
 // Log SMTP configuration status
 console.log('📧 Email Service Configuration:');
@@ -270,7 +270,7 @@ exports.sendCoursePublishedNotification = async ({
                             </p>
                             
                             <div style="text-align: center;">
-                                <a href="http://localhost:5001" class="cta-button">
+                                <a href="https://awarenessacademy.in" class="cta-button">
                                     🌟 Visit Our Website
                                 </a>
                             </div>
@@ -349,15 +349,15 @@ exports.sendMail = async ({ to, subject, html }) => {
  */
 exports.sendPaymentConfirmationEmail = async (email, paymentData) => {
     try {
-        const { 
-            studentName, 
-            studentId, 
-            courseName, 
-            amount, 
-            transactionId, 
-            paymentId, 
-            paymentMethod, 
-            date 
+        const {
+            studentName,
+            studentId,
+            courseName,
+            amount,
+            transactionId,
+            paymentId,
+            paymentMethod,
+            date
         } = paymentData;
 
         const formattedDate = new Date(date).toLocaleString('en-IN', {
@@ -476,7 +476,7 @@ exports.sendPaymentConfirmationEmail = async (email, paymentData) => {
                 </div>
             `
         });
-        
+
         console.log(`✅ Payment confirmation email sent to ${email}`);
     } catch (error) {
         console.error('❌ Error sending payment confirmation email:', error);
@@ -489,13 +489,13 @@ exports.sendPaymentConfirmationEmail = async (email, paymentData) => {
  */
 exports.sendPaymentFailureEmail = async (email, paymentData) => {
     try {
-        const { 
-            studentName, 
-            courseName, 
-            amount, 
-            transactionId, 
-            failureReason, 
-            date 
+        const {
+            studentName,
+            courseName,
+            amount,
+            transactionId,
+            failureReason,
+            date
         } = paymentData;
 
         const formattedDate = new Date(date).toLocaleString('en-IN', {
@@ -606,7 +606,7 @@ exports.sendPaymentFailureEmail = async (email, paymentData) => {
                 </div>
             `
         });
-        
+
         console.log(`✅ Payment failure notification sent to ${email}`);
     } catch (error) {
         console.error('❌ Error sending payment failure email:', error);

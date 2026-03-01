@@ -173,7 +173,7 @@ const UI = {
 
         // Get the backend base URL (without /api)
         // Handle case when CONFIG might not be loaded
-        const backendUrl = (typeof CONFIG !== 'undefined' && CONFIG.CLIENT_URL) ? CONFIG.CLIENT_URL : 'http://localhost:5001';
+        const backendUrl = (typeof CONFIG !== 'undefined' && CONFIG.CLIENT_URL) ? CONFIG.CLIENT_URL : 'https://awarenessacademy.in';
 
         // Replace relative /uploads/ paths with absolute backend URLs
         // This handles: <img src="/uploads/..."> and <video src="/uploads/...">
@@ -228,7 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
 async function applyGlobalSettings() {
     try {
         // Check if Auth exists, otherwise use default API base
-        const apiBase = (typeof Auth !== 'undefined' && Auth.apiBase) ? Auth.apiBase : 'http://localhost:5001/api';
+        const apiBase = (typeof Auth !== 'undefined' && Auth.apiBase) ? Auth.apiBase : 'https://awarenessacademy.in/api';
 
         const res = await fetch(`${apiBase}/settings/public`);
 
@@ -362,7 +362,7 @@ function setupNewsletter() {
             input.disabled = true;
 
             // Determine API Base URL
-            let apiBase = 'http://localhost:5001/api';
+            let apiBase = (typeof Auth !== 'undefined' && Auth.apiBase) ? Auth.apiBase : 'https://awarenessacademy.in/api';
             if (typeof CONFIG !== 'undefined' && CONFIG.API_BASE_URL) apiBase = CONFIG.API_BASE_URL;
             else if (typeof Auth !== 'undefined' && Auth.apiBase) apiBase = Auth.apiBase;
 
