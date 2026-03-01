@@ -113,7 +113,7 @@ mongoose.connection.on('reconnected', () => {
     console.log('✅ MongoDB Reconnected');
 });
 
-connectDB();
+//connectDB();
 
 // Preload all models to ensure they're registered before routes use them
 require('./backend/models/index');
@@ -215,7 +215,6 @@ if (require.main === module) {
 
         server.listen(PORT, () => {
             console.log(`🚀 InnerSpark Server running on port ${PORT}`);
-            console.log(`🔌 WebSocket Server initialized on /api/developer/metrics/ws`);
         });
     });
 }
